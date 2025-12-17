@@ -48,6 +48,11 @@ public class LedgerEntity extends BaseTime{
     @OnDelete(action = OnDeleteAction.CASCADE)
     private PaymentEntity paymentEntity;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id", columnDefinition = "INT UNSIGNED NOT NULL")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private AccountEntity accountEntity;
+
     public LedgerDto toDto(){
         return LedgerDto.builder()
                 .ledger_id(this.ledger_id)
@@ -58,6 +63,7 @@ public class LedgerEntity extends BaseTime{
                 .user_id(this.userEntity != null ? this.userEntity.getUser_id() : 0)
                 .category_id(this.categoryEntity != null ? this.categoryEntity.getCategory_id() : 0)
                 .payment_id(this.paymentEntity != null ? this.paymentEntity.getPayment_id() : 0)
+                .account_id(this.accountEntity != null ? this.accountEntity.getAccount_id() : 0)
                 .created_at(this.getCreated_at())
                 .updated_at(this.getUpdated_at())
                 .build();

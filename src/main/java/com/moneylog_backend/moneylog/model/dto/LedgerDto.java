@@ -22,6 +22,7 @@ public class LedgerDto {
     private int user_id;
     private int category_id;
     private int payment_id;
+    private int account_id;
     private String title;
     private int amount;
     private String memo;
