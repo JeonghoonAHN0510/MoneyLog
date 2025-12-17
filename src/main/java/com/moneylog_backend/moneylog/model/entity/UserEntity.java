@@ -1,5 +1,7 @@
 package com.moneylog_backend.moneylog.model.entity;
 
+import com.moneylog_backend.moneylog.common.type.ProviderType;
+import com.moneylog_backend.moneylog.common.type.StatusType;
 import com.moneylog_backend.moneylog.model.dto.UserDto;
 
 import java.time.LocalDateTime;
@@ -20,7 +22,7 @@ public class UserEntity extends BaseTime{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(columnDefinition = "INT UNSIGNED")
-    private int user_pk;
+    private int user_id;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")
     private String name;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL UNIQUE")
@@ -36,9 +38,11 @@ public class UserEntity extends BaseTime{
     @Column(columnDefinition = "VARCHAR(255)")
     private String profile_image_url;
     @Column(columnDefinition = "ENUM('ACTIVE', 'DORMANT', 'WITHDRAWN') DEFAULT 'ACTIVE'")
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private StatusType status;
     @Column(columnDefinition = "ENUM('LOCAL', 'KAKAO', 'GOOGLE') DEFAULT 'LOCAL'")
-    private String provider;
+    @Enumerated(EnumType.STRING)
+    private ProviderType provider;
     @Column(columnDefinition = "VARCHAR(255)")
     private String provider_id;
     @Column(columnDefinition = "DATETIME(6)")
@@ -46,7 +50,7 @@ public class UserEntity extends BaseTime{
 
     public UserDto toDto(){
         return UserDto.builder()
-                .user_pk(this.user_pk)
+                .user_id(this.user_id)
                 .name(this.name)
                 .id(this.id)
                 .password(this.password)
@@ -58,8 +62,8 @@ public class UserEntity extends BaseTime{
                 .provider(this.provider)
                 .provider_id(this.provider_id)
                 .last_login_at(this.last_login_at)
-                .create_at(this.getCreate_at())
-                .update_at(this.getUpdate_at())
+                .created_at(this.getCreated_at())
+                .updated_at(this.getUpdated_at())
                 .build();
     } // func end
 } // class end

@@ -1,10 +1,11 @@
 package com.moneylog_backend.moneylog.model.dto;
 
+import com.moneylog_backend.moneylog.common.type.ProviderType;
+import com.moneylog_backend.moneylog.common.type.StatusType;
 import com.moneylog_backend.moneylog.model.entity.UserEntity;
 
 import java.time.LocalDateTime;
 
-import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,7 +16,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserDto {
-    private int user_pk;
+    private int user_id;
     private String name;
     private String id;
     private String password;
@@ -23,16 +24,16 @@ public class UserDto {
     private String phone;
     private boolean gender;
     private String profile_image_url;
-    private String status;
-    private String provider;
+    private StatusType status;
+    private ProviderType provider;
     private String provider_id;
     private LocalDateTime last_login_at;
-    private LocalDateTime create_at;
-    private LocalDateTime update_at;
+    private LocalDateTime created_at;
+    private LocalDateTime updated_at;
 
     public UserEntity toEntity(){
         return UserEntity.builder()
-                .user_pk(this.user_pk)
+                .user_id(this.user_id)
                 .name(this.name)
                 .id(this.id)
                 .password(this.password)
