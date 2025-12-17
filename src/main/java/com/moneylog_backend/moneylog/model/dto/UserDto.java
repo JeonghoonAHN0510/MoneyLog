@@ -1,6 +1,6 @@
-package com.jeonghoon.moneylog.model.dto;
+package com.moneylog_backend.moneylog.model.dto;
 
-import com.jeonghoon.moneylog.model.entity.UserEntity;
+import com.moneylog_backend.moneylog.model.entity.UserEntity;
 
 import java.time.LocalDateTime;
 

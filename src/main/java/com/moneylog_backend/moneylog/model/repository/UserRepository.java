@@ -1,6 +1,6 @@
-package com.jeonghoon.moneylog.model.repository;
+package com.moneylog_backend.moneylog.model.repository;
 
-import com.jeonghoon.moneylog.model.entity.UserEntity;
+import com.moneylog_backend.moneylog.model.entity.UserEntity;
 
 import org.springframework.data.repository.CrudRepository;
 

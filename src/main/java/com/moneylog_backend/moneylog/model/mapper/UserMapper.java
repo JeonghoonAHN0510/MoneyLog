@@ -1,4 +1,4 @@
-package com.jeonghoon.moneylog.model.mapper;
+package com.moneylog_backend.moneylog.model.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 

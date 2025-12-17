@@ -1,7 +1,7 @@
-package com.jeonghoon.moneylog.service;
+package com.moneylog_backend.moneylog.service;
 
-import com.jeonghoon.moneylog.model.mapper.UserMapper;
-import com.jeonghoon.moneylog.model.repository.UserRepository;
+import com.moneylog_backend.moneylog.model.mapper.UserMapper;
+import com.moneylog_backend.moneylog.model.repository.UserRepository;
 
 import org.springframework.stereotype.Service;
 

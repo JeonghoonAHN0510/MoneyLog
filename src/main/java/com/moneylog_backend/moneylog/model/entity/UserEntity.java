@@ -1,6 +1,6 @@
-package com.jeonghoon.moneylog.model.entity;
+package com.moneylog_backend.moneylog.model.entity;
 
-import com.jeonghoon.moneylog.model.dto.UserDto;
+import com.moneylog_backend.moneylog.model.dto.UserDto;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

@@ -1,4 +1,4 @@
-package com.jeonghoon.moneylog.model.entity;
+package com.moneylog_backend.moneylog.model.entity;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;

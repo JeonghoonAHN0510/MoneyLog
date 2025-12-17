@@ -1,6 +1,6 @@
-package com.jeonghoon.moneylog.controller;
+package com.moneylog_backend.moneylog.controller;
 
-import com.jeonghoon.moneylog.service.UserService;
+import com.moneylog_backend.moneylog.service.UserService;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
