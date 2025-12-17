@@ -4,6 +4,7 @@ import com.moneylog_backend.moneylog.model.entity.UserEntity;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,26 +16,34 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserDto {
     private int user_pk;
-    private String user_id;
-    private String user_pwd;
-    private String user_nickname;
-    private String user_email;
-    private String user_role;
-    private String user_address1;
-    private String user_address2;
-    private LocalDateTime create_date;
-    private LocalDateTime update_date;
-
+    private String name;
+    private String id;
+    private String password;
+    private String email;
+    private String phone;
+    private boolean gender;
+    private String profile_image_url;
+    private String status;
+    private String provider;
+    private String provider_id;
+    private LocalDateTime last_login_at;
+    private LocalDateTime create_at;
+    private LocalDateTime update_at;
 
     public UserEntity toEntity(){
         return UserEntity.builder()
                 .user_pk(this.user_pk)
-                .user_id(this.user_id)
-                .user_nickname(this.user_nickname)
-                .user_email(this.user_email)
-                .user_role(this.user_role)
-                .user_address1(this.user_address1)
-                .user_address2(this.user_address2)
+                .name(this.name)
+                .id(this.id)
+                .password(this.password)
+                .email(this.email)
+                .phone(this.phone)
+                .gender(this.gender)
+                .profile_image_url(this.profile_image_url)
+                .status(this.status)
+                .provider(this.provider)
+                .provider_id(this.provider_id)
+                .last_login_at(this.last_login_at)
                 .build();
     } // func end
 } // class end

@@ -2,6 +2,8 @@ package com.moneylog_backend.moneylog.model.entity;
 
 import com.moneylog_backend.moneylog.model.dto.UserDto;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,34 +19,47 @@ import lombok.NoArgsConstructor;
 public class UserEntity extends BaseTime{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(columnDefinition = "int unsigned")
+    @Column(columnDefinition = "INT UNSIGNED")
     private int user_pk;
-    @Column(columnDefinition = "varchar(30) not null unique")
-    private String user_id;
-    @Column(columnDefinition = "varchar(100) not null")
-    private String user_pwd;
-    @Column(columnDefinition = "varchar(50) not null unique")
-    private String user_nickname;
-    @Column(columnDefinition = "varchar(50) not null unique")
-    private String user_email;
-    @Column(columnDefinition = "enum('USER', 'OWNER', 'ADMIN') not null")
-    private String user_role;
-    @Column(columnDefinition = "varchar(100)")
-    private String user_address1;
-    @Column(columnDefinition = "varchar(100)")
-    private String user_address2;
+    @Column(columnDefinition = "VARCHAR(50) NOT NULL")
+    private String name;
+    @Column(columnDefinition = "VARCHAR(50) NOT NULL UNIQUE")
+    private String id;
+    @Column(columnDefinition = "VARCHAR(255)")
+    private String password;
+    @Column(columnDefinition = "VARCHAR(100) NOT NULL UNIQUE")
+    private String email;
+    @Column(columnDefinition = "VARCHAR(20)")
+    private String phone;
+    @Column(columnDefinition = "BOOLEAN")
+    private boolean gender;
+    @Column(columnDefinition = "VARCHAR(255)")
+    private String profile_image_url;
+    @Column(columnDefinition = "ENUM('ACTIVE', 'DORMANT', 'WITHDRAWN') DEFAULT 'ACTIVE'")
+    private String status;
+    @Column(columnDefinition = "ENUM('LOCAL', 'KAKAO', 'GOOGLE') DEFAULT 'LOCAL'")
+    private String provider;
+    @Column(columnDefinition = "VARCHAR(255)")
+    private String provider_id;
+    @Column(columnDefinition = "DATETIME(6)")
+    private LocalDateTime last_login_at;
 
     public UserDto toDto(){
         return UserDto.builder()
                 .user_pk(this.user_pk)
-                .user_id(this.user_id)
-                .user_nickname(this.user_nickname)
-                .user_email(this.user_email)
-                .user_role(this.user_role)
-                .user_address1(this.user_address1)
-                .user_address2(this.user_address2)
-                .create_date(this.getCreate_date())
-                .update_date(this.getUpdate_date())
+                .name(this.name)
+                .id(this.id)
+                .password(this.password)
+                .email(this.email)
+                .phone(this.phone)
+                .gender(this.gender)
+                .profile_image_url(this.profile_image_url)
+                .status(this.status)
+                .provider(this.provider)
+                .provider_id(this.provider_id)
+                .last_login_at(this.last_login_at)
+                .create_at(this.getCreate_at())
+                .update_at(this.getUpdate_at())
                 .build();
     } // func end
 } // class end
