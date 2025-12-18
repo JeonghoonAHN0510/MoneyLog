@@ -22,3 +22,17 @@ INSERT INTO account(user_id, bank_id, nickname, balance, account_number, created
     VALUES ('1', '70001', '국민계좌', '50000', '941602-00-581596', now()),
            ('1', '70002', '신한계좌', '30000', '110-459-893115', now()),
            ('1', '70003', '카카오계좌', '300000', '3333-11-2756766', now());
+
+INSERT INTO budget(user_id, category_id, budget_date, amount, created_at)
+    VALUES ('1', '10003', '2025-12-22', '200000', now()),
+           ('1', '10004', '2025-12-22', '80000', now());
+
+INSERT INTO fixed(user_id, category_id, title, amount, fixed_day, start_date, created_at)
+    VALUES ('1', '10001', '월급', '2400000', '1', '2025-12-22', now());
+
+INSERT INTO ledger(user_id, category_id, account_id, fixed_id, title, amount, trading_at, created_at)
+    VALUES ('1', '10001', '30003', '50001', '월급', '2400000' ,'2025-12-22' , now());
+
+INSERT INTO transfer(user_id, from_account, to_account, amount, transfer_at, memo, created_at)
+    VALUES ('1', '30001', '30002', '50000', '2025-12-22', '', now()),
+           ('1', '30001', '30003', '40000', '2025-12-22', '테스트 이체', now());
