@@ -4,6 +4,9 @@ import com.moneylog_backend.moneylog.common.type.ProviderType;
 import com.moneylog_backend.moneylog.common.type.StatusType;
 import com.moneylog_backend.moneylog.model.dto.UserDto;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
@@ -48,9 +51,15 @@ public class UserEntity extends BaseTime{
     @Column(columnDefinition = "DATETIME(6)")
     private LocalDateTime last_login_at;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id", columnDefinition = "INT UNSIGNED")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private AccountEntity accountEntity;
+
     public UserDto toDto(){
         return UserDto.builder()
                 .user_id(this.user_id)
+                .account_id(this.accountEntity != null ? this.accountEntity.getAccount_id() : 0)
                 .name(this.name)
                 .id(this.id)
                 .password(this.password)

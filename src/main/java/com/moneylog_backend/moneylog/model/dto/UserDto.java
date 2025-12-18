@@ -2,6 +2,7 @@ package com.moneylog_backend.moneylog.model.dto;
 
 import com.moneylog_backend.moneylog.common.type.ProviderType;
 import com.moneylog_backend.moneylog.common.type.StatusType;
+import com.moneylog_backend.moneylog.model.entity.AccountEntity;
 import com.moneylog_backend.moneylog.model.entity.UserEntity;
 
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserDto {
     private int user_id;
+    private int account_id;
     private String name;
     private String id;
     private String password;
@@ -31,9 +33,10 @@ public class UserDto {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
-    public UserEntity toEntity(){
+    public UserEntity toEntity(AccountEntity accountEntity) {
         return UserEntity.builder()
                 .user_id(this.user_id)
+                .accountEntity(accountEntity)
                 .name(this.name)
                 .id(this.id)
                 .password(this.password)
