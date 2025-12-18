@@ -31,13 +31,13 @@ public class LedgerDto {
     public LedgerEntity toEntity(UserEntity userEntity,
                                  CategoryEntity categoryEntity,
                                  PaymentEntity paymentEntity,
-                                 FixedExpenseEntity fixedExpenseEntity){
+                                 FixedEntity fixedEntity){
         return LedgerEntity.builder()
                 .ledger_id(this.ledger_id)
                 .userEntity(userEntity)
                 .categoryEntity(categoryEntity)
                 .paymentEntity(paymentEntity)
-                .fixedExpenseEntity(fixedExpenseEntity)
+                .fixedEntity(fixedEntity)
                 .title(this.title)
                 .amount(this.amount)
                 .memo(this.memo)

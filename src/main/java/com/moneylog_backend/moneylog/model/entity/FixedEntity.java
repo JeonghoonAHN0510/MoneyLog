@@ -1,6 +1,6 @@
 package com.moneylog_backend.moneylog.model.entity;
 
-import com.moneylog_backend.moneylog.model.dto.FixedExpenseDto;
+import com.moneylog_backend.moneylog.model.dto.FixedDto;
 
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -14,12 +14,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "fixed_expense")
+@Table(name = "fixed")
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class FixedExpenseEntity extends BaseTime{
+public class FixedEntity extends BaseTime{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(columnDefinition = "INT UNSIGNED")
@@ -45,8 +45,8 @@ public class FixedExpenseEntity extends BaseTime{
     @OnDelete(action = OnDeleteAction.CASCADE)
     private CategoryEntity categoryEntity;
 
-    public FixedExpenseDto toDto(){
-        return FixedExpenseDto.builder()
+    public FixedDto toDto(){
+        return FixedDto.builder()
                 .fixed_id(this.fixed_id)
                 .user_id(this.userEntity != null ? this.userEntity.getUser_id() : 0)
                 .category_id(this.categoryEntity != null ? this.categoryEntity.getCategory_id() : 0)

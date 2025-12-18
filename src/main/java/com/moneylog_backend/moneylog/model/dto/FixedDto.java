@@ -1,7 +1,7 @@
 package com.moneylog_backend.moneylog.model.dto;
 
 import com.moneylog_backend.moneylog.model.entity.CategoryEntity;
-import com.moneylog_backend.moneylog.model.entity.FixedExpenseEntity;
+import com.moneylog_backend.moneylog.model.entity.FixedEntity;
 import com.moneylog_backend.moneylog.model.entity.UserEntity;
 
 import java.time.LocalDate;
@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class FixedExpenseDto {
+public class FixedDto {
     private int fixed_id;
     private int user_id;
     private int category_id;
@@ -28,9 +28,9 @@ public class FixedExpenseDto {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
-    public FixedExpenseEntity toEntity(UserEntity userEntity,
-                                       CategoryEntity categoryEntity){
-        return FixedExpenseEntity.builder()
+    public FixedEntity toEntity(UserEntity userEntity,
+                                CategoryEntity categoryEntity){
+        return FixedEntity.builder()
                 .fixed_id(this.fixed_id)
                 .userEntity(userEntity)
                 .categoryEntity(categoryEntity)

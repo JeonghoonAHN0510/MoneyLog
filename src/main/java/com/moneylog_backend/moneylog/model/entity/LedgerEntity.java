@@ -44,7 +44,7 @@ public class LedgerEntity extends BaseTime{
     private CategoryEntity categoryEntity;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_id", columnDefinition = "INT UNSIGNED NOT NULL")
+    @JoinColumn(name = "payment_id", columnDefinition = "INT UNSIGNED")
     @OnDelete(action = OnDeleteAction.CASCADE)
     private PaymentEntity paymentEntity;
 
@@ -56,7 +56,7 @@ public class LedgerEntity extends BaseTime{
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fixed_id", columnDefinition = "INT UNSIGNED")
     @OnDelete(action = OnDeleteAction.CASCADE)
-    private FixedExpenseEntity fixedExpenseEntity;
+    private FixedEntity fixedEntity;
 
     public LedgerDto toDto(){
         return LedgerDto.builder()
@@ -69,7 +69,7 @@ public class LedgerEntity extends BaseTime{
                 .category_id(this.categoryEntity != null ? this.categoryEntity.getCategory_id() : 0)
                 .payment_id(this.paymentEntity != null ? this.paymentEntity.getPayment_id() : 0)
                 .account_id(this.accountEntity != null ? this.accountEntity.getAccount_id() : 0)
-                .fixed_id(this.fixedExpenseEntity != null ? this.fixedExpenseEntity.getFixed_id() : 0)
+                .fixed_id(this.fixedEntity != null ? this.fixedEntity.getFixed_id() : 0)
                 .created_at(this.getCreated_at())
                 .updated_at(this.getUpdated_at())
                 .build();
