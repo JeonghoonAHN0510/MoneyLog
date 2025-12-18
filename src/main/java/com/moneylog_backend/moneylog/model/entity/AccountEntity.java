@@ -24,8 +24,6 @@ public class AccountEntity extends BaseTime{
     private int account_id;
     @Column(columnDefinition = "VARCHAR(50)")
     private String nickname;
-    @Column(columnDefinition = "VARCHAR(50) NOT NULL")
-    private String bank_name;
     @Column(columnDefinition = "INT")
     private int balance;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")
@@ -36,12 +34,17 @@ public class AccountEntity extends BaseTime{
     @OnDelete(action = OnDeleteAction.CASCADE)
     private UserEntity userEntity;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bank_id", columnDefinition = "INT UNSIGNED NOT NULL")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private BankEntity bankEntity;
+
     public AccountDto toDto(){
         return AccountDto.builder()
                 .account_id(this.account_id)
                 .user_id(this.userEntity != null ? this.userEntity.getUser_id() : 0)
+                .bank_id(this.bankEntity != null ? this.bankEntity.getBank_id() : 0)
                 .nickname(this.nickname)
-                .bank_name(this.bank_name)
                 .balance(this.balance)
                 .account_number(this.account_number)
                 .build();
