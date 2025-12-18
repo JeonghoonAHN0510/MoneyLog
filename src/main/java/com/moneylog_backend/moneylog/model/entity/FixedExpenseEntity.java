@@ -1,6 +1,6 @@
 package com.moneylog_backend.moneylog.model.entity;
 
-import com.moneylog_backend.moneylog.model.dto.LedgerDto;
+import com.moneylog_backend.moneylog.model.dto.FixedExpenseDto;
 
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -14,24 +14,26 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "ledger")
+@Table(name = "fixed_expense")
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class LedgerEntity extends BaseTime{
+public class FixedExpenseEntity extends BaseTime{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(columnDefinition = "INT UNSIGNED")
-    private int ledger_id;
+    private int fixed_id;
     @Column(columnDefinition = "VARCHAR(100) NOT NULL")
     private String title;
     @Column(columnDefinition = "INT NOT NULL")
     private int amount;
-    @Column(columnDefinition = "TEXT")
-    private String memo;
+    @Column(columnDefinition = "INT NOT NULL")
+    private int fixed_day;
     @Column(columnDefinition = "DATE NOT NULL")
-    private LocalDate trading_at;
+    private LocalDate start_date;
+    @Column(columnDefinition = "DATE")
+    private LocalDate end_date;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
@@ -43,33 +45,16 @@ public class LedgerEntity extends BaseTime{
     @OnDelete(action = OnDeleteAction.CASCADE)
     private CategoryEntity categoryEntity;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private PaymentEntity paymentEntity;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private AccountEntity accountEntity;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "fixed_id", columnDefinition = "INT UNSIGNED")
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private FixedExpenseEntity fixedExpenseEntity;
-
-    public LedgerDto toDto(){
-        return LedgerDto.builder()
-                .ledger_id(this.ledger_id)
-                .title(this.title)
-                .amount(this.amount)
-                .memo(this.memo)
-                .trading_at(this.trading_at)
+    public FixedExpenseDto toDto(){
+        return FixedExpenseDto.builder()
+                .fixed_id(this.fixed_id)
                 .user_id(this.userEntity != null ? this.userEntity.getUser_id() : 0)
                 .category_id(this.categoryEntity != null ? this.categoryEntity.getCategory_id() : 0)
-                .payment_id(this.paymentEntity != null ? this.paymentEntity.getPayment_id() : 0)
-                .account_id(this.accountEntity != null ? this.accountEntity.getAccount_id() : 0)
-                .fixed_id(this.fixedExpenseEntity != null ? this.fixedExpenseEntity.getFixed_id() : 0)
+                .title(this.title)
+                .amount(this.amount)
+                .fixed_day(this.fixed_day)
+                .start_date(this.start_date)
+                .end_date(this.end_date)
                 .created_at(this.getCreated_at())
                 .updated_at(this.getUpdated_at())
                 .build();

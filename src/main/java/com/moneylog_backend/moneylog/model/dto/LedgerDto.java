@@ -1,9 +1,6 @@
 package com.moneylog_backend.moneylog.model.dto;
 
-import com.moneylog_backend.moneylog.model.entity.CategoryEntity;
-import com.moneylog_backend.moneylog.model.entity.LedgerEntity;
-import com.moneylog_backend.moneylog.model.entity.PaymentEntity;
-import com.moneylog_backend.moneylog.model.entity.UserEntity;
+import com.moneylog_backend.moneylog.model.entity.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -23,6 +20,7 @@ public class LedgerDto {
     private int category_id;
     private int payment_id;
     private int account_id;
+    private int fixed_id;
     private String title;
     private int amount;
     private String memo;
@@ -32,12 +30,14 @@ public class LedgerDto {
 
     public LedgerEntity toEntity(UserEntity userEntity,
                                  CategoryEntity categoryEntity,
-                                 PaymentEntity paymentEntity){
+                                 PaymentEntity paymentEntity,
+                                 FixedExpenseEntity fixedExpenseEntity){
         return LedgerEntity.builder()
                 .ledger_id(this.ledger_id)
                 .userEntity(userEntity)
                 .categoryEntity(categoryEntity)
                 .paymentEntity(paymentEntity)
+                .fixedExpenseEntity(fixedExpenseEntity)
                 .title(this.title)
                 .amount(this.amount)
                 .memo(this.memo)
