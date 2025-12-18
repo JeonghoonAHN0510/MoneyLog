@@ -50,6 +50,10 @@ dependencies {
     implementation 'org.springframework.security:spring-security-crypto:6.5.5'
     // [11] 입력값 유효성 검사
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    // [12] NoSQL REDIS
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    // [13] Redisson
+    implementation 'org.redisson:redisson-spring-boot-starter:3.52.0'
 
     // 개발 편의성 (서버 자동 재시작 등)
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
