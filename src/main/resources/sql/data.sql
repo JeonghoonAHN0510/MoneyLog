@@ -36,3 +36,7 @@ INSERT INTO ledger(user_id, category_id, account_id, fixed_id, title, amount, tr
 INSERT INTO transfer(user_id, from_account, to_account, amount, transfer_at, memo, created_at)
     VALUES ('1', '30001', '30002', '50000', '2025-12-22', '', now()),
            ('1', '30001', '30003', '40000', '2025-12-22', '테스트 이체', now());
+
+INSERT INTO loan(bank_id, amount, interest_rate, terminated_at, created_at)
+    VALUES ('70001', '50000', '5.4', '2026-12-22', now()),
+           ('70002', '30000', '7.3', '2026-12-30', now());
