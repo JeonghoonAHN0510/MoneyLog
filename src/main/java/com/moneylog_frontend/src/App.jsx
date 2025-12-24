@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import PrivateRoute from './components/common/PrivateRoute';
 
 // TODO: 나중에 실제 페이지 컴포넌트를 import 하세요.
 import HomePage from './pages/HomePage';
