@@ -3,7 +3,6 @@ package com.moneylog_backend.moneylog.ledger.dto;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.ledger.entity.FixedEntity;
 import com.moneylog_backend.moneylog.ledger.entity.LedgerEntity;
-import com.moneylog_backend.moneylog.model.entity.*;
 import com.moneylog_backend.moneylog.payment.entity.PaymentEntity;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 

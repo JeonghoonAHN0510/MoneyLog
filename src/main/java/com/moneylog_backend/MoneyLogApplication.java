@@ -1,4 +1,4 @@
-package com.moneylog_backend.moneylog;
+package com.moneylog_backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
