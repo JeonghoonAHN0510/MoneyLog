@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosError, AxiosResponse } from 'axios';
+import { useAuthStore } from '../stores/authStore';
 
 // 1. Axios 인스턴스 생성
 const client: AxiosInstance = axios.create({
@@ -12,7 +13,14 @@ const client: AxiosInstance = axios.create({
 // 2. 요청 인터셉터
 client.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-        // todo : 토큰 추가 로직 필요
+        // store에서 토큰 꺼내기
+        const { accessToken } = useAuthStore.getState();
+
+        if (accessToken){
+            config.headers.Authorization = `Bearer ${accessToken}`;
+        }
+        
+        console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
         return config;
     },
     (error: AxiosError) => {
