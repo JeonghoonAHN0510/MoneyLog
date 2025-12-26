@@ -1,7 +1,8 @@
 package com.moneylog_backend.moneylog.user.dto;
 
-import com.moneylog_backend.global.type.ProviderType;
-import com.moneylog_backend.global.type.StatusType;
+import com.moneylog_backend.global.type.ProviderEnum;
+import com.moneylog_backend.global.type.RoleEnum;
+import com.moneylog_backend.global.type.StatusEnum;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 
@@ -25,9 +26,10 @@ public class UserDto {
     private String email;
     private String phone;
     private boolean gender;
+    private RoleEnum role;
     private String profile_image_url;
-    private StatusType status;
-    private ProviderType provider;
+    private StatusEnum status;
+    private ProviderEnum provider;
     private String provider_id;
     private LocalDateTime last_login_at;
     private LocalDateTime created_at;
@@ -43,6 +45,7 @@ public class UserDto {
                 .email(this.email)
                 .phone(this.phone)
                 .gender(this.gender)
+                .role(this.role)
                 .profile_image_url(this.profile_image_url)
                 .status(this.status)
                 .provider(this.provider)

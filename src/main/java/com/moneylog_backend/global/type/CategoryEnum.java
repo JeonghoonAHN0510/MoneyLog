@@ -1,5 +1,6 @@
 package com.moneylog_backend.global.type;
 
-public enum StatusType {
-    ACTIVE, DORMANT, WITHDRAWN
+public enum CategoryEnum {
+    INCOME,
+    EXPENSE
 } // enum end

@@ -1,6 +1,6 @@
 package com.moneylog_backend.moneylog.category.dto;
 
-import com.moneylog_backend.global.type.CategoryType;
+import com.moneylog_backend.global.type.CategoryEnum;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 
@@ -19,7 +19,7 @@ public class CategoryDto {
     private int category_id;
     private int user_id;
     private String name;
-    private CategoryType type;
+    private CategoryEnum type;
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 

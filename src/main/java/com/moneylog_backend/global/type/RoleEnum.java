@@ -1,5 +1,6 @@
 package com.moneylog_backend.global.type;
 
-public enum CategoryType {
-    INCOME, EXPENSE
+public enum RoleEnum {
+    USER,
+    ADMIN
 } // enum end

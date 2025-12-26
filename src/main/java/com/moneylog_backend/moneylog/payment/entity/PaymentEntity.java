@@ -1,7 +1,7 @@
 package com.moneylog_backend.moneylog.payment.entity;
 
 import com.moneylog_backend.global.common.BaseTime;
-import com.moneylog_backend.global.type.PaymentType;
+import com.moneylog_backend.global.type.PaymentEnum;
 import com.moneylog_backend.moneylog.payment.dto.PaymentDto;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 
@@ -29,7 +29,7 @@ public class PaymentEntity extends BaseTime {
     private String name;
     @Column(columnDefinition = "ENUM('CASH', 'CREDIT_CARD', 'CHECK_CARD', 'BANK') NOT NULL")
     @Enumerated(EnumType.STRING)
-    private PaymentType type;
+    private PaymentEnum type;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")

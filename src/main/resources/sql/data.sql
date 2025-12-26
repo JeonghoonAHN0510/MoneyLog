@@ -1,5 +1,5 @@
-INSERT INTO user(name, id, password, email, phone, gender, created_at)
-    VALUES ('안정훈', 'wjdgnsdl1342', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'wjdgnsdl1342@naver.com', '010-5109-1342', '0', now());
+INSERT INTO user(name, id, password, email, phone, gender, role, created_at)
+    VALUES ('안정훈', 'wjdgnsdl1342', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'wjdgnsdl1342@naver.com', '010-5109-1342', '0', 'ADMIN', now());
 
 INSERT INTO category(user_id, name, type, created_at)
     VALUES ('1', '월급', 'INCOME', now()),

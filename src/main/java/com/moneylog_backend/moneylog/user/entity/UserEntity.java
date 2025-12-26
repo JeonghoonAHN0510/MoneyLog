@@ -1,8 +1,9 @@
 package com.moneylog_backend.moneylog.user.entity;
 
 import com.moneylog_backend.global.common.BaseTime;
-import com.moneylog_backend.global.type.ProviderType;
-import com.moneylog_backend.global.type.StatusType;
+import com.moneylog_backend.global.type.ProviderEnum;
+import com.moneylog_backend.global.type.RoleEnum;
+import com.moneylog_backend.global.type.StatusEnum;
 import com.moneylog_backend.moneylog.user.dto.UserDto;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 
@@ -40,14 +41,17 @@ public class UserEntity extends BaseTime {
     private String phone;
     @Column(columnDefinition = "BOOLEAN")
     private boolean gender;
+    @Column(columnDefinition = "ENUM('ADMIN', 'USER') DEFAULT 'USER'")
+    @Enumerated(EnumType.STRING)
+    private RoleEnum role;
     @Column(columnDefinition = "VARCHAR(255)")
     private String profile_image_url;
     @Column(columnDefinition = "ENUM('ACTIVE', 'DORMANT', 'WITHDRAWN') DEFAULT 'ACTIVE'")
     @Enumerated(EnumType.STRING)
-    private StatusType status;
+    private StatusEnum status;
     @Column(columnDefinition = "ENUM('LOCAL', 'KAKAO', 'GOOGLE') DEFAULT 'LOCAL'")
     @Enumerated(EnumType.STRING)
-    private ProviderType provider;
+    private ProviderEnum provider;
     @Column(columnDefinition = "VARCHAR(255)")
     private String provider_id;
     @Column(columnDefinition = "DATETIME(6)")
@@ -68,6 +72,7 @@ public class UserEntity extends BaseTime {
                 .email(this.email)
                 .phone(this.phone)
                 .gender(this.gender)
+                .role(this.role)
                 .profile_image_url(this.profile_image_url)
                 .status(this.status)
                 .provider(this.provider)

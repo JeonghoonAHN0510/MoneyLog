@@ -1,6 +1,6 @@
 package com.moneylog_backend.moneylog.payment.dto;
 
-import com.moneylog_backend.global.type.PaymentType;
+import com.moneylog_backend.global.type.PaymentEnum;
 import com.moneylog_backend.moneylog.payment.entity.PaymentEntity;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 
@@ -19,7 +19,7 @@ public class PaymentDto {
     private int payment_id;
     private int user_id;
     private String name;
-    private PaymentType type;
+    private PaymentEnum type;
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 

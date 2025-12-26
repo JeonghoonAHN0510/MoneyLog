@@ -1,7 +1,7 @@
 package com.moneylog_backend.moneylog.category.entity;
 
 import com.moneylog_backend.global.common.BaseTime;
-import com.moneylog_backend.global.type.CategoryType;
+import com.moneylog_backend.global.type.CategoryEnum;
 import com.moneylog_backend.moneylog.category.dto.CategoryDto;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 
@@ -29,7 +29,7 @@ public class CategoryEntity extends BaseTime {
     private String name;
     @Column(columnDefinition = "ENUM('INCOME', 'EXPENSE') NOT NULL")
     @Enumerated(EnumType.STRING)
-    private CategoryType type;
+    private CategoryEnum type;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
