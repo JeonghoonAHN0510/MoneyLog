@@ -5,6 +5,7 @@ import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.ledger.dto.TransferDto;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 
+import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -20,6 +21,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "transfer")
 @Data
 @Builder
+@DynamicInsert
 @AllArgsConstructor
 @NoArgsConstructor
 public class TransferEntity extends BaseTime {

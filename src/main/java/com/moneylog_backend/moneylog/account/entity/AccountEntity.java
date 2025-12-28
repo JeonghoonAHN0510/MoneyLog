@@ -5,6 +5,7 @@ import com.moneylog_backend.moneylog.account.dto.AccountDto;
 import com.moneylog_backend.global.common.entity.BankEntity;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 
+import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -18,6 +19,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "account")
 @Data
 @Builder
+@DynamicInsert
 @AllArgsConstructor
 @NoArgsConstructor
 public class AccountEntity extends BaseTime {

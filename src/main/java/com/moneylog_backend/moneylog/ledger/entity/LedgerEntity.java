@@ -7,6 +7,7 @@ import com.moneylog_backend.moneylog.ledger.dto.LedgerDto;
 import com.moneylog_backend.moneylog.payment.entity.PaymentEntity;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 
+import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -22,6 +23,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "ledger")
 @Data
 @Builder
+@DynamicInsert
 @AllArgsConstructor
 @NoArgsConstructor
 public class LedgerEntity extends BaseTime {

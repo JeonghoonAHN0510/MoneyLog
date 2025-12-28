@@ -7,6 +7,7 @@ import com.moneylog_backend.global.type.StatusEnum;
 import com.moneylog_backend.moneylog.user.dto.UserDto;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 
+import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -22,6 +23,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "user")
 @Data
 @Builder
+@DynamicInsert
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserEntity extends BaseTime {
@@ -37,7 +39,7 @@ public class UserEntity extends BaseTime {
     private String password;
     @Column(columnDefinition = "VARCHAR(100) NOT NULL UNIQUE")
     private String email;
-    @Column(columnDefinition = "VARCHAR(20)")
+    @Column(columnDefinition = "VARCHAR(20) NOT NULL")
     private String phone;
     @Column(columnDefinition = "BOOLEAN")
     private boolean gender;

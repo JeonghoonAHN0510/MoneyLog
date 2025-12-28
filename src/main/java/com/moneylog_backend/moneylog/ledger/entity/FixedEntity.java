@@ -5,6 +5,7 @@ import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.ledger.dto.FixedDto;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 
+import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -20,6 +21,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "fixed")
 @Data
 @Builder
+@DynamicInsert
 @AllArgsConstructor
 @NoArgsConstructor
 public class FixedEntity extends BaseTime {
