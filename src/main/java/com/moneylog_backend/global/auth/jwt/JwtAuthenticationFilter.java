@@ -40,7 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // 4. 정상 토큰이면 SecurityContext에 저장
                 Authentication authentication = jwtProvider.getAuthentication(token);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
+            } // if end
         } // if end
 
         filterChain.doFilter(request, response);

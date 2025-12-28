@@ -2,14 +2,19 @@ package com.moneylog_backend.moneylog.user.service;
 
 import com.moneylog_backend.global.auth.jwt.JwtProvider;
 import com.moneylog_backend.global.util.RedisService;
+import com.moneylog_backend.moneylog.user.dto.TokenResponse;
 import com.moneylog_backend.moneylog.user.dto.UserDto;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 import com.moneylog_backend.moneylog.user.mapper.UserMapper;
 import com.moneylog_backend.moneylog.user.repository.UserRepository;
 
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -31,15 +36,59 @@ public class UserService {
         } // if end
 
         String encodedPassword = passwordEncoder.encode(userDto.getPassword());
+        // todo 추후 toEntity로 변경(AccountRepository 생성 후)
         UserEntity userEntity = UserEntity.builder()
                 .name(userDto.getName())
+                .id(userDto.getId())
                 .password(encodedPassword)
                 .email(userDto.getEmail())
-                .phone(userDto.getPhone() == null ? "" : userDto.getPhone())
+                .phone(userDto.getPhone())
                 .gender(userDto.isGender())
                 .role(userDto.getRole())
                 .profile_image_url(userDto.getProfile_image_url() == null ? "" : userDto.getProfile_image_url())
                 .build();
         return userRepository.save(userEntity).getUser_id();
+    } // func end
+
+    @Transactional
+    public TokenResponse login(UserDto userDto){
+        // 1. 인증 객체 생성
+        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+                new UsernamePasswordAuthenticationToken(userDto.getId(), userDto.getPassword());
+        // 2. 비밀번호 체크
+        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(usernamePasswordAuthenticationToken);
+        // 3. JWT 토큰 생성
+        String accessToken = jwtProvider.createAccessToken(authentication);
+        String refreshToken = jwtProvider.createRefreshToken(authentication);
+        // 4. Redis에 Refresh Token 저장
+        // Key: "RT:{아이디}", Value: {리프레시 토큰}, Duration: 14일
+        redisService.setValues(
+                "RT:" + authentication.getName(),
+                refreshToken,
+                Duration.ofDays(14)
+        );
+        // 5. 토큰 반환
+        return TokenResponse.builder()
+                .grantType("Bearer")
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .accessTokenExpireTime(1800L)
+                .build();
+    } // func end
+
+    @Transactional
+    public void logout(String accessToken, String id){
+        // 1. Access Token의 남은 시간 계산
+        Long expiration = jwtProvider.getExpiration(accessToken);
+        // 2. 시간이 남았다면, 블랙리스트 등록
+        if (expiration > 0){
+            redisService.setValues(
+                    "BL:" + accessToken,
+                    "Logout",
+                    Duration.ofMillis(expiration)
+            );
+        } // if end
+        // 3. Refresh Token 삭제
+        redisService.deleteValues("RT:" + id);
     } // func end
 } // class end
