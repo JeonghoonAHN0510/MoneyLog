@@ -9,11 +9,12 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import java.security.Key;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.stream.Collectors;
+
+import javax.crypto.SecretKey;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -24,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class JwtProvider {
     private static final String AUTHORITIES_KEY = "auth";
-    private final Key key;
+    private final SecretKey key;
     private final long accessTokenValidityTime;
     private final long refreshTokenValidityTime;
 
@@ -58,11 +59,11 @@ public class JwtProvider {
         Date validity = new Date(now + validityTime);
 
         return Jwts.builder()
-                .setSubject(authentication.getName())
+                .subject(authentication.getName())
                 .claim(AUTHORITIES_KEY, authorities)
-                .setIssuedAt(new Date(now))
-                .setExpiration(validity)
-                .signWith(key, SignatureAlgorithm.HS256)
+                .issuedAt(new Date(now))
+                .expiration(validity)
+                .signWith(key)
                 .compact();
     } // func end
 
@@ -88,7 +89,10 @@ public class JwtProvider {
     // 5. 토큰 검증
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(key).build().parseClaimsJws(token);
+            Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token);
             return true;
         } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
             log.info("잘못된 JWT 서명입니다.");
@@ -104,15 +108,18 @@ public class JwtProvider {
 
     // 6. accessToken 남은 유효시간 추출
     public Long getExpiration(String accessToken) {
-        Date expiration = Jwts.parser().setSigningKey(key).build()
-                .parseClaimsJws(accessToken).getBody().getExpiration();
+        Date expiration = parseClaims(accessToken).getExpiration();
         long now = new Date().getTime();
         return (expiration.getTime() - now);
     } // func end
 
     private Claims parseClaims(String accessToken) {
         try {
-            return Jwts.parser().setSigningKey(key).build().parseClaimsJws(accessToken).getBody();
+            return Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(accessToken)
+                    .getPayload();
         } catch (ExpiredJwtException e) {
             return e.getClaims();
         }

@@ -30,17 +30,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 2. 토큰 유효성 검사
         if (StringUtils.hasText(token) && jwtProvider.validateToken(token)) {
-            // ⭐ Redis에 블랙리스트("BL:토큰값")로 등록되어 있는지 확인
-            String isLogout = redisService.getValues("BL:" + token);
-
-            if (isLogout != null) {
-                // 블랙리스트면 에러 처리 또는 필터 통과 X
-                // 여기선 단순 로그만 찍고 넘어가거나, 예외를 던질 수 있음
-                throw new RuntimeException("로그아웃된 토큰입니다.");
-            } // if end
-            // 3. 토큰이 유효하면 인증 객체(Authentication)를 만들어서 SecurityContext에 저장
-            Authentication authentication = jwtProvider.getAuthentication(token);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            // 3. ⭐ Redis 블랙리스트 확인 (로그아웃된 토큰인지)
+            // 키: "BL:토큰값" 이 존재하면 로그아웃된 상태임
+            if (redisService.hasKey("BL:" + token)) {
+                // 로그아웃된 토큰으로 접근 시 에러 처리 (여기선 간단히 401 에러로 넘기거나 예외 발생)
+                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그아웃된 사용자입니다.");
+                 return; // 필터 체인 중단
+            } else {
+                // 4. 정상 토큰이면 SecurityContext에 저장
+                Authentication authentication = jwtProvider.getAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
         } // if end
 
         filterChain.doFilter(request, response);

@@ -52,9 +52,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     // [12] NoSQL REDIS
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-//     [13] Redisson
-//    implementation 'org.redisson:redisson-spring-boot-starter:3.52.0'
-
+    // [13] Redisson
+    // implementation 'org.redisson:redisson-spring-boot-starter:3.52.0'
+    // [14] Quartz
+    implementation 'org.springframework.boot:spring-boot-starter-quartz'
     // 개발 편의성 (서버 자동 재시작 등)
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     // 테스트 코드 작성용
