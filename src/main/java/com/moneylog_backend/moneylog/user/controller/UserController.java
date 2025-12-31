@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -16,7 +18,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody UserDto userDto){
+    public ResponseEntity<?> signup(@ModelAttribute UserDto userDto) throws IOException {
         return ResponseEntity.ok(userService.signup(userDto));
     }
 

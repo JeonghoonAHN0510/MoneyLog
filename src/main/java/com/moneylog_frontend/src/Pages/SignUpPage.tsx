@@ -35,6 +35,7 @@ export default function SignUpPage() {
     }
   };
 
+  // @ts-ignore
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -59,18 +60,26 @@ export default function SignUpPage() {
     }
 
     try {
-      const userDto = {
-        id,
-        name,
-        email,
-        password,
-        phone,
-        gender,
-        profile_image_url: profileImage?.name,
-      };
+      const formData = new FormData();
 
-      const response = await api.post('/user/signup', userDto);
+      formData.append('id', id);
+      formData.append('name', name);
+      formData.append('email', email);
+      formData.append('password', password);
+      formData.append('phone', phone);
+      formData.append('gender', gender);
+
+      if (profileImage) {
+        formData.append('upload_file', profileImage);
+      }
+      const response = await api.post('/user/signup', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
       const user_pk = response.data;
+
       if (user_pk > 0) {
         toast.success('회원가입이 완료되었습니다!');
         setTimeout(() => {
@@ -79,7 +88,7 @@ export default function SignUpPage() {
       }
 
     } catch (error) {
-      if (error.status == 403) {
+      if (error.status == 409) {
         toast.error('중복된 아이디 또는 이메일이 존재합니다');
       } else {
         toast.error('회원가입 중 알 수 없는 오류가 발생했습니다');

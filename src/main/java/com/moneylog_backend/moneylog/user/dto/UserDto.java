@@ -6,6 +6,8 @@ import com.moneylog_backend.global.type.StatusEnum;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
@@ -28,6 +30,7 @@ public class UserDto {
     private boolean gender;
     private RoleEnum role;
     private String profile_image_url;
+    private MultipartFile upload_file;
     private StatusEnum status;
     private ProviderEnum provider;
     private String provider_id;
