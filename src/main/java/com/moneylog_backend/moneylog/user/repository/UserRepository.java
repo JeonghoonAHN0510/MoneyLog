@@ -8,5 +8,7 @@ public interface UserRepository extends CrudRepository<UserEntity, Integer> {
 
     UserEntity findById(String id);
 
+    boolean existsById(String id);
+
     boolean existsByEmail(String email);
 } // interface end

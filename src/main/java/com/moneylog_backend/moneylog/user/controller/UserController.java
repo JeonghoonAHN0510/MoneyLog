@@ -1,6 +1,5 @@
 package com.moneylog_backend.moneylog.user.controller;
 
-import com.moneylog_backend.moneylog.user.dto.TokenResponse;
 import com.moneylog_backend.moneylog.user.dto.UserDto;
 import com.moneylog_backend.moneylog.user.service.UserService;
 
@@ -17,17 +16,17 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/signup")
-    public ResponseEntity<Integer> signup(@RequestBody UserDto userDto){
+    public ResponseEntity<?> signup(@RequestBody UserDto userDto){
         return ResponseEntity.ok(userService.signup(userDto));
-    } // func end
+    }
 
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@RequestBody UserDto userDto){
+    public ResponseEntity<?> login(@RequestBody UserDto userDto){
         return ResponseEntity.ok(userService.login(userDto));
-    } // func end
+    }
 
     @PostMapping("/logout")
-    public ResponseEntity<Boolean> logout(@RequestHeader("Authorization") String authHeader,
+    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader,
                                           Authentication authentication){
         // 순수 토큰값 추출
         String accessToken = authHeader.substring(7);
@@ -36,5 +35,5 @@ public class UserController {
         // 로그아웃 진행
         userService.logout(accessToken, userId);
         return ResponseEntity.ok(true);
-    } // func end
-} // class end
+    }
+}

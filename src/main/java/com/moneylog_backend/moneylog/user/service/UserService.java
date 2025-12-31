@@ -1,6 +1,7 @@
 package com.moneylog_backend.moneylog.user.service;
 
 import com.moneylog_backend.global.auth.jwt.JwtProvider;
+import com.moneylog_backend.global.util.FormatUtils;
 import com.moneylog_backend.global.util.RedisService;
 import com.moneylog_backend.moneylog.user.dto.TokenResponse;
 import com.moneylog_backend.moneylog.user.dto.UserDto;
@@ -13,10 +14,10 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -31,9 +32,12 @@ public class UserService {
 
     @Transactional
     public int signup(UserDto userDto){
-        if (userRepository.existsByEmail(userDto.getEmail())){
-            throw new RuntimeException("이미 가입된 이메일입니다.");
-        } // if end
+        checkIdOrEmailValidity(userDto);
+
+        userDto.setPhone(FormatUtils.toPhone(userDto.getPhone()));
+
+        // todo profile_image_url 파일명에 UUID 추가 로직 필요
+        // todo 파일 저장 로직 필요
 
         String encodedPassword = passwordEncoder.encode(userDto.getPassword());
         // todo 추후 toEntity로 변경(AccountRepository 생성 후)
@@ -48,9 +52,8 @@ public class UserService {
                 .profile_image_url(userDto.getProfile_image_url() == null ? "" : userDto.getProfile_image_url())
                 .build();
         return userRepository.save(userEntity).getUser_id();
-    } // func end
+    }
 
-    @Transactional
     public TokenResponse login(UserDto userDto){
         // 1. 인증 객체 생성
         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
@@ -74,9 +77,8 @@ public class UserService {
                 .refreshToken(refreshToken)
                 .accessTokenExpireTime(1800L)
                 .build();
-    } // func end
+    }
 
-    @Transactional
     public void logout(String accessToken, String id){
         // 1. Access Token의 남은 시간 계산
         Long expiration = jwtProvider.getExpiration(accessToken);
@@ -87,8 +89,18 @@ public class UserService {
                     "Logout",
                     Duration.ofMillis(expiration)
             );
-        } // if end
+        }
         // 3. Refresh Token 삭제
         redisService.deleteValues("RT:" + id);
-    } // func end
-} // class end
+    }
+
+    @Transactional(readOnly = true)
+    public void checkIdOrEmailValidity(UserDto userDto){
+        if (userRepository.existsById(userDto.getId())){
+            throw new RuntimeException("이미 가입된 아이디입니다.");
+        }
+        if (userRepository.existsByEmail(userDto.getEmail())){
+            throw new RuntimeException("이미 가입된 이메일입니다.");
+        }
+    }
+}
