@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import useAuthStore from "../stores/authStore";
+import useAuthStore from "../stores/authStore.js";
 
 export default function PrivateRoute({ children }) {
     // Zustand Store에서 로그인 여부 추출

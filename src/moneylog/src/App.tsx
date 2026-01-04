@@ -1,10 +1,10 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from './components/ui/sonner';
-import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import SignUpPage from './pages/SignUpPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import FinancePage from './pages/FinancePage';
+import HomePage from './Pages/HomePage';
+import LoginPage from './Pages/LoginPage';
+import SignUpPage from './Pages/SignUpPage';
+import ForgotPasswordPage from './Pages/ForgotPasswordPage';
+import FinancePage from './Pages/FinancePage';
 import PrivateRoute from './components/PrivateRoute'
 import './styles/index.css';
 

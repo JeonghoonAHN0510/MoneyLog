@@ -1,5 +1,5 @@
 import axios from 'axios';
-import authStore from '../stores/authStore';
+import authStore from '../stores/authStore.js';
 
 const api = axios.create({
     baseURL: 'http://localhost:8080/api',
