@@ -67,7 +67,7 @@ export default function SignUpPage() {
       formData.append('email', email);
       formData.append('password', password);
       formData.append('phone', phone);
-      formData.append('gender', gender);
+      formData.append('gender', String(gender));
 
       if (profileImage) {
         formData.append('upload_file', profileImage);
@@ -87,7 +87,7 @@ export default function SignUpPage() {
         }, 1000);
       }
 
-    } catch (error) {
+    } catch (error: any) {
       if (error.status == 409) {
         toast.error('중복된 아이디 또는 이메일이 존재합니다');
       } else {

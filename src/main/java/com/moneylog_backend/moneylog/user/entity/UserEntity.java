@@ -33,8 +33,8 @@ public class UserEntity extends BaseTime {
     private int user_id;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")
     private String name;
-    @Column(columnDefinition = "VARCHAR(50) NOT NULL UNIQUE")
-    private String id;
+    @Column(name = "id", columnDefinition = "VARCHAR(50) NOT NULL UNIQUE")
+    private String loginId;
     @Column(columnDefinition = "VARCHAR(255)")
     private String password;
     @Column(columnDefinition = "VARCHAR(100) NOT NULL UNIQUE")
@@ -69,7 +69,7 @@ public class UserEntity extends BaseTime {
                 .user_id(this.user_id)
                 .account_id(this.accountEntity != null ? this.accountEntity.getAccount_id() : 0)
                 .name(this.name)
-                .id(this.id)
+                .id(this.loginId)
                 .password(this.password)
                 .email(this.email)
                 .phone(this.phone)

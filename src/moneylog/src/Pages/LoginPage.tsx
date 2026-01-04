@@ -6,10 +6,13 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Wallet, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
+import api from '../api/axiosConfig';
+import useUserStore from '../stores/authStore';
 
 export default function LoginPage() {
+  const login = useUserStore((state) => state.login);
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -19,28 +22,20 @@ export default function LoginPage() {
     setIsLoading(true);
 
     // 간단한 클라이언트 검증
-    if (!email || !password) {
+    if (!id || !password) {
       toast.error('이메일과 비밀번호를 입력해주세요');
       setIsLoading(false);
       return;
     }
 
-    // 시뮬레이션: localStorage에서 사용자 확인
-    // 실제 구현 시 Supabase auth로 교체
     try {
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const user = users.find((u: any) => u.email === email && u.password === password);
-
-      if (user) {
-        localStorage.setItem('currentUser', JSON.stringify({ 
-          id: user.id,
-          email: user.email,
-          name: user.name 
-        }));
+      const user = { id, password };
+      const response = await api.post('/user/login', user);
+      const data = await response.data;
+      if (data) {
+        login(data.accessToken);
         toast.success('로그인 성공!');
         navigate('/finance');
-      } else {
-        toast.error('이메일 또는 비밀번호가 올바르지 않습니다');
       }
     } catch (error) {
       toast.error('로그인 중 오류가 발생했습니다');
@@ -63,19 +58,19 @@ export default function LoginPage() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl">로그인</CardTitle>
             <CardDescription>
-              이메일과 비밀번호를 입력하여 로그인하세요
+              아이디과 비밀번호를 입력하여 로그인하세요
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">이메일</Label>
+                <Label htmlFor="email">아이디</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="id"
+                  type="text"
+                  placeholder="your_id"
+                  value={id}
+                  onChange={(e) => setId(e.target.value)}
                   required
                 />
               </div>
@@ -106,8 +101,8 @@ export default function LoginPage() {
               </div>
 
               <div className="flex items-center justify-between text-sm">
-                <Link 
-                  to="/forgot-password" 
+                <Link
+                  to="/forgot-password"
                   className="text-blue-600 hover:text-blue-700 hover:underline"
                 >
                   비밀번호를 잊으셨나요?
@@ -121,8 +116,8 @@ export default function LoginPage() {
 
             <div className="mt-6 text-center text-sm">
               <span className="text-gray-600">계정이 없으신가요? </span>
-              <Link 
-                to="/signup" 
+              <Link
+                to="/signup"
                 className="text-blue-600 hover:text-blue-700 hover:underline font-medium"
               >
                 회원가입
@@ -130,9 +125,9 @@ export default function LoginPage() {
             </div>
 
             <div className="mt-6">
-              <Button 
-                variant="outline" 
-                className="w-full" 
+              <Button
+                variant="outline"
+                className="w-full"
                 onClick={() => navigate('/')}
               >
                 홈으로 돌아가기

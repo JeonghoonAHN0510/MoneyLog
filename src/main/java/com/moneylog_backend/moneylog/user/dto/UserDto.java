@@ -43,7 +43,7 @@ public class UserDto {
                 .user_id(this.user_id)
                 .accountEntity(accountEntity)
                 .name(this.name)
-                .id(this.id)
+                .loginId(this.id)
                 .password(this.password)
                 .email(this.email)
                 .phone(this.phone)

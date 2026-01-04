@@ -22,10 +22,27 @@ import {
 } from '../data/mockData';
 import { Plus, Wallet, Calendar, ChartBar, Calculator, Target, List, Settings, ArrowRightLeft, User, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
+import useUserStore from '../stores/authStore';
+import api from '../api/axiosConfig';
+
+interface UserInfo {
+  user_id: number;
+  id: string; // 로그인 아이디
+  name: string;
+  email: string;
+  phone: string;
+  profile_image_url?: string;
+  role: "USER" | "ADMIN";
+  status: "ACTIVE" | "DORMANT" | "WITHDRAWN";
+  created_at: string;
+  last_login_at: string;
+  account_id: number;
+}
 
 export default function FinancePage() {
   const navigate = useNavigate();
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const { isAuthenticated, userInfo, setUserInfo, logout } = useUserStore();
+  const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions);
   const [budgets, setBudgets] = useState<Budget[]>(mockBudgets);
   const [accounts, setAccounts] = useState<Account[]>(mockAccounts);
@@ -39,21 +56,43 @@ export default function FinancePage() {
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState('dashboard');
 
+  useEffect(() => {
+    fetchUserInfo();
+  }, [])
+
+  const fetchUserInfo = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/user/info');
+      setUserInfo(response.data);
+    } catch (error) {
+      toast.error('정보를 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   // 로그인 상태 확인
   useEffect(() => {
-    const user = localStorage.getItem('currentUser');
-    if (!user) {
+    if (!isAuthenticated) {
       toast.error('로그인이 필요합니다');
       navigate('/login');
-    } else {
-      setCurrentUser(JSON.parse(user));
     }
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('currentUser');
-    toast.success('로그아웃 되었습니다');
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      const response = await api.post('/user/logout');
+      if (response.data){
+        logout();
+        toast.success('로그아웃 되었습니다');
+        navigate('/');
+      } else {
+        toast.error('로그아웃 중 오류가 발생했습니다.');
+      }
+    } catch (error) {
+      toast.error('로그아웃 중 오류가 발생했습니다.');
+    }
   };
 
   const handleAddTransaction = (transaction: Omit<Transaction, 'id'>) => {
@@ -118,7 +157,7 @@ export default function FinancePage() {
       id: Date.now().toString(),
     };
     setTransfers([...transfers, newTransfer]);
-    
+
     // Update account balances
     setAccounts(accounts.map((acc) => {
       if (acc.id === transfer.fromAccountId) {
@@ -139,7 +178,15 @@ export default function FinancePage() {
     setSelectedDate(date);
   };
 
-  if (!currentUser) {
+  // [수정된 부분] 로딩 중이거나 userInfo가 없으면 로딩 화면을 보여줍니다.
+  if (loading || !userInfo) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-lg text-gray-500">정보를 불러오는 중입니다...</p>
+      </div>
+    );
+  }
+  if (!isAuthenticated) {
     return null;
   }
 
@@ -160,21 +207,21 @@ export default function FinancePage() {
               <Plus className="size-4 mr-2" />
               거래 추가
             </Button>
-            
+
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2">
                   <User className="size-4" />
-                  <span className="hidden sm:inline">{currentUser.name}</span>
+                  <span className="hidden sm:inline">{userInfo?.name}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{currentUser.name}</p>
+                    <p className="text-sm font-medium leading-none">{userInfo?.name}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      {currentUser.email}
+                      {userInfo?.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>

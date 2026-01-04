@@ -21,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
 
@@ -47,7 +48,7 @@ public class UserService {
         // todo 추후 toEntity로 변경(AccountRepository 생성 후)
         UserEntity userEntity = UserEntity.builder()
                 .name(userDto.getName())
-                .id(userDto.getId())
+                .loginId(userDto.getId())
                 .password(encodedPassword)
                 .email(userDto.getEmail())
                 .phone(userDto.getPhone())
@@ -99,8 +100,19 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public UserDto getUserInfo(String loginId){
+        Optional<UserEntity> userEntityOptional = userRepository.findByLoginId(loginId);
+        if (userEntityOptional.isPresent()){
+            UserEntity userEntity = userEntityOptional.get();
+            userEntity.setPassword(null);
+            return userEntity.toDto();
+        }
+        return null;
+    }
+
+    @Transactional(readOnly = true)
     public void checkIdOrEmailValidity(UserDto userDto){
-        if (userRepository.existsById(userDto.getId())) {
+        if (userRepository.existsByLoginId(userDto.getId())) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT, "이미 가입된 아이디입니다."
             );

@@ -1,5 +1,7 @@
 package com.moneylog_backend.global.auth.security;
 
+import java.util.Optional;
+
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 import com.moneylog_backend.moneylog.user.repository.UserRepository;
 
@@ -17,11 +19,13 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserEntity userEntity = userRepository.findById(username);
-        if (userEntity == null){
-            throw new UsernameNotFoundException("사용자를 찾을 수 없습니다." + username);
-        } else {
+        Optional<UserEntity> userEntityOptional = userRepository.findByLoginId(username);
+
+        if (userEntityOptional.isPresent()) {
+            UserEntity userEntity = userEntityOptional.get();
             return new CustomUserDetails(userEntity);
+        } else {
+            throw new UsernameNotFoundException("사용자를 찾을 수 없습니다." + username);
         } // if end
     } // func end
 } // class end

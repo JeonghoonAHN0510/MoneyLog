@@ -29,6 +29,6 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername(){
-        return userEntity.getId();
+        return userEntity.getLoginId();
     } // func end
 } // class end
