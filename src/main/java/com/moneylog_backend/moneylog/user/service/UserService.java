@@ -45,7 +45,7 @@ public class UserService {
         userDto.setProfile_image_url(fileStore.storeFile(userDto.getUpload_file()));
 
         String encodedPassword = passwordEncoder.encode(userDto.getPassword());
-        // todo 추후 toEntity로 변경(AccountRepository 생성 후)
+        // todo 추후 toEntity로 변경(AccountRepository 생성 후) -> 대표 계좌는 회원가입할 때 무조건 받자 그냥 ㅋㅋ
         UserEntity userEntity = UserEntity.builder()
                 .name(userDto.getName())
                 .loginId(userDto.getId())
