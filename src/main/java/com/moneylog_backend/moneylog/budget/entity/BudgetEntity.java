@@ -2,12 +2,8 @@ package com.moneylog_backend.moneylog.budget.entity;
 
 import com.moneylog_backend.global.common.BaseTime;
 import com.moneylog_backend.moneylog.budget.dto.BudgetDto;
-import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
-import com.moneylog_backend.moneylog.user.entity.UserEntity;
 
 import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDate;
 
@@ -18,46 +14,35 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "budget", uniqueConstraints = {
-        @UniqueConstraint(
-                name = "uk_budget_user_date_category",
-                columnNames = {"user_id", "budget_date", "category_id"}
-        )
-})
+@Table(name = "budget")
 @Data
 @Builder
 @DynamicInsert
 @AllArgsConstructor
 @NoArgsConstructor
 public class BudgetEntity extends BaseTime {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(columnDefinition = "INT UNSIGNED")
-    private int budget_id;
-    @Column(columnDefinition = "INT NOT NULL")
-    private int amount;
-    @Column(columnDefinition = "DATE NOT NULL")
-    private LocalDate budget_date;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(columnDefinition = "INT UNSIGNED")
+	private int budget_id;
+	@Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
+	private int user_id;
+	@Column(name = "category_id", columnDefinition = "INT UNSIGNED NOT NULL")
+	private int category_id;
+	@Column(columnDefinition = "INT NOT NULL")
+	private int amount;
+	@Column(columnDefinition = "DATE NOT NULL")
+	private LocalDate budget_date;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private UserEntity userEntity;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private CategoryEntity categoryEntity;
-
-    public BudgetDto toDto(){
-        return BudgetDto.builder()
-                .budget_id(this.budget_id)
-                .amount(this.amount)
-                .budget_date(this.budget_date)
-                .user_id(this.userEntity != null ? this.userEntity.getUser_id() : 0)
-                .category_id(this.categoryEntity != null ? this.categoryEntity.getCategory_id() : 0)
-                .created_at(this.getCreated_at())
-                .updated_at(this.getUpdated_at())
-                .build();
-    } // func end
+	public BudgetDto toDto() {
+		return BudgetDto.builder()
+			.budget_id(this.budget_id)
+			.amount(this.amount)
+			.budget_date(this.budget_date)
+			.user_id(this.user_id)
+			.category_id(this.category_id)
+			.created_at(this.getCreated_at())
+			.updated_at(this.getUpdated_at())
+			.build();
+	} // func end
 } // class end

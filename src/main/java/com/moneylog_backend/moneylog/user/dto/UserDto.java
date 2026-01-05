@@ -3,7 +3,6 @@ package com.moneylog_backend.moneylog.user.dto;
 import com.moneylog_backend.global.type.ProviderEnum;
 import com.moneylog_backend.global.type.RoleEnum;
 import com.moneylog_backend.global.type.StatusEnum;
-import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 
 import org.springframework.web.multipart.MultipartFile;
@@ -20,40 +19,40 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserDto {
-    private int user_id;
-    private int account_id;
-    private String name;
-    private String id;
-    private String password;
-    private String email;
-    private String phone;
-    private boolean gender;
-    private RoleEnum role;
-    private String profile_image_url;
-    private MultipartFile upload_file;
-    private StatusEnum status;
-    private ProviderEnum provider;
-    private String provider_id;
-    private LocalDateTime last_login_at;
-    private LocalDateTime created_at;
-    private LocalDateTime updated_at;
+	private int user_id;
+	private int account_id;
+	private String name;
+	private String id;
+	private String password;
+	private String email;
+	private String phone;
+	private boolean gender;
+	private RoleEnum role;
+	private String profile_image_url;
+	private MultipartFile upload_file;
+	private StatusEnum status;
+	private ProviderEnum provider;
+	private String provider_id;
+	private LocalDateTime last_login_at;
+	private LocalDateTime created_at;
+	private LocalDateTime updated_at;
 
-    public UserEntity toEntity(AccountEntity accountEntity) {
-        return UserEntity.builder()
-                .user_id(this.user_id)
-                .accountEntity(accountEntity)
-                .name(this.name)
-                .loginId(this.id)
-                .password(this.password)
-                .email(this.email)
-                .phone(this.phone)
-                .gender(this.gender)
-                .role(this.role)
-                .profile_image_url(this.profile_image_url)
-                .status(this.status)
-                .provider(this.provider)
-                .provider_id(this.provider_id)
-                .last_login_at(this.last_login_at)
-                .build();
-    } // func end
+	public UserEntity toEntity() {
+		return UserEntity.builder()
+			.user_id(this.user_id)
+			.account_id(this.account_id)
+			.name(this.name)
+			.loginId(this.id)
+			.password(this.password)
+			.email(this.email)
+			.phone(this.phone)
+			.gender(this.gender)
+			.role(this.role)
+			.profile_image_url(this.profile_image_url)
+			.status(this.status)
+			.provider(this.provider)
+			.provider_id(this.provider_id)
+			.last_login_at(this.last_login_at)
+			.build();
+	} // func end
 } // class end
