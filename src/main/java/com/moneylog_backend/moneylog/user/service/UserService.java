@@ -47,16 +47,7 @@ public class UserService {
 
         String encodedPassword = passwordEncoder.encode(userDto.getPassword());
         // todo 추후 toEntity로 변경(AccountRepository 생성 후) -> 대표 계좌는 회원가입할 때 무조건 받자 그냥 ㅋㅋ
-        UserEntity userEntity = UserEntity.builder()
-                .name(userDto.getName())
-                .loginId(userDto.getId())
-                .password(encodedPassword)
-                .email(userDto.getEmail())
-                .phone(userDto.getPhone())
-                .gender(userDto.isGender())
-                .role(userDto.getRole())
-                .profile_image_url(userDto.getProfile_image_url())
-                .build();
+        UserEntity userEntity = userDto.toEntity();
         return userRepository.save(userEntity).getUser_id();
     }
 

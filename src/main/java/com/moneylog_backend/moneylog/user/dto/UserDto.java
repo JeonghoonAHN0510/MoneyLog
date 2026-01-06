@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserDto {
 	private int user_id;
-	private int account_id;
+	private Integer account_id;
 	private String name;
 	private String id;
 	private String password;

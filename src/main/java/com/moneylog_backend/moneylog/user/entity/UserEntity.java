@@ -29,7 +29,7 @@ public class UserEntity extends BaseTime {
 	@Column(columnDefinition = "INT UNSIGNED")
 	private int user_id;
 	@Column(columnDefinition = "INT UNSIGNED")
-	private int account_id;
+	private Integer account_id;
 	@Column(columnDefinition = "VARCHAR(50) NOT NULL")
 	private String name;
 	@Column(name = "id", columnDefinition = "VARCHAR(50) NOT NULL UNIQUE")
