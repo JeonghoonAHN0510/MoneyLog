@@ -1,6 +1,6 @@
-package com.moneylog_backend.global.common.dto;
+package com.moneylog_backend.moneylog.bank.dto;
 
-import com.moneylog_backend.global.common.entity.BankEntity;
+import com.moneylog_backend.moneylog.bank.entity.BankEntity;
 
 import java.time.LocalDateTime;
 

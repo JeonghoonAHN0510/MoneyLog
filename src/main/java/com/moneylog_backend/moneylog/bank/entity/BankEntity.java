@@ -1,7 +1,7 @@
-package com.moneylog_backend.global.common.entity;
+package com.moneylog_backend.moneylog.bank.entity;
 
 import com.moneylog_backend.global.common.BaseTime;
-import com.moneylog_backend.global.common.dto.BankDto;
+import com.moneylog_backend.moneylog.bank.dto.BankDto;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
