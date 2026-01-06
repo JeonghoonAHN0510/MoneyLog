@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserService {
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final PasswordEncoder passwordEncoder;
@@ -99,7 +100,7 @@ public class UserService {
         redisService.deleteValues("RT:" + id);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public UserDto getUserInfo(String loginId){
         Optional<UserEntity> userEntityOptional = userRepository.findByLoginId(loginId);
         if (userEntityOptional.isPresent()){
@@ -110,7 +111,7 @@ public class UserService {
         return null;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public void checkIdOrEmailValidity(UserDto userDto){
         if (userRepository.existsByLoginId(userDto.getId())) {
             throw new ResponseStatusException(
