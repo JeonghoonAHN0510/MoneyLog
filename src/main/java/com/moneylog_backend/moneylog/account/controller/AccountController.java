@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 public class AccountController {
     private final AccountService accountService;
 
-    @PostMapping("/save")
+    @PostMapping
     public ResponseEntity<?> saveAccount (@RequestBody AccountDto accountDto, Authentication authentication) {
         if (authentication == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -36,4 +36,4 @@ public class AccountController {
             return ResponseEntity.ok(resultValue);
         }
     }
-} // class end
+}

@@ -18,4 +18,4 @@ public class BaseTime {
     private LocalDateTime created_at;
     @LastModifiedDate
     private LocalDateTime updated_at;
-} // class end
+}

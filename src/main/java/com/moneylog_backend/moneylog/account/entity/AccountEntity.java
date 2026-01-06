@@ -43,5 +43,5 @@ public class AccountEntity extends BaseTime {
 			.balance(this.balance)
 			.account_number(this.account_number)
 			.build();
-	} // func end
-} // class end
+	}
+}
