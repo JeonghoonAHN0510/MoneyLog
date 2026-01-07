@@ -15,21 +15,21 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BudgetDto {
-	private int budget_id;
-	private int user_id;
-	private int category_id;
-	private int amount;
-	private LocalDate budget_date;
-	private LocalDateTime created_at;
-	private LocalDateTime updated_at;
+    private int budget_id;
+    private int user_id;
+    private int category_id;
+    private int amount;
+    private LocalDate budget_date;
+    private LocalDateTime created_at;
+    private LocalDateTime updated_at;
 
-	public BudgetEntity budgetEntity() {
-		return BudgetEntity.builder()
-			.budget_id(this.budget_id)
-			.user_id(this.user_id)
-			.category_id(this.category_id)
-			.amount(this.amount)
-			.budget_date(this.budget_date)
-			.build();
-	} // func end
+    public BudgetEntity budgetEntity () {
+        return BudgetEntity.builder()
+                           .budget_id(this.budget_id)
+                           .user_id(this.user_id)
+                           .category_id(this.category_id)
+                           .amount(this.amount)
+                           .budget_date(this.budget_date)
+                           .build();
+    } // func end
 } // class end

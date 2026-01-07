@@ -27,14 +27,14 @@ public class BankEntity extends BaseTime {
     @Column(columnDefinition = "VARCHAR(255)")
     private String logo_image_url;
 
-    public BankDto toDto(){
+    public BankDto toDto () {
         return BankDto.builder()
-                .bank_id(this.bank_id)
-                .name(this.name)
-                .code(this.code)
-                .logo_image_url(this.logo_image_url)
-                .created_at(this.getCreated_at())
-                .updated_at(this.getUpdated_at())
-                .build();
+                      .bank_id(this.bank_id)
+                      .name(this.name)
+                      .code(this.code)
+                      .logo_image_url(this.logo_image_url)
+                      .created_at(this.getCreated_at())
+                      .updated_at(this.getUpdated_at())
+                      .build();
     } // func end
 } // class end

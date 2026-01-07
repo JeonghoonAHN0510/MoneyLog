@@ -21,12 +21,12 @@ public class BankDto {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
-    public BankEntity toEntity(){
+    public BankEntity toEntity () {
         return BankEntity.builder()
-                .bank_id(this.bank_id)
-                .name(this.name)
-                .code(this.code)
-                .logo_image_url(this.logo_image_url)
-                .build();
+                         .bank_id(this.bank_id)
+                         .name(this.name)
+                         .code(this.code)
+                         .logo_image_url(this.logo_image_url)
+                         .build();
     } // func end
 } // class end

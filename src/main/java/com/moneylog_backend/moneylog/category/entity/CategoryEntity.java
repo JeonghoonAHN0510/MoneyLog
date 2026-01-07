@@ -20,26 +20,26 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CategoryEntity extends BaseTime {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(columnDefinition = "INT UNSIGNED")
-	private int category_id;
-	@Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
-	private int user_id;
-	@Column(columnDefinition = "VARCHAR(50) NOT NULL")
-	private String name;
-	@Column(columnDefinition = "ENUM('INCOME', 'EXPENSE') NOT NULL")
-	@Enumerated(EnumType.STRING)
-	private CategoryEnum type;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(columnDefinition = "INT UNSIGNED")
+    private int category_id;
+    @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
+    private int user_id;
+    @Column(columnDefinition = "VARCHAR(50) NOT NULL")
+    private String name;
+    @Column(columnDefinition = "ENUM('INCOME', 'EXPENSE') NOT NULL")
+    @Enumerated(EnumType.STRING)
+    private CategoryEnum type;
 
-	public CategoryDto toDto() {
-		return CategoryDto.builder()
-			.category_id(this.category_id)
-			.user_id(this.user_id)
-			.name(this.name)
-			.type(this.type)
-			.created_at(this.getCreated_at())
-			.updated_at(this.getUpdated_at())
-			.build();
-	} // func end
+    public CategoryDto toDto () {
+        return CategoryDto.builder()
+                          .category_id(this.category_id)
+                          .user_id(this.user_id)
+                          .name(this.name)
+                          .type(this.type)
+                          .created_at(this.getCreated_at())
+                          .updated_at(this.getUpdated_at())
+                          .build();
+    } // func end
 } // class end

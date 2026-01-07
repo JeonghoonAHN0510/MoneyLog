@@ -15,27 +15,27 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FixedDto {
-	private int fixed_id;
-	private int user_id;
-	private int category_id;
-	private String title;
-	private int amount;
-	private int fixed_day;
-	private LocalDate start_date;
-	private LocalDate end_date;
-	private LocalDateTime created_at;
-	private LocalDateTime updated_at;
+    private int fixed_id;
+    private int user_id;
+    private int category_id;
+    private String title;
+    private int amount;
+    private int fixed_day;
+    private LocalDate start_date;
+    private LocalDate end_date;
+    private LocalDateTime created_at;
+    private LocalDateTime updated_at;
 
-	public FixedEntity toEntity() {
-		return FixedEntity.builder()
-			.fixed_id(this.fixed_id)
-			.user_id(this.user_id)
-			.category_id(this.category_id)
-			.title(this.title)
-			.amount(this.amount)
-			.fixed_day(this.fixed_day)
-			.start_date(this.start_date)
-			.end_date(this.end_date)
-			.build();
-	} // func end
+    public FixedEntity toEntity () {
+        return FixedEntity.builder()
+                          .fixed_id(this.fixed_id)
+                          .user_id(this.user_id)
+                          .category_id(this.category_id)
+                          .title(this.title)
+                          .amount(this.amount)
+                          .fixed_day(this.fixed_day)
+                          .start_date(this.start_date)
+                          .end_date(this.end_date)
+                          .build();
+    } // func end
 } // class end

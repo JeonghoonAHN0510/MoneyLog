@@ -15,19 +15,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CategoryDto {
-	private int category_id;
-	private int user_id;
-	private String name;
-	private CategoryEnum type;
-	private LocalDateTime created_at;
-	private LocalDateTime updated_at;
+    private int category_id;
+    private int user_id;
+    private String name;
+    private CategoryEnum type;
+    private LocalDateTime created_at;
+    private LocalDateTime updated_at;
 
-	public CategoryEntity toEntity() {
-		return CategoryEntity.builder()
-			.category_id(this.category_id)
-			.user_id(this.user_id)
-			.name(this.name)
-			.type(this.type)
-			.build();
-	} // func end
+    public CategoryEntity toEntity () {
+        return CategoryEntity.builder()
+                             .category_id(this.category_id)
+                             .user_id(this.user_id)
+                             .name(this.name)
+                             .type(this.type)
+                             .build();
+    } // func end
 } // class end

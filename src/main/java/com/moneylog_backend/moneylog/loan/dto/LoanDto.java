@@ -15,21 +15,21 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LoanDto {
-	private int loan_id;
-	private int bank_id;
-	private int amount;
-	private double interest_rate;
-	private LocalDate terminated_at;
-	private LocalDateTime created_at;
-	private LocalDateTime updated_at;
+    private int loan_id;
+    private int bank_id;
+    private int amount;
+    private double interest_rate;
+    private LocalDate terminated_at;
+    private LocalDateTime created_at;
+    private LocalDateTime updated_at;
 
-	public LoanEntity toEntity() {
-		return LoanEntity.builder()
-			.loan_id(this.loan_id)
-			.bank_id(this.bank_id)
-			.amount(this.amount)
-			.interest_rate(this.interest_rate)
-			.terminated_at(this.terminated_at)
-			.build();
-	} // func end
+    public LoanEntity toEntity () {
+        return LoanEntity.builder()
+                         .loan_id(this.loan_id)
+                         .bank_id(this.bank_id)
+                         .amount(this.amount)
+                         .interest_rate(this.interest_rate)
+                         .terminated_at(this.terminated_at)
+                         .build();
+    } // func end
 } // class end
