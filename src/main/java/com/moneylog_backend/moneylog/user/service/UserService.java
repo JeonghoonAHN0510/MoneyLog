@@ -104,6 +104,15 @@ public class UserService {
         return null;
     }
 
+    public int getUserPK (String loginId) {
+        Optional<UserEntity> userEntityOptional = userRepository.findByLoginId(loginId);
+        if (userEntityOptional.isPresent()) {
+            UserEntity userEntity = userEntityOptional.get();
+            return userEntity.getUser_id();
+        }
+        return -1;
+    }
+
     public void checkIdOrEmailValidity (UserDto userDto) {
         if (userRepository.existsByLoginId(userDto.getId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 가입된 아이디입니다.");

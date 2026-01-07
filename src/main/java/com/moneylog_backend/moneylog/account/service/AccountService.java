@@ -1,5 +1,7 @@
 package com.moneylog_backend.moneylog.account.service;
 
+import java.util.Optional;
+
 import com.moneylog_backend.moneylog.account.dto.AccountDto;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.mapper.AccountMapper;
@@ -42,5 +44,17 @@ public class AccountService {
         accountRepository.save(accountEntity);
 
         return accountEntity.getAccount_id();
+    }
+
+    public AccountDto getAccount (int account_id, String login_id) {
+        Optional<AccountEntity> accountEntityOptional = accountRepository.findById(account_id);
+        int user_id = userService.getUserPK(login_id);
+        if (accountEntityOptional.isPresent()) {
+            AccountEntity accountEntity = accountEntityOptional.get();
+            if (user_id == accountEntity.getUser_id()) {
+                return accountEntity.toDto();
+            }
+        }
+        return null;
     }
 }

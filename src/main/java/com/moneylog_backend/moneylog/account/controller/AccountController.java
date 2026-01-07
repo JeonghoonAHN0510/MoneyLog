@@ -6,9 +6,11 @@ import com.moneylog_backend.moneylog.account.service.AccountService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
@@ -35,5 +37,15 @@ public class AccountController {
         } else {
             return ResponseEntity.ok(resultValue);
         }
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getAccount (@RequestParam int account_id, Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String login_id = authentication.getName();
+
+        return ResponseEntity.ok(accountService.getAccount(account_id, login_id));
     }
 }
