@@ -34,6 +34,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final RedisService redisService;
     private final JwtProvider jwtProvider;
+    private final FormatUtils formatUtils;
     private final UserMapper userMapper;
     private final FileStore fileStore;
 
@@ -41,7 +42,7 @@ public class UserService {
     public int signup (UserDto userDto) throws IOException {
         checkIdOrEmailValidity(userDto);
 
-        userDto.setPhone(FormatUtils.toPhone(userDto.getPhone()));
+        userDto.setPhone(formatUtils.toPhone(userDto.getPhone()));
 
         userDto.setProfile_image_url(fileStore.storeFile(userDto.getUpload_file()));
 
