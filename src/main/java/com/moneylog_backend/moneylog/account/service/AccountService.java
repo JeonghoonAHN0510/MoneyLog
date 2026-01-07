@@ -48,10 +48,10 @@ public class AccountService {
 
     public AccountDto getAccount (int account_id, String login_id) {
         int user_id = userService.getUserPK(login_id);
-        if (user_id == getAccountUserPK(account_id)) {
-            Optional<AccountEntity> accountEntityOptional = accountRepository.findById(account_id);
-            if (accountEntityOptional.isPresent()) {
-                AccountEntity accountEntity = accountEntityOptional.get();
+        Optional<AccountEntity> accountEntityOptional = accountRepository.findById(account_id);
+        if (accountEntityOptional.isPresent()) {
+            AccountEntity accountEntity = accountEntityOptional.get();
+            if (user_id == accountEntity.getUser_id()) {
                 return accountEntity.toDto();
             }
         }
@@ -63,11 +63,11 @@ public class AccountService {
     public AccountDto updateAccount (AccountDto accountDto, String login_id) {
         int account_id = accountDto.getAccount_id();
         int user_id = userService.getUserPK(login_id);
-        if (user_id == getAccountUserPK(account_id)) {
-            Optional<AccountEntity> accountEntityOptional = accountRepository.findById(account_id);
-            if (accountEntityOptional.isPresent()) {
-                AccountEntity accountEntity = accountEntityOptional.get();
 
+        Optional<AccountEntity> accountEntityOptional = accountRepository.findById(account_id);
+        if (accountEntityOptional.isPresent()) {
+            AccountEntity accountEntity = accountEntityOptional.get();
+            if (user_id == accountEntity.getUser_id()) {
                 String InputNickname = accountDto.getNickname();
                 String InputAccountNumber = accountDto.getAccount_number();
                 if (InputNickname != null) {
@@ -79,15 +79,7 @@ public class AccountService {
                 return accountEntity.toDto();
             }
         }
-        return null;
-    }
 
-    private int getAccountUserPK (int account_id) {
-        Optional<AccountEntity> accountEntityOptional = accountRepository.findById(account_id);
-        if (accountEntityOptional.isPresent()) {
-            AccountEntity accountEntity = accountEntityOptional.get();
-            return accountEntity.getUser_id();
-        }
-        return -1;
+        return null;
     }
 }
