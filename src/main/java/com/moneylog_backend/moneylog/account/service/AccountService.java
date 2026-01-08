@@ -86,4 +86,19 @@ public class AccountService {
 
         return null;
     }
+
+    @Transactional
+    public boolean deleteAccount (int account_id, String login_id) {
+        int user_id = userService.getUserPK(login_id);
+
+        Optional<AccountEntity> accountEntityOptional = accountRepository.findById(account_id);
+        if (accountEntityOptional.isPresent()) {
+            AccountEntity accountEntity = accountEntityOptional.get();
+            if (user_id == accountEntity.getUser_id()) {
+                accountRepository.deleteById(account_id);
+                return true;
+            }
+        }
+        return false;
+    }
 }

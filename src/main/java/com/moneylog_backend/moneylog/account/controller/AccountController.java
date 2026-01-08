@@ -7,6 +7,7 @@ import com.moneylog_backend.moneylog.account.service.AccountService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -70,5 +71,13 @@ public class AccountController {
         return ResponseEntity.ok(accountService.updateAccount(accountDto, login_id));
     }
 
-    // todo 삭제 메소드 필요
+    @DeleteMapping
+    public ResponseEntity<?> deleteAccount (@RequestParam int account_id, Authentication authentication) {
+        String login_id = authUtils.getLoginId(authentication);
+        if (login_id == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        return ResponseEntity.ok(accountService.deleteAccount(account_id, login_id));
+    }
 }
