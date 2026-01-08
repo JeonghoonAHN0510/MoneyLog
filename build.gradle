@@ -56,6 +56,8 @@ dependencies {
     // implementation 'org.redisson:redisson-spring-boot-starter:3.52.0'
     // [14] Quartz
     implementation 'org.springframework.boot:spring-boot-starter-quartz'
+    // [15] Actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     // 개발 편의성 (서버 자동 재시작 등)
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     // 테스트 코드 작성용
