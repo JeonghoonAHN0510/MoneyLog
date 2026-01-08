@@ -70,6 +70,5 @@ public class AccountController {
         return ResponseEntity.ok(accountService.updateAccount(accountDto, login_id));
     }
 
-    // todo 금액만 수정하는 수정 메소드 필요
     // todo 삭제 메소드 필요
 }

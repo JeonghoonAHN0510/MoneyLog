@@ -70,11 +70,15 @@ public class AccountService {
             if (user_id == accountEntity.getUser_id()) {
                 String InputNickname = accountDto.getNickname();
                 String InputAccountNumber = accountDto.getAccount_number();
+                int InputBalance = accountDto.getBalance();
                 if (InputNickname != null) {
                     accountEntity.setNickname(InputNickname);
                 }
                 if (InputAccountNumber != null) {
                     accountEntity.setAccount_number(InputAccountNumber);
+                }
+                if (InputBalance > 0) {
+                    accountEntity.setBalance(InputBalance);
                 }
                 return accountEntity.toDto();
             }
