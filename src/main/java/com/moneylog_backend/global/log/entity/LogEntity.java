@@ -28,6 +28,7 @@ public class LogEntity extends BaseTime {
     private String trace_id;
     private String service_name;
     private String method_name;
+    @Column(columnDefinition = "TEXT")
     private String request_params;
 
     @Column(columnDefinition = "TEXT")
