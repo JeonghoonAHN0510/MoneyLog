@@ -62,3 +62,6 @@ VALUES ('1', '30001', '30002', '50000', '2025-12-22', '', now()),
 INSERT INTO loan(bank_id, amount, interest_rate, terminated_at, created_at)
 VALUES ('70001', '50000', '5.4', '2026-12-22', now()),
        ('70002', '30000', '7.3', '2026-12-30', now());
+
+INSERT INTO job_metadata (job_name, job_group, cron_expression, description, is_active)
+VALUES ('logCleanupJob', 'system', '0 0 3 * * ?', '오래된 로그 자동 삭제', true);
