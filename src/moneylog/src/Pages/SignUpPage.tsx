@@ -8,13 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Wallet, Eye, EyeOff, User, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../api/axiosConfig';
-
-interface Bank {
-  bankId: string,
-  name: string,
-  logoImageUrl: string,
-  code: string
-}
+import useResourceStore from '../stores/resourceStore';
 
 export default function SignUpPage() {
   const navigate = useNavigate();
@@ -29,24 +23,34 @@ export default function SignUpPage() {
   const [gender, setGender] = useState<boolean>(true);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
-  const [banks, setBanks] = useState<Bank[]>([]);
   const [bankId, setBankId] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
+
+  const { banks, setBanks } = useResourceStore();
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fechBanks = async () => {
+
+      if (banks.length > 0) {
+        if (!bankId) setBankId(banks[0].bankId);
+        return; 
+      }
+
       try {
         const response = await api.get("/bank");
+
         setBanks(response.data);
+
       } catch (error) {
         console.error("은행 목록 로드 실패:", error);
+        toast.error("은행 목록을 불러오지 못했습니다.");
       }
     }
     fechBanks();
-  }, []);
+  }, [banks, setBanks]);
 
   // 이미지 변경 핸들러
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -258,8 +262,7 @@ export default function SignUpPage() {
               </div>
 
               {/* 주거래 은행 & 계좌번호 */}
-              <div className="grid grid-cols-5 gap-4"> {/* 전체를 4등분 */}
-                {/* 주거래 은행: 1칸 차지 (col-span-1) */}
+              <div className="grid grid-cols-5 gap-4">
                 <div className="col-span-2 space-y-2">
                   <Label htmlFor="bank">주거래 은행</Label>
                   <Select value={bankId} onValueChange={setBankId}>
