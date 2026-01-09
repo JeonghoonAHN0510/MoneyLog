@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 interface Bank {
-  bankId: string,
+  bank_id: string,
   name: string,
   code: string
 }
@@ -18,10 +18,8 @@ interface ResourceState {
 const useResourceStore = create<ResourceState>()(
   persist(
     (set) => ({
-      // 초기 상태
       banks: [],
 
-      // 액션 구현
       setBanks: (bankList) => set({ banks: bankList }),
     }),
     {
