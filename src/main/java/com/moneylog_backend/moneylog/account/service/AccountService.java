@@ -40,6 +40,9 @@ public class AccountService {
             String nickname = bankService.getBankName(bank_id);
             accountDto.setNickname(nickname);
         }
+
+        // todo 계좌번호 정규식 추가
+
         AccountEntity accountEntity = accountDto.toEntity();
         accountRepository.save(accountEntity);
 

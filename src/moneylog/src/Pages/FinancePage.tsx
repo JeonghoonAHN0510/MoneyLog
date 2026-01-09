@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Button } from '../components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
@@ -25,20 +25,6 @@ import { toast } from 'sonner';
 import useUserStore from '../stores/authStore';
 import api from '../api/axiosConfig';
 
-interface UserInfo {
-  user_id: number;
-  id: string; // 로그인 아이디
-  name: string;
-  email: string;
-  phone: string;
-  profile_image_url?: string;
-  role: "USER" | "ADMIN";
-  status: "ACTIVE" | "DORMANT" | "WITHDRAWN";
-  created_at: string;
-  last_login_at: string;
-  account_id: number;
-}
-
 export default function FinancePage() {
   const navigate = useNavigate();
   const { isAuthenticated, userInfo, setUserInfo, logout } = useUserStore();
@@ -55,6 +41,12 @@ export default function FinancePage() {
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentTab = searchParams.get('tab') || 'dashboard';
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
+  };
 
   useEffect(() => {
     fetchUserInfo();
@@ -83,7 +75,7 @@ export default function FinancePage() {
   const handleLogout = async () => {
     try {
       const response = await api.post('/user/logout');
-      if (response.data){
+      if (response.data) {
         logout();
         toast.success('로그아웃 되었습니다');
         navigate('/');
@@ -236,7 +228,9 @@ export default function FinancePage() {
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="dashboard" className="space-y-6">
+        <Tabs value={currentTab}
+          onValueChange={handleTabChange}
+          className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <ChartBar className="size-4" />
