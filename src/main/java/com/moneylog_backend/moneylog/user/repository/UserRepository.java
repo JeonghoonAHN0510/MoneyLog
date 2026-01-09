@@ -4,9 +4,9 @@ import java.util.Optional;
 
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserRepository extends CrudRepository<UserEntity, Integer> {
+public interface UserRepository extends JpaRepository<UserEntity, Integer> {
 
 	Optional<UserEntity> findByLoginId(String loginId);
 

@@ -37,6 +37,10 @@ public class UserDto {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
+    private int bank_id;
+    private String bank_name;
+    private String account_number;
+
     public UserEntity toEntity () {
         return UserEntity.builder()
                          .user_id(this.user_id)

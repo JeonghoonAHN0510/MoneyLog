@@ -1,12 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Wallet, Eye, EyeOff, User, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../api/axiosConfig';
+
+interface Bank {
+  bankId: string,
+  name: string,
+  logoImageUrl: string,
+  code: string
+}
 
 export default function SignUpPage() {
   const navigate = useNavigate();
@@ -21,9 +29,24 @@ export default function SignUpPage() {
   const [gender, setGender] = useState<boolean>(true);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [banks, setBanks] = useState<Bank[]>([]);
+  const [bankId, setBankId] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fechBanks = async () => {
+      try {
+        const response = await api.get("/bank");
+        setBanks(response.data);
+      } catch (error) {
+        console.error("은행 목록 로드 실패:", error);
+      }
+    }
+    fechBanks();
+  }, []);
 
   // 이미지 변경 핸들러
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,13 +58,18 @@ export default function SignUpPage() {
     }
   };
 
-  // @ts-ignore
+  const getBankName = (targetId: string) => {
+    const targetBank = banks.find(bank => bank.bankId === targetId);
+
+    return targetBank?.name || "";
+  }
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     // 클라이언트 검증
-    if (!name || !id || !email || !password || !confirmPassword || !phone) {
+    if (!name || !id || !email || !password || !confirmPassword || !phone || !bankId || !accountNumber) {
       toast.error('모든 필드를 입력해주세요');
       setIsLoading(false);
       return;
@@ -68,6 +96,12 @@ export default function SignUpPage() {
       formData.append('password', password);
       formData.append('phone', phone);
       formData.append('gender', String(gender));
+      formData.append('bank_id', bankId);
+      formData.append('account_number', String(accountNumber));
+
+      const bankName = getBankName(bankId);
+      console.log(bankName);
+      formData.append('bank_name', String(bankName));
 
       if (profileImage) {
         formData.append('upload_file', profileImage);
@@ -221,6 +255,39 @@ export default function SignUpPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                 />
+              </div>
+
+              {/* 주거래 은행 & 계좌번호 */}
+              <div className="grid grid-cols-5 gap-4"> {/* 전체를 4등분 */}
+                {/* 주거래 은행: 1칸 차지 (col-span-1) */}
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="bank">주거래 은행</Label>
+                  <Select value={bankId} onValueChange={setBankId}>
+                    <SelectTrigger id="bank" className="w-full">
+                      <SelectValue placeholder="은행 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {banks.map((bank) => (
+                        <SelectItem key={bank.code} value={bank.bankId}>
+                          {bank.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* 계좌번호: 3칸 차지 (col-span-3) */}
+                <div className="col-span-3 space-y-2">
+                  <Label htmlFor="name">계좌번호</Label>
+                  <Input
+                    id="accountNumber"
+                    type="text"
+                    placeholder="-를 제외하고 입력해주세요."
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    required
+                  />
+                </div>
               </div>
 
               {/* 전화번호 & 성별 */}
