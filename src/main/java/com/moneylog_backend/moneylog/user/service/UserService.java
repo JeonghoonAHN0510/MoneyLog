@@ -4,6 +4,10 @@ import com.moneylog_backend.global.auth.jwt.JwtProvider;
 import com.moneylog_backend.global.file.FileStore;
 import com.moneylog_backend.global.util.FormatUtils;
 import com.moneylog_backend.global.util.RedisService;
+import com.moneylog_backend.moneylog.account.dto.AccountDto;
+import com.moneylog_backend.moneylog.account.entity.AccountEntity;
+import com.moneylog_backend.moneylog.account.repository.AccountRepository;
+import com.moneylog_backend.moneylog.account.service.AccountService;
 import com.moneylog_backend.moneylog.user.dto.TokenResponse;
 import com.moneylog_backend.moneylog.user.dto.UserDto;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
@@ -30,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class UserService {
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
+    private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final RedisService redisService;
@@ -48,9 +53,18 @@ public class UserService {
 
         String encodedPassword = passwordEncoder.encode(userDto.getPassword());
         userDto.setPassword(encodedPassword);
-        // todo 추후 toEntity로 변경(AccountRepository 생성 후) -> 대표 계좌는 회원가입할 때 무조건 받자 그냥 ㅋㅋ
         UserEntity userEntity = userDto.toEntity();
-        return userRepository.save(userEntity).getUser_id();
+        userRepository.save(userEntity);
+
+        AccountEntity accountEntity = AccountEntity.builder()
+                                                   .user_id(userDto.getUser_id())
+                                                   .bank_id(userDto.getBank_id())
+                                                   .nickname(userDto.getBank_name())
+                                                   .account_number(userDto.getAccount_number())
+                                                   .build();
+        accountRepository.save(accountEntity);
+
+        return userEntity.getUser_id();
     }
 
     public TokenResponse login (UserDto userDto) {
