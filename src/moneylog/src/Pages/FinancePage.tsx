@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Button } from '../components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
@@ -13,172 +13,222 @@ import { BudgetManager } from '../components/BudgetManager';
 import { AccountManager } from '../components/AccountManager';
 import { CategoryManager } from '../components/CategoryManager';
 import { Transaction, Budget, Category, Account, Transfer } from '../types/finance';
-import {
-  mockTransactions,
-  mockBudgets,
-  mockAccounts,
-  defaultExpenseCategories,
-  defaultIncomeCategories,
-} from '../data/mockData';
-import { Plus, Wallet, Calendar, ChartBar, Calculator, Target, List, Settings, ArrowRightLeft, User, LogOut } from 'lucide-react';
+import { Plus, Wallet, Calendar, ChartBar, Calculator, Target, List, User, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import useUserStore from '../stores/authStore';
 import api from '../api/axiosConfig';
 
-interface UserInfo {
-  user_id: number;
-  id: string; // 로그인 아이디
-  name: string;
-  email: string;
-  phone: string;
-  profile_image_url?: string;
-  role: "USER" | "ADMIN";
-  status: "ACTIVE" | "DORMANT" | "WITHDRAWN";
-  created_at: string;
-  last_login_at: string;
-  account_id: number;
-}
-
 export default function FinancePage() {
   const navigate = useNavigate();
   const { isAuthenticated, userInfo, setUserInfo, logout } = useUserStore();
+  
+  // [변경] 초기값을 빈 배열로 설정 (Mock Data 제거)
   const [loading, setLoading] = useState(true);
-  const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions);
-  const [budgets, setBudgets] = useState<Budget[]>(mockBudgets);
-  const [accounts, setAccounts] = useState<Account[]>(mockAccounts);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [transfers, setTransfers] = useState<Transfer[]>([]);
-  const [categories, setCategories] = useState<Category[]>([
-    ...defaultExpenseCategories,
-    ...defaultIncomeCategories,
-  ]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
-  const [activeTab, setActiveTab] = useState('dashboard');
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentTab = searchParams.get('tab') || 'dashboard';
+
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
+  };
+
+  // 1. 사용자 정보 및 초기 데이터 로드
   useEffect(() => {
-    fetchUserInfo();
-  }, [])
+    if (isAuthenticated) {
+      fetchUserInfo();
+      fetchAllData(); // 모든 금융 데이터 가져오기
+    }
+  }, [isAuthenticated]);
 
   const fetchUserInfo = async () => {
     try {
-      setLoading(true);
       const response = await api.get('/user/info');
       setUserInfo(response.data);
     } catch (error) {
-      toast.error('정보를 불러오는데 실패했습니다.');
+      toast.error('사용자 정보를 불러오는데 실패했습니다.');
+    }
+  };
+
+  // [추가] 모든 데이터를 서버에서 가져오는 함수
+  const fetchAllData = useCallback(async () => {
+    try {
+      setLoading(true);
+      // Promise.all로 병렬 요청 (성능 최적화)
+      const [accRes, transRes, budgetRes, catRes] = await Promise.allSettled([
+        api.get('/account/list'),      // 계좌 목록
+        api.get('/transaction/list'),  // 거래 내역
+        api.get('/budget/list'),       // 예산 목록
+        api.get('/category/list')      // 카테고리 목록
+      ]);
+
+      // 성공한 요청만 State에 반영
+      if (accRes.status === 'fulfilled') setAccounts(accRes.value.data);
+      if (transRes.status === 'fulfilled') setTransactions(transRes.value.data);
+      if (budgetRes.status === 'fulfilled') setBudgets(budgetRes.value.data);
+      if (catRes.status === 'fulfilled') setCategories(catRes.value.data);
+      
+      // Transfer는 별도 엔드포인트가 있다면 추가 필요
+      // const transferRes = await api.get('/transfer/list');
+      // setTransfers(transferRes.data);
+
+    } catch (error) {
+      console.error("데이터 로드 실패:", error);
+      toast.error('데이터를 불러오는 중 일부 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  // 로그인 상태 확인
+  // 로그인 체크
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !loading) {
       toast.error('로그인이 필요합니다');
       navigate('/login');
     }
-  }, [navigate]);
+  }, [isAuthenticated, loading, navigate]);
 
   const handleLogout = async () => {
     try {
-      const response = await api.post('/user/logout');
-      if (response.data){
-        logout();
-        toast.success('로그아웃 되었습니다');
-        navigate('/');
-      } else {
-        toast.error('로그아웃 중 오류가 발생했습니다.');
-      }
+      await api.post('/user/logout');
+      logout();
+      toast.success('로그아웃 되었습니다');
+      navigate('/');
     } catch (error) {
-      toast.error('로그아웃 중 오류가 발생했습니다.');
+      // 토큰 만료 등으로 API 실패해도 클라이언트 로그아웃은 진행
+      logout();
+      navigate('/');
     }
   };
 
-  const handleAddTransaction = (transaction: Omit<Transaction, 'id'>) => {
-    const newTransaction: Transaction = {
-      ...transaction,
-      id: Date.now().toString(),
-    };
-    setTransactions([...transactions, newTransaction]);
+  // --- [Transaction CRUD] ---
+  const handleAddTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+    try {
+      await api.post('/transaction', transaction);
+      toast.success("거래 내역이 추가되었습니다.");
+      fetchAllData(); // 목록 새로고침
+    } catch (e) {
+      toast.error("거래 내역 추가 실패");
+    }
   };
 
-  const handleDeleteTransaction = (id: string) => {
-    setTransactions(transactions.filter((t) => t.id !== id));
+  const handleDeleteTransaction = async (id: string) => {
+    try {
+      await api.delete(`/transaction/${id}`);
+      toast.success("삭제되었습니다.");
+      fetchAllData();
+    } catch (e) {
+      toast.error("삭제 실패");
+    }
   };
 
-  const handleAddBudget = (budget: Omit<Budget, 'id'>) => {
-    const newBudget: Budget = {
-      ...budget,
-      id: Date.now().toString(),
-    };
-    setBudgets([...budgets, newBudget]);
+  // --- [Budget CRUD] ---
+  const handleAddBudget = async (budget: Omit<Budget, 'id'>) => {
+    try {
+      await api.post('/budget', budget);
+      toast.success("예산이 설정되었습니다.");
+      fetchAllData();
+    } catch (e) {
+      toast.error("예산 설정 실패");
+    }
   };
 
-  const handleDeleteBudget = (id: string) => {
-    setBudgets(budgets.filter((b) => b.id !== id));
+  const handleDeleteBudget = async (id: string) => {
+    try {
+      await api.delete(`/budget/${id}`);
+      toast.success("예산이 삭제되었습니다.");
+      fetchAllData();
+    } catch (e) {
+      toast.error("삭제 실패");
+    }
   };
 
-  const handleAddAccount = (account: Omit<Account, 'id'>) => {
-    const newAccount: Account = {
-      ...account,
-      id: Date.now().toString(),
-    };
-    setAccounts([...accounts, newAccount]);
+  // --- [Account CRUD] ---
+  const handleAddAccount = async (newAccountData: any) => {
+    try {
+      await api.post('/account', newAccountData);
+      toast.success("계좌가 추가되었습니다.");
+      fetchAllData(); // 계좌 추가 후 목록 갱신
+    } catch (e) {
+      toast.error("추가 실패");
+    }
   };
 
-  const handleUpdateAccount = (id: string, updates: Partial<Account>) => {
-    setAccounts(accounts.map((a) => (a.id === id ? { ...a, ...updates } : a)));
+  const handleUpdateAccount = async (id: number, updateData: any) => {
+    try {
+      await api.put(`/account/${id}`, updateData);
+      toast.success("계좌가 수정되었습니다.");
+      fetchAllData();
+    } catch (e) {
+      toast.error("수정 실패");
+    }
   };
 
-  const handleDeleteAccount = (id: string) => {
-    setAccounts(accounts.filter((a) => a.id !== id));
+  const handleDeleteAccount = async (id: number) => {
+    try {
+      await api.delete(`/account/${id}`);
+      toast.success("계좌가 삭제되었습니다.");
+      fetchAllData();
+    } catch (e) {
+      toast.error("삭제 실패");
+    }
   };
 
-  const handleAddCategory = (category: Omit<Category, 'id'>) => {
-    const newCategory: Category = {
-      ...category,
-      id: Date.now().toString(),
-    };
-    setCategories([...categories, newCategory]);
+  // --- [Category CRUD] ---
+  const handleAddCategory = async (category: Omit<Category, 'id'>) => {
+    try {
+      await api.post('/category', category);
+      toast.success("카테고리가 추가되었습니다.");
+      fetchAllData();
+    } catch (e) {
+      toast.error("추가 실패");
+    }
   };
 
-  const handleUpdateCategory = (id: string, updates: Partial<Category>) => {
-    setCategories(categories.map((c) => (c.id === id ? { ...c, ...updates } : c)));
+  const handleUpdateCategory = async (id: string, updates: Partial<Category>) => {
+    try {
+      await api.put(`/category/${id}`, updates);
+      toast.success("수정되었습니다.");
+      fetchAllData();
+    } catch (e) {
+      toast.error("수정 실패");
+    }
   };
 
-  const handleDeleteCategory = (id: string) => {
-    setCategories(categories.filter((c) => c.id !== id));
+  const handleDeleteCategory = async (id: string) => {
+    try {
+      await api.delete(`/category/${id}`);
+      toast.success("삭제되었습니다.");
+      fetchAllData();
+    } catch (e) {
+      toast.error("삭제 실패");
+    }
   };
 
-  const handleAddTransfer = (transfer: Omit<Transfer, 'id'>) => {
-    const newTransfer: Transfer = {
-      ...transfer,
-      id: Date.now().toString(),
-    };
-    setTransfers([...transfers, newTransfer]);
-
-    // Update account balances
-    setAccounts(accounts.map((acc) => {
-      if (acc.id === transfer.fromAccountId) {
-        return { ...acc, balance: acc.balance - transfer.amount };
-      }
-      if (acc.id === transfer.toAccountId) {
-        return { ...acc, balance: acc.balance + transfer.amount };
-      }
-      return acc;
-    }));
-  };
-
-  const handleDeleteTransfer = (id: string) => {
-    setTransfers(transfers.filter((t) => t.id !== id));
+  // --- [Transfer Logic] ---
+  const handleAddTransfer = async (transfer: Omit<Transfer, 'id'>) => {
+    try {
+      await api.post('/account/transfer', transfer); // 이체 API 호출
+      toast.success("이체가 완료되었습니다.");
+      fetchAllData(); // 계좌 잔액 변동 반영을 위해 전체 갱신
+    } catch (e) {
+      toast.error("이체 실패");
+    }
   };
 
   const handleDateClick = (date: string) => {
     setSelectedDate(date);
   };
 
-  // [수정된 부분] 로딩 중이거나 userInfo가 없으면 로딩 화면을 보여줍니다.
+  // 로딩 화면
   if (loading || !userInfo) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -186,9 +236,8 @@ export default function FinancePage() {
       </div>
     );
   }
-  if (!isAuthenticated) {
-    return null;
-  }
+
+  if (!isAuthenticated) return null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -207,7 +256,7 @@ export default function FinancePage() {
               <Plus className="size-4 mr-2" />
               거래 추가
             </Button>
-
+            
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -236,7 +285,7 @@ export default function FinancePage() {
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="dashboard" className="space-y-6">
+        <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <ChartBar className="size-4" />

@@ -8,13 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Wallet, Eye, EyeOff, User, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../api/axiosConfig';
-
-interface Bank {
-  bankId: string,
-  name: string,
-  logoImageUrl: string,
-  code: string
-}
+import useResourceStore from '../stores/resourceStore';
 
 export default function SignUpPage() {
   const navigate = useNavigate();
@@ -29,26 +23,34 @@ export default function SignUpPage() {
   const [gender, setGender] = useState<boolean>(true);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
-  const [banks, setBanks] = useState<Bank[]>([]);
-  const [bankId, setBankId] = useState('');
+  const [bank_id, setbank_id] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
+
+  const { banks, setBanks } = useResourceStore();
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const fechBanks = async () => {
+    // @ts-ignore
+    const fetchBanks = async () => {
+      if (banks.length > 0) {
+        if (!bank_id) setbank_id(String(banks[0].bank_id));
+        return;
+      }
+
       try {
         const response = await api.get("/bank");
         setBanks(response.data);
+
       } catch (error) {
         console.error("은행 목록 로드 실패:", error);
+        toast.error("은행 목록을 불러오지 못했습니다.");
       }
-    }
-    fechBanks();
-  }, []);
+    };
+    fetchBanks();
+  }, [banks, setBanks]);
 
-  // 이미지 변경 핸들러
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -58,18 +60,24 @@ export default function SignUpPage() {
     }
   };
 
+  const handleBankChange = (value: string) => {
+    setbank_id(value);
+  };
+
   const getBankName = (targetId: string) => {
-    const targetBank = banks.find(bank => bank.bankId === targetId);
+    // @ts-ignore
+    const targetBank = banks.find(bank => String(bank.bank_id) === String(targetId));
 
     return targetBank?.name || "";
   }
 
+  // @ts-ignore
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     // 클라이언트 검증
-    if (!name || !id || !email || !password || !confirmPassword || !phone || !bankId || !accountNumber) {
+    if (!name || !id || !email || !password || !confirmPassword || !phone || !bank_id || !accountNumber) {
       toast.error('모든 필드를 입력해주세요');
       setIsLoading(false);
       return;
@@ -96,11 +104,10 @@ export default function SignUpPage() {
       formData.append('password', password);
       formData.append('phone', phone);
       formData.append('gender', String(gender));
-      formData.append('bank_id', bankId);
+      formData.append('bank_id', bank_id);
       formData.append('account_number', String(accountNumber));
 
-      const bankName = getBankName(bankId);
-      console.log(bankName);
+      const bankName = getBankName(bank_id);
       formData.append('bank_name', String(bankName));
 
       if (profileImage) {
@@ -258,17 +265,17 @@ export default function SignUpPage() {
               </div>
 
               {/* 주거래 은행 & 계좌번호 */}
-              <div className="grid grid-cols-5 gap-4"> {/* 전체를 4등분 */}
-                {/* 주거래 은행: 1칸 차지 (col-span-1) */}
+              <div className="grid grid-cols-5 gap-4">
                 <div className="col-span-2 space-y-2">
                   <Label htmlFor="bank">주거래 은행</Label>
-                  <Select value={bankId} onValueChange={setBankId}>
+                  <Select value={bank_id} onValueChange={handleBankChange}>
                     <SelectTrigger id="bank" className="w-full">
                       <SelectValue placeholder="은행 선택" />
                     </SelectTrigger>
                     <SelectContent>
                       {banks.map((bank) => (
-                        <SelectItem key={bank.code} value={bank.bankId}>
+                        // [수정] bank_id -> bank_id, 값은 반드시 String으로 변환
+                        <SelectItem key={bank.code} value={String(bank.bank_id)}>
                           {bank.name}
                         </SelectItem>
                       ))}
