@@ -40,7 +40,6 @@ export default function FinancePage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
-  const [activeTab, setActiveTab] = useState('dashboard');
 
   const [searchParams, setSearchParams] = useSearchParams();
   const currentTab = searchParams.get('tab') || 'dashboard';
@@ -111,20 +110,32 @@ export default function FinancePage() {
     setBudgets(budgets.filter((b) => b.id !== id));
   };
 
-  const handleAddAccount = (account: Omit<Account, 'id'>) => {
-    const newAccount: Account = {
-      ...account,
-      id: Date.now().toString(),
-    };
-    setAccounts([...accounts, newAccount]);
+  // todo handleAddAccount, handleUpdateAccount, handleDeleteAccount 수정 필요
+  const handleAddAccount = async (newAccountData: any) => {
+    try {
+      await api.post('/account', newAccountData); // API 호출
+      toast.success("계좌가 추가되었습니다.");
+    } catch (e) {
+      toast.error("추가 실패");
+    }
   };
 
-  const handleUpdateAccount = (id: string, updates: Partial<Account>) => {
-    setAccounts(accounts.map((a) => (a.id === id ? { ...a, ...updates } : a)));
+  const handleUpdateAccount = async (id: number, updateData: any) => {
+    try {
+      await api.put(`/account/${id}`, updateData);
+      toast.success("계좌가 수정되었습니다.");
+    } catch (e) {
+      toast.error("수정 실패");
+    }
   };
 
-  const handleDeleteAccount = (id: string) => {
-    setAccounts(accounts.filter((a) => a.id !== id));
+  const handleDeleteAccount = async (id: number) => {
+    try {
+      await api.delete(`/account/${id}`);
+      toast.success("계좌가 삭제되었습니다.");
+    } catch (e) {
+      toast.error("삭제 실패");
+    }
   };
 
   const handleAddCategory = (category: Omit<Category, 'id'>) => {
@@ -150,16 +161,6 @@ export default function FinancePage() {
     };
     setTransfers([...transfers, newTransfer]);
 
-    // Update account balances
-    setAccounts(accounts.map((acc) => {
-      if (acc.id === transfer.fromAccountId) {
-        return { ...acc, balance: acc.balance - transfer.amount };
-      }
-      if (acc.id === transfer.toAccountId) {
-        return { ...acc, balance: acc.balance + transfer.amount };
-      }
-      return acc;
-    }));
   };
 
   const handleDeleteTransfer = (id: string) => {

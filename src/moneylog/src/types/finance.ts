@@ -30,11 +30,12 @@ export interface Category {
 }
 
 export interface Account {
-  id: string;
-  name: string;
-  type: 'bank' | 'card' | 'cash' | 'other';
-  balance: number;
-  color: string;
+  account_id: number,
+  user_id: number,
+  bank_id: number,
+  nickname: string,
+  balance: number,
+  account_number: string;
 }
 
 export interface Transfer {
