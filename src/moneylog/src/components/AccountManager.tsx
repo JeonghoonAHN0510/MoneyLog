@@ -5,28 +5,31 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Account } from '../types/finance';
-import { Wallet, Trash, Plus, Building, CreditCard, Banknote, Pencil, ArrowRightLeft } from 'lucide-react';
+// [변경] CreditCard 제거, Coins 추가 (포인트 아이콘용)
+import { Wallet, Trash, Plus, Building, Banknote, Pencil, ArrowRightLeft, Coins } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 
 interface AccountManagerProps {
   accounts: Account[];
-  onAdd: (account: Omit<Account, 'id'>) => void;
-  onUpdate: (id: string, account: Partial<Account>) => void;
-  onDelete: (id: string) => void;
+  onAdd: (account: any) => void;
+  onUpdate: (id: number, account: any) => void;
+  onDelete: (id: number) => void;
   onTransferClick?: () => void;
 }
 
+// [변경] 'card' 제거, 'point' 추가
 const accountTypeLabels = {
   bank: '은행',
-  card: '카드',
   cash: '현금',
+  point: '포인트',
   other: '기타',
 };
 
+// [변경] 'card' 제거, 'point'에 Coins 아이콘 연결
 const accountTypeIcons = {
   bank: Building,
-  card: CreditCard,
   cash: Banknote,
+  point: Coins,
   other: Wallet,
 };
 
@@ -38,9 +41,10 @@ export function AccountManager({ accounts, onAdd, onUpdate, onDelete, onTransfer
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   
   const [name, setName] = useState('');
-  const [type, setType] = useState<'bank' | 'card' | 'cash' | 'other'>('bank');
+  // [변경] 타입 정의에서 'card' 제거, 'point' 추가
+  const [type, setType] = useState<'bank' | 'cash' | 'point' | 'other'>('bank');
   const [balance, setBalance] = useState('');
-  const [color, setColor] = useState(defaultColors[0]);
+  const [color, setColor] = useState<String>(defaultColors[0]);
 
   const resetForm = () => {
     setName('');
@@ -65,7 +69,7 @@ export function AccountManager({ accounts, onAdd, onUpdate, onDelete, onTransfer
 
   const handleEdit = (account: Account) => {
     setEditingAccount(account);
-    setName(account.name);
+    setName(account.nickname);
     setType(account.type);
     setBalance(account.balance.toString());
     setColor(account.color);
@@ -75,7 +79,7 @@ export function AccountManager({ accounts, onAdd, onUpdate, onDelete, onTransfer
   const handleUpdate = () => {
     if (!editingAccount || !name) return;
 
-    onUpdate(editingAccount.id, {
+    onUpdate(editingAccount.account_id, {
       name,
       type,
       balance: parseFloat(balance) || 0,
@@ -99,7 +103,7 @@ export function AccountManager({ accounts, onAdd, onUpdate, onDelete, onTransfer
         <Label htmlFor="account-name">계좌명</Label>
         <Input
           id="account-name"
-          placeholder="신한은행 입출금"
+          placeholder="예: 네이버페이 포인트, 신한은행"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
@@ -113,8 +117,8 @@ export function AccountManager({ accounts, onAdd, onUpdate, onDelete, onTransfer
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="bank">은행</SelectItem>
-            <SelectItem value="card">카드</SelectItem>
             <SelectItem value="cash">현금</SelectItem>
+            <SelectItem value="point">포인트</SelectItem>
             <SelectItem value="other">기타</SelectItem>
           </SelectContent>
         </Select>
@@ -186,10 +190,11 @@ export function AccountManager({ accounts, onAdd, onUpdate, onDelete, onTransfer
               <div className="text-center text-muted-foreground py-8">등록된 계좌가 없습니다</div>
             ) : (
               accounts.map((account) => {
-                const Icon = accountTypeIcons[account.type];
+                // @ts-ignore: 기존 데이터에 card 타입이 남아있을 경우 대비 (기본값 Wallet)
+                const Icon = accountTypeIcons[account.type] || Wallet;
                 return (
                   <div
-                    key={account.id}
+                    key={account.account_id}
                     className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
                   >
                     <div className="flex items-center gap-3">
@@ -200,9 +205,10 @@ export function AccountManager({ accounts, onAdd, onUpdate, onDelete, onTransfer
                         <Icon className="size-4" style={{ color: account.color }} />
                       </div>
                       <div>
-                        <div>{account.name}</div>
+                        <div>{account.nickname}</div>
                         <div className="text-xs text-muted-foreground">
-                          {accountTypeLabels[account.type]}
+                          {/* @ts-ignore: 기존 데이터 호환성 */}
+                          {accountTypeLabels[account.type] || '기타'}
                         </div>
                       </div>
                     </div>
@@ -218,7 +224,7 @@ export function AccountManager({ accounts, onAdd, onUpdate, onDelete, onTransfer
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => onDelete(account.id)}
+                        onClick={() => onDelete(account.account_id)}
                       >
                         <Trash className="size-4" />
                       </Button>
@@ -255,7 +261,7 @@ export function AccountManager({ accounts, onAdd, onUpdate, onDelete, onTransfer
         <DialogContent>
           <DialogHeader>
             <DialogTitle>계좌 수정</DialogTitle>
-            <DialogDescription>계좌 정보를 수정하세요.</DialogDescription>
+            <DialogDescription>계좌 정보를 수정합니다.</DialogDescription>
           </DialogHeader>
           <AccountForm />
           <div className="flex gap-2 pt-4">
