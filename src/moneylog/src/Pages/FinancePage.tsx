@@ -285,7 +285,7 @@ export default function FinancePage() {
         </div>
 
         {/* Main Content */}
-        <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
+        <Tabs defaultValue="dashboard" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <ChartBar className="size-4" />

@@ -5,104 +5,85 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Account } from '../types/finance';
-import { Wallet, Trash, Plus, Pencil, ArrowRightLeft } from 'lucide-react';
+// [변경] CreditCard 제거, Coins 추가 (포인트 아이콘용)
+import { Wallet, Trash, Plus, Building, Banknote, Pencil, ArrowRightLeft, Coins } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
-import useResourceStore from '../stores/resourceStore'; // 은행 목록 스토어
-import { toast } from 'sonner';
 
-// 부모 컴포넌트(FinancePage)에서 내려받을 Props 정의
 interface AccountManagerProps {
   accounts: Account[];
-  onAdd: (account: any) => void; 
+  onAdd: (account: any) => void;
   onUpdate: (id: number, account: any) => void;
   onDelete: (id: number) => void;
   onTransferClick?: () => void;
 }
 
+// [변경] 'card' 제거, 'point' 추가
+const accountTypeLabels = {
+  bank: '은행',
+  cash: '현금',
+  point: '포인트',
+  other: '기타',
+};
+
+// [변경] 'card' 제거, 'point'에 Coins 아이콘 연결
+const accountTypeIcons = {
+  bank: Building,
+  cash: Banknote,
+  point: Coins,
+  other: Wallet,
+};
+
 const defaultColors = ['#3b82f6', '#ef4444', '#22c55e', '#eab308', '#8b5cf6', '#ec4899', '#06b6d4'];
 
 export function AccountManager({ accounts, onAdd, onUpdate, onDelete, onTransferClick }: AccountManagerProps) {
-  const { banks } = useResourceStore(); // 은행 목록 가져오기
-
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
-
-  // 폼 입력 상태 관리
-  const [name, setName] = useState(''); // 계좌 별칭 (nickname)
-  // account_type 상태 제거됨
-  const [balance, setBalance] = useState('');
-  const [color, setColor] = useState(defaultColors[0]);
   
-  // 은행 관련 필드
-  const [bankId, setBankId] = useState<string>('');
-  const [accountNumber, setAccountNumber] = useState('');
+  const [name, setName] = useState('');
+  // [변경] 타입 정의에서 'card' 제거, 'point' 추가
+  const [type, setType] = useState<'bank' | 'cash' | 'point' | 'other'>('bank');
+  const [balance, setBalance] = useState('');
+  const [color, setColor] = useState<String>(defaultColors[0]);
 
-  // 폼 초기화
   const resetForm = () => {
     setName('');
-    // type 초기화 제거
+    setType('bank');
     setBalance('');
     setColor(defaultColors[0]);
-    setBankId('');
-    setAccountNumber('');
   };
 
-  // [CREATE] 계좌 추가 핸들러
   const handleAdd = () => {
-    // 유효성 검사
-    if (!name) {
-      toast.error('계좌 별칭을 입력해주세요.');
-      return;
-    }
-    
-    // 부모 컴포넌트의 추가 함수 호출 (API 연결용)
+    if (!name) return;
+
     onAdd({
-      nickname: name,
-      // account_type 제거됨
+      name,
+      type,
       balance: parseFloat(balance) || 0,
-      bank_id: bankId ? Number(bankId) : null, // 값이 있을 때만 전송
-      account_number: accountNumber || null,     // 값이 있을 때만 전송
-      // color: color, 
+      color,
     });
 
     resetForm();
     setIsAddDialogOpen(false);
   };
 
-  // [UPDATE] 수정 모드 진입
   const handleEdit = (account: Account) => {
     setEditingAccount(account);
-    
-    // 기존 데이터 폼에 채우기
-    setName(account.nickname); 
-    // type 설정 제거
-    setBalance(String(account.balance));
-    // setColor(account.color); 
-
-    if (account.bank_id) setBankId(String(account.bank_id));
-    else setBankId(''); // 없을 경우 초기화
-
-    if (account.account_number) setAccountNumber(account.account_number);
-    else setAccountNumber(''); // 없을 경우 초기화
-    
+    setName(account.nickname);
+    setType(account.type);
+    setBalance(account.balance.toString());
+    setColor(account.color);
     setIsEditDialogOpen(true);
   };
 
-  // [UPDATE] 계좌 수정 핸들러
   const handleUpdate = () => {
-    if (!editingAccount) return;
-
-    if (!name) {
-        toast.error('계좌 별칭을 입력해주세요.');
-        return;
-    }
+    if (!editingAccount || !name) return;
 
     onUpdate(editingAccount.account_id, {
-      nickname: name,
+      name,
+      type,
       balance: parseFloat(balance) || 0,
-      bank_id: bankId ? Number(bankId) : null,
-      account_number: accountNumber || null,
+      color,
     });
 
     resetForm();
@@ -110,59 +91,37 @@ export function AccountManager({ accounts, onAdd, onUpdate, onDelete, onTransfer
     setIsEditDialogOpen(false);
   };
 
-  // [DELETE] 계좌 삭제 핸들러
-  const handleDelete = (id: number) => {
-    if (confirm('정말로 이 계좌를 삭제하시겠습니까? \n삭제된 데이터는 복구할 수 없습니다.')) {
-        onDelete(id);
-    }
-  }
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ko-KR').format(amount);
   };
 
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
 
-  // 공통 폼 컴포넌트
   const AccountForm = () => (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="account-name">계좌 별칭</Label>
+        <Label htmlFor="account-name">계좌명</Label>
         <Input
           id="account-name"
-          placeholder="예: 월급통장, 비상금"
+          placeholder="예: 네이버페이 포인트, 신한은행"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
       </div>
 
-      {/* 유형 선택(Select) 제거됨 */}
-
-      {/* 은행 및 계좌번호는 항상 노출 (선택 사항으로 간주) */}
-      <div className="grid grid-cols-2 gap-4">
-             <div className="space-y-2">
-                <Label>은행 (선택)</Label>
-                <Select value={bankId} onValueChange={setBankId}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="은행 선택" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {banks.map((bank) => (
-                            <SelectItem key={bank.bank_id} value={String(bank.bank_id)}>
-                                {bank.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-             </div>
-             <div className="space-y-2">
-                <Label>계좌번호 (선택)</Label>
-                <Input 
-                    placeholder="- 제외 입력"
-                    value={accountNumber}
-                    onChange={(e) => setAccountNumber(e.target.value)}
-                />
-             </div>
+      <div className="space-y-2">
+        <Label htmlFor="account-type">유형</Label>
+        <Select value={type} onValueChange={(val) => setType(val as typeof type)}>
+          <SelectTrigger id="account-type">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="bank">은행</SelectItem>
+            <SelectItem value="cash">현금</SelectItem>
+            <SelectItem value="point">포인트</SelectItem>
+            <SelectItem value="other">기타</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-2">
@@ -176,9 +135,8 @@ export function AccountManager({ accounts, onAdd, onUpdate, onDelete, onTransfer
         />
       </div>
 
-      {/* 색상 선택 */}
       <div className="space-y-2">
-        <Label>색상 (앱 표시용)</Label>
+        <Label>색상</Label>
         <div className="flex gap-2">
           {defaultColors.map((c) => (
             <button
@@ -223,7 +181,7 @@ export function AccountManager({ accounts, onAdd, onUpdate, onDelete, onTransfer
           {/* Total Balance */}
           <div className="p-4 bg-primary/10 rounded-lg">
             <div className="text-sm text-muted-foreground mb-1">총 자산</div>
-            <div className="text-primary text-xl font-bold">{formatCurrency(totalBalance)}원</div>
+            <div className="text-primary">{formatCurrency(totalBalance)}원</div>
           </div>
 
           {/* Account List */}
@@ -232,9 +190,8 @@ export function AccountManager({ accounts, onAdd, onUpdate, onDelete, onTransfer
               <div className="text-center text-muted-foreground py-8">등록된 계좌가 없습니다</div>
             ) : (
               accounts.map((account) => {
-                // 아이콘은 기본 Wallet 아이콘으로 통일
-                const displayName = account.nickname; 
-                
+                // @ts-ignore: 기존 데이터에 card 타입이 남아있을 경우 대비 (기본값 Wallet)
+                const Icon = accountTypeIcons[account.type] || Wallet;
                 return (
                   <div
                     key={account.account_id}
@@ -243,38 +200,33 @@ export function AccountManager({ accounts, onAdd, onUpdate, onDelete, onTransfer
                     <div className="flex items-center gap-3">
                       <div
                         className="p-2 rounded-full"
-                        style={{ backgroundColor: `${color}20` }} 
+                        style={{ backgroundColor: `${account.color}20` }}
                       >
-                        <Wallet className="size-4" />
+                        <Icon className="size-4" style={{ color: account.color }} />
                       </div>
                       <div>
-                        <div className="font-medium">{displayName}</div>
-                        <div className="text-xs text-muted-foreground flex gap-2">
-                          {/* account_type 라벨 제거 */}
-                          {account.nickname ? (
-                            <span>{account.nickname}</span>
-                          ) : (
-                            <span>기본 계좌</span>
-                          )}
-                          {account.account_number && <span>| {account.account_number}</span>}
+                        <div>{account.nickname}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {/* @ts-ignore: 기존 데이터 호환성 */}
+                          {accountTypeLabels[account.type] || '기타'}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="font-semibold">{formatCurrency(account.balance)}원</span>
+                      <span>{formatCurrency(account.balance)}원</span>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEdit(account)}
                       >
-                        <Pencil className="size-4 text-gray-500" />
+                        <Pencil className="size-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDelete(account.account_id)}
+                        onClick={() => onDelete(account.account_id)}
                       >
-                        <Trash className="size-4 text-red-500" />
+                        <Trash className="size-4" />
                       </Button>
                     </div>
                   </div>
@@ -290,7 +242,7 @@ export function AccountManager({ accounts, onAdd, onUpdate, onDelete, onTransfer
         <DialogContent>
           <DialogHeader>
             <DialogTitle>계좌 추가</DialogTitle>
-            <DialogDescription>새로운 계좌를 등록합니다.</DialogDescription>
+            <DialogDescription>새로운 계좌를 추가하세요.</DialogDescription>
           </DialogHeader>
           <AccountForm />
           <div className="flex gap-2 pt-4">

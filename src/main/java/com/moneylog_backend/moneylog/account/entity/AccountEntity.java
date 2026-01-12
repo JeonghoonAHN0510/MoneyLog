@@ -1,6 +1,8 @@
 package com.moneylog_backend.moneylog.account.entity;
 
 import com.moneylog_backend.global.common.BaseTime;
+import com.moneylog_backend.global.type.AccountColorEnum;
+import com.moneylog_backend.global.type.AccountTypeEnum;
 import com.moneylog_backend.moneylog.account.dto.AccountDto;
 
 import org.hibernate.annotations.DynamicInsert;
@@ -33,6 +35,12 @@ public class AccountEntity extends BaseTime {
     private int balance;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")
     private String account_number;
+    @Column(columnDefinition = "ENUM('BLUE', 'RED', 'GREEN', 'YELLOW', 'PURPLE', 'PINK', 'CYAN') NOT NULL")
+    @Enumerated(EnumType.STRING)
+    private AccountColorEnum color;
+    @Column(columnDefinition = "ENUM('BANK', 'CASH', 'POINT', 'OTHER') NOT NULL")
+    @Enumerated(EnumType.STRING)
+    private AccountTypeEnum type;
 
     public AccountDto toDto () {
         return AccountDto.builder()
@@ -42,6 +50,8 @@ public class AccountEntity extends BaseTime {
                          .nickname(this.nickname)
                          .balance(this.balance)
                          .account_number(this.account_number)
+                         .color(this.color)
+                         .type(this.type)
                          .created_at(this.getCreated_at())
                          .updated_at(this.getUpdated_at())
                          .build();

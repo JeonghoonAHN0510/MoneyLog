@@ -33,9 +33,11 @@ export interface Account {
   account_id: number,
   user_id: number,
   bank_id: number,
+  type: 'bank' | 'cash' | 'point' | 'other',
   nickname: string,
   balance: number,
-  account_number: string;
+  account_number: string,
+  color: '#3b82f6' | '#ef4444' | '#22c55e' | '#eab308' | '#8b5cf6' | '#ec4899' | '#06b6d4';
 }
 
 export interface Transfer {
