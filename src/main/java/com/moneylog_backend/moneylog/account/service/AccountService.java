@@ -2,6 +2,7 @@ package com.moneylog_backend.moneylog.account.service;
 
 import java.util.Optional;
 
+import com.moneylog_backend.global.util.BankAccountNumberFormatter;
 import com.moneylog_backend.moneylog.account.dto.AccountDto;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.mapper.AccountMapper;
@@ -25,11 +26,8 @@ public class AccountService {
 
     @Transactional
     public int saveAccount (AccountDto accountDto, String login_id) {
-        int user_id = accountDto.getUser_id();
-        String user_login_id = userService.getUserId(user_id);
-        if (!user_login_id.equals(login_id)) {
-            return -1;
-        }
+        int user_pk = userService.getUserPK(login_id);
+        accountDto.setUser_id(user_pk);
 
         int bank_id = accountDto.getBank_id();
         if (!bankService.isBankValid(bank_id)) {
@@ -41,7 +39,7 @@ public class AccountService {
             accountDto.setNickname(nickname);
         }
 
-        // todo 계좌번호 정규식 추가
+        accountDto.setAccount_number(getRegexAccountNumber(bank_id, accountDto.getAccount_number()));
 
         AccountEntity accountEntity = accountDto.toEntity();
         accountRepository.save(accountEntity);
@@ -50,11 +48,11 @@ public class AccountService {
     }
 
     public AccountDto getAccount (int account_id, String login_id) {
-        int user_id = userService.getUserPK(login_id);
+        int user_pk = userService.getUserPK(login_id);
         Optional<AccountEntity> accountEntityOptional = accountRepository.findById(account_id);
         if (accountEntityOptional.isPresent()) {
             AccountEntity accountEntity = accountEntityOptional.get();
-            if (user_id == accountEntity.getUser_id()) {
+            if (user_pk == accountEntity.getUser_id()) {
                 return accountEntity.toDto();
             }
         }
@@ -65,12 +63,12 @@ public class AccountService {
     @Transactional
     public AccountDto updateAccount (AccountDto accountDto, String login_id) {
         int account_id = accountDto.getAccount_id();
-        int user_id = userService.getUserPK(login_id);
+        int user_pk = userService.getUserPK(login_id);
 
         Optional<AccountEntity> accountEntityOptional = accountRepository.findById(account_id);
         if (accountEntityOptional.isPresent()) {
             AccountEntity accountEntity = accountEntityOptional.get();
-            if (user_id == accountEntity.getUser_id()) {
+            if (user_pk == accountEntity.getUser_id()) {
                 String InputNickname = accountDto.getNickname();
                 String InputAccountNumber = accountDto.getAccount_number();
                 int InputBalance = accountDto.getBalance();
@@ -92,16 +90,50 @@ public class AccountService {
 
     @Transactional
     public boolean deleteAccount (int account_id, String login_id) {
-        int user_id = userService.getUserPK(login_id);
+        int user_pk = userService.getUserPK(login_id);
 
         Optional<AccountEntity> accountEntityOptional = accountRepository.findById(account_id);
         if (accountEntityOptional.isPresent()) {
             AccountEntity accountEntity = accountEntityOptional.get();
-            if (user_id == accountEntity.getUser_id()) {
+            if (user_pk == accountEntity.getUser_id()) {
                 accountRepository.deleteById(account_id);
                 return true;
             }
         }
         return false;
+    }
+
+    @Transactional
+    public boolean transferAccountBalance (AccountDto accountDto, String login_id) {
+        int user_pk = userService.getUserPK(login_id);
+        int transferBalance = accountDto.getBalance();
+        if (transferBalance < 0) {
+            return false;
+        }
+
+        Optional<AccountEntity> toAccountEntityOptional = accountRepository.findById(accountDto.getTo_account_id());
+        Optional<AccountEntity> fromAccountEntityOptional = accountRepository.findById(accountDto.getFrom_account_id());
+        if (toAccountEntityOptional.isPresent() && fromAccountEntityOptional.isPresent()) {
+            AccountEntity fromAccountEntity = fromAccountEntityOptional.get();
+            AccountEntity toAccountEntity = toAccountEntityOptional.get();
+
+            int from_balance = fromAccountEntity.getBalance();
+            int to_balance = toAccountEntity.getBalance();
+            if (user_pk == toAccountEntity.getUser_id() && user_pk == fromAccountEntity.getUser_id()) {
+                if (from_balance >= transferBalance) {
+                    fromAccountEntity.setBalance(from_balance - transferBalance);
+                    toAccountEntity.setBalance(to_balance + transferBalance);
+
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public String getRegexAccountNumber (int bank_id, String account_number) {
+        String bankName = bankService.getBankName(bank_id);
+
+        return BankAccountNumberFormatter.format(bankName, account_number);
     }
 }

@@ -27,6 +27,9 @@ public class AccountDto {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
+    private int from_account_id;
+    private int to_account_id;
+
     public AccountEntity toEntity () {
         return AccountEntity.builder()
                             .account_id(this.account_id)
