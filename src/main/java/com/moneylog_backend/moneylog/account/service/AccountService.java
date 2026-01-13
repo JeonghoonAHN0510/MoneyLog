@@ -48,11 +48,11 @@ public class AccountService {
     }
 
     public AccountDto getAccount (int account_id, String login_id) {
-        int user_id = userService.getUserPK(login_id);
+        int user_pk = userService.getUserPK(login_id);
         Optional<AccountEntity> accountEntityOptional = accountRepository.findById(account_id);
         if (accountEntityOptional.isPresent()) {
             AccountEntity accountEntity = accountEntityOptional.get();
-            if (user_id == accountEntity.getUser_id()) {
+            if (user_pk == accountEntity.getUser_id()) {
                 return accountEntity.toDto();
             }
         }
@@ -63,12 +63,12 @@ public class AccountService {
     @Transactional
     public AccountDto updateAccount (AccountDto accountDto, String login_id) {
         int account_id = accountDto.getAccount_id();
-        int user_id = userService.getUserPK(login_id);
+        int user_pk = userService.getUserPK(login_id);
 
         Optional<AccountEntity> accountEntityOptional = accountRepository.findById(account_id);
         if (accountEntityOptional.isPresent()) {
             AccountEntity accountEntity = accountEntityOptional.get();
-            if (user_id == accountEntity.getUser_id()) {
+            if (user_pk == accountEntity.getUser_id()) {
                 String InputNickname = accountDto.getNickname();
                 String InputAccountNumber = accountDto.getAccount_number();
                 int InputBalance = accountDto.getBalance();
@@ -90,12 +90,12 @@ public class AccountService {
 
     @Transactional
     public boolean deleteAccount (int account_id, String login_id) {
-        int user_id = userService.getUserPK(login_id);
+        int user_pk = userService.getUserPK(login_id);
 
         Optional<AccountEntity> accountEntityOptional = accountRepository.findById(account_id);
         if (accountEntityOptional.isPresent()) {
             AccountEntity accountEntity = accountEntityOptional.get();
-            if (user_id == accountEntity.getUser_id()) {
+            if (user_pk == accountEntity.getUser_id()) {
                 accountRepository.deleteById(account_id);
                 return true;
             }

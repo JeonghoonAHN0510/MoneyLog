@@ -1,5 +1,7 @@
 package com.moneylog_backend.moneylog.category.service;
 
+import java.util.Optional;
+
 import com.moneylog_backend.moneylog.category.dto.CategoryDto;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
@@ -31,4 +33,18 @@ public class CategoryService {
 
         return categoryEntity.getCategory_id();
     }
-} // class end
+
+    public boolean deleteCategory (int category_id, String login_id) {
+        int user_pk = userService.getUserPK(login_id);
+
+        Optional<CategoryEntity> categoryEntityOptional = categoryRepository.findById(category_id);
+        if (categoryEntityOptional.isPresent()) {
+            CategoryEntity categoryEntity = categoryEntityOptional.get();
+            if (user_pk == categoryEntity.getUser_id()) {
+                categoryRepository.deleteById(category_id);
+                return true;
+            }
+        }
+        return false;
+    }
+}
