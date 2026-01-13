@@ -103,6 +103,34 @@ public class AccountService {
         return false;
     }
 
+    @Transactional
+    public boolean transferAccountBalance (AccountDto accountDto, String login_id) {
+        int user_pk = userService.getUserPK(login_id);
+        int transferBalance = accountDto.getBalance();
+        if (transferBalance < 0) {
+            return false;
+        }
+
+        Optional<AccountEntity> toAccountEntityOptional = accountRepository.findById(accountDto.getTo_account_id());
+        Optional<AccountEntity> fromAccountEntityOptional = accountRepository.findById(accountDto.getFrom_account_id());
+        if (toAccountEntityOptional.isPresent() && fromAccountEntityOptional.isPresent()) {
+            AccountEntity fromAccountEntity = fromAccountEntityOptional.get();
+            AccountEntity toAccountEntity = toAccountEntityOptional.get();
+
+            int from_balance = fromAccountEntity.getBalance();
+            int to_balance = toAccountEntity.getBalance();
+            if (user_pk == toAccountEntity.getUser_id() && user_pk == fromAccountEntity.getUser_id()) {
+                if (from_balance >= transferBalance) {
+                    fromAccountEntity.setBalance(from_balance - transferBalance);
+                    toAccountEntity.setBalance(to_balance + transferBalance);
+
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public String getRegexAccountNumber (int bank_id, String account_number) {
         String bankName = bankService.getBankName(bank_id);
 

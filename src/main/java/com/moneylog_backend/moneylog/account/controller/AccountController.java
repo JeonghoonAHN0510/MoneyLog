@@ -81,5 +81,13 @@ public class AccountController {
         return ResponseEntity.ok(accountService.deleteAccount(account_id, login_id));
     }
 
-    // todo 계좌이체 기능 구현 필요
+    @PutMapping("/transfer")
+    public ResponseEntity<?> transferAccountBalance (@RequestBody AccountDto accountDto, Authentication authentication) {
+        String login_id = authUtils.getLoginId(authentication);
+        if (login_id == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        return ResponseEntity.ok(accountService.transferAccountBalance(accountDto, login_id));
+    }
 }

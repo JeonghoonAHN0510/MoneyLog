@@ -9,16 +9,19 @@ import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
 import com.moneylog_backend.moneylog.user.service.UserService;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
     private final UserService userService;
 
+    @Transactional
     public int saveCategory (CategoryDto categoryDto, String login_id) {
         int user_pk = userService.getUserPK(login_id);
         categoryDto.setUser_id(user_pk);
@@ -34,6 +37,7 @@ public class CategoryService {
         return categoryEntity.getCategory_id();
     }
 
+    @Transactional
     public boolean deleteCategory (int category_id, String login_id) {
         int user_pk = userService.getUserPK(login_id);
 
