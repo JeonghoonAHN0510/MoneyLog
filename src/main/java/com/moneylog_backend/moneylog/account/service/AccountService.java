@@ -2,6 +2,7 @@ package com.moneylog_backend.moneylog.account.service;
 
 import java.util.Optional;
 
+import com.moneylog_backend.global.util.BankAccountNumberFormatter;
 import com.moneylog_backend.moneylog.account.dto.AccountDto;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.mapper.AccountMapper;
@@ -41,7 +42,7 @@ public class AccountService {
             accountDto.setNickname(nickname);
         }
 
-        // todo 계좌번호 정규식 추가
+        accountDto.setAccount_number(getRegexAccountNumber(bank_id, accountDto.getAccount_number()));
 
         AccountEntity accountEntity = accountDto.toEntity();
         accountRepository.save(accountEntity);
@@ -103,5 +104,11 @@ public class AccountService {
             }
         }
         return false;
+    }
+
+    public String getRegexAccountNumber (int bank_id, String account_number) {
+        String bankName = bankService.getBankName(bank_id);
+
+        return BankAccountNumberFormatter.format(bankName, account_number);
     }
 }
