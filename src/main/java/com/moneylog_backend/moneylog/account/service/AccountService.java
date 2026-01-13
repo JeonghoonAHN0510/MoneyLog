@@ -26,11 +26,8 @@ public class AccountService {
 
     @Transactional
     public int saveAccount (AccountDto accountDto, String login_id) {
-        int user_id = accountDto.getUser_id();
-        String user_login_id = userService.getUserId(user_id);
-        if (!user_login_id.equals(login_id)) {
-            return -1;
-        }
+        int user_pk = userService.getUserPK(login_id);
+        accountDto.setUser_id(user_pk);
 
         int bank_id = accountDto.getBank_id();
         if (!bankService.isBankValid(bank_id)) {
