@@ -2,12 +2,14 @@ package com.moneylog_backend.moneylog.user.service;
 
 import com.moneylog_backend.global.auth.jwt.JwtProvider;
 import com.moneylog_backend.global.file.FileStore;
+import com.moneylog_backend.global.util.BankAccountNumberFormatter;
 import com.moneylog_backend.global.util.FormatUtils;
 import com.moneylog_backend.global.util.RedisService;
 import com.moneylog_backend.moneylog.account.dto.AccountDto;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.account.service.AccountService;
+import com.moneylog_backend.moneylog.bank.service.BankService;
 import com.moneylog_backend.moneylog.user.dto.TokenResponse;
 import com.moneylog_backend.moneylog.user.dto.UserDto;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
@@ -38,6 +40,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final RedisService redisService;
+    private final BankService bankService;
     private final JwtProvider jwtProvider;
     private final FormatUtils formatUtils;
     private final UserMapper userMapper;
@@ -56,11 +59,15 @@ public class UserService {
         UserEntity userEntity = userDto.toEntity();
         userRepository.save(userEntity);
 
+        int bank_id = userDto.getBank_id();
+        String bankName = bankService.getBankName(bank_id);
+        String regexAccountNumber = BankAccountNumberFormatter.format(bankName, userDto.getAccount_number());
+
         AccountEntity accountEntity = AccountEntity.builder()
                                                    .user_id(userDto.getUser_id())
-                                                   .bank_id(userDto.getBank_id())
+                                                   .bank_id(bank_id)
                                                    .nickname(userDto.getBank_name())
-                                                   .account_number(userDto.getAccount_number())
+                                                   .account_number(regexAccountNumber)
                                                    .build();
         accountRepository.save(accountEntity);
 
