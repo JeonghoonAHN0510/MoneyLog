@@ -3,6 +3,7 @@ package com.moneylog_backend.moneylog.category.service;
 import java.util.List;
 import java.util.Optional;
 
+import com.moneylog_backend.global.type.CategoryEnum;
 import com.moneylog_backend.moneylog.category.dto.CategoryDto;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
@@ -38,12 +39,35 @@ public class CategoryService {
         return categoryEntity.getCategory_id();
     }
 
-    public List<CategoryDto> getCategoryByUserId(String login_id) {
+    public List<CategoryDto> getCategoryByUserId (String login_id) {
         int user_pk = userService.getUserPK(login_id);
 
         List<CategoryEntity> categoryEntities = categoryRepository.findByUser_id(user_pk);
 
         return categoryEntities.stream().map(CategoryEntity::toDto).toList();
+    }
+
+    @Transactional
+    public CategoryDto updateCategory (CategoryDto categoryDto, String login_id) {
+        int user_pk = userService.getUserPK(login_id);
+
+        CategoryEntity categoryEntity = categoryRepository.findById(categoryDto.getCategory_id()).orElse(null);
+        if (categoryEntity == null) {
+            return null;
+        }
+
+        String InputName = categoryDto.getName();
+        CategoryEnum InputType = categoryDto.getType();
+        if (categoryEntity.getUser_id() == user_pk) {
+            if (InputName != null) {
+                categoryEntity.setName(InputName);
+            }
+            if (InputType != null) {
+                categoryEntity.setType(InputType);
+            }
+        }
+
+        return categoryEntity.toDto();
     }
 
     @Transactional

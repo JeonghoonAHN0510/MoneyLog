@@ -49,6 +49,15 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.getCategoryByUserId(login_id));
     }
 
+    @PutMapping
+    public ResponseEntity<?> updateCategory (@RequestBody CategoryDto categoryDto, Authentication authentication) {
+        String login_id = authUtils.getLoginId(authentication);
+        if (login_id == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(categoryService.updateCategory(categoryDto, login_id));
+    }
+
     @DeleteMapping
     public ResponseEntity<?> deleteCategory (@RequestParam int category_id, Authentication authentication) {
         String login_id = authUtils.getLoginId(authentication);
