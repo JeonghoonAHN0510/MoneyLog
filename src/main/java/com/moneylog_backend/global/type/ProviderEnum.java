@@ -4,4 +4,4 @@ public enum ProviderEnum {
     LOCAL,
     KAKAO,
     GOOGLE
-} // enum end
+}

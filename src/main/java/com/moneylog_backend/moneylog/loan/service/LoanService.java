@@ -12,4 +12,4 @@ import lombok.RequiredArgsConstructor;
 public class LoanService {
     private final LoanRepository loanRepository;
     private final LoanMapper loanMapper;
-} // class end
+}

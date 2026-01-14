@@ -35,5 +35,5 @@ public class TransferDto {
                              .transfer_at(this.transfer_at)
                              .memo(this.memo)
                              .build();
-    } // func end
-} // class end
+    }
+}

@@ -12,4 +12,4 @@ import lombok.RequiredArgsConstructor;
 public class LedgerService {
     private final LedgerRepository ledgerRepository;
     private final LedgerMapper ledgerMapper;
-} // class end
+}

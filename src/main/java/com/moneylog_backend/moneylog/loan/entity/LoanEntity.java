@@ -44,5 +44,5 @@ public class LoanEntity extends BaseTime {
                       .created_at(this.getCreated_at())
                       .updated_at(this.getUpdated_at())
                       .build();
-    } // func end
-} // class end
+    }
+}

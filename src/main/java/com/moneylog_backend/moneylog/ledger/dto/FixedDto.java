@@ -37,5 +37,5 @@ public class FixedDto {
                           .start_date(this.start_date)
                           .end_date(this.end_date)
                           .build();
-    } // func end
-} // class end
+    }
+}

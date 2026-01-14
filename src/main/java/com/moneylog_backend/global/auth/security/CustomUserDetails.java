@@ -18,17 +18,17 @@ public class CustomUserDetails implements UserDetails {
     private final UserEntity userEntity;
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities(){
+    public Collection<? extends GrantedAuthority> getAuthorities () {
         return Collections.singletonList(new SimpleGrantedAuthority(userEntity.getRole().name()));
-    } // func end
+    }
 
     @Override
-    public String getPassword(){
+    public String getPassword () {
         return userEntity.getPassword();
-    } // func end
+    }
 
     @Override
-    public String getUsername(){
+    public String getUsername () {
         return userEntity.getLoginId();
-    } // func end
-} // class end
+    }
+}

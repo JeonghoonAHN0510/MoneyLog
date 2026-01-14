@@ -58,5 +58,5 @@ public class UserDto {
                          .provider_id(this.provider_id)
                          .last_login_at(this.last_login_at)
                          .build();
-    } // func end
-} // class end
+    }
+}

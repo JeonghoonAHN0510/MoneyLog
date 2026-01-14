@@ -31,5 +31,5 @@ public class BudgetDto {
                            .amount(this.amount)
                            .budget_date(this.budget_date)
                            .build();
-    } // func end
-} // class end
+    }
+}

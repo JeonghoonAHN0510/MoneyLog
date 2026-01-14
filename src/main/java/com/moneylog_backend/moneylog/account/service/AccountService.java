@@ -35,7 +35,7 @@ public class AccountService {
             String nickname = bankService.getBankName(bank_id);
             accountDto.setNickname(nickname);
         }
-
+        // todo 같은 회원에게 같은 계좌번호로 등록된 계좌가 있으면, 계좌 등록 실패
         accountDto.setAccount_number(getRegexAccountNumber(bank_id, accountDto.getAccount_number()));
 
         AccountEntity accountEntity = accountDto.toEntity();

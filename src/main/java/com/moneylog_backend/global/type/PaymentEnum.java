@@ -5,4 +5,4 @@ public enum PaymentEnum {
     CREDIT_CARD,
     CHECK_CARD,
     BANK
-} // enum end
+}

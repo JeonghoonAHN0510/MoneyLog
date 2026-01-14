@@ -31,5 +31,5 @@ public class LoanDto {
                          .interest_rate(this.interest_rate)
                          .terminated_at(this.terminated_at)
                          .build();
-    } // func end
-} // class end
+    }
+}
