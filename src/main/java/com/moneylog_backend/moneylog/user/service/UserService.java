@@ -62,7 +62,7 @@ public class UserService {
         String regexAccountNumber = BankAccountNumberFormatter.format(bankName, userDto.getAccount_number());
 
         AccountEntity accountEntity = AccountEntity.builder()
-                                                   .user_id(userDto.getUser_id())
+                                                   .user_id(userEntity.getUser_id())
                                                    .bank_id(bank_id)
                                                    .nickname(userDto.getBank_name())
                                                    .account_number(regexAccountNumber)
