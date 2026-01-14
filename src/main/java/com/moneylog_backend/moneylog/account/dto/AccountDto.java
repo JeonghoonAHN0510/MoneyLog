@@ -41,5 +41,5 @@ public class AccountDto {
                             .color(this.color)
                             .type(this.type)
                             .build();
-    } // func end
-} // class end
+    }
+}

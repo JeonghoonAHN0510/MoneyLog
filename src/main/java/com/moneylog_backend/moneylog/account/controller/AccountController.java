@@ -1,12 +1,11 @@
 package com.moneylog_backend.moneylog.account.controller;
 
-import com.moneylog_backend.global.util.AuthUtils;
+import com.moneylog_backend.global.auth.annotation.LoginUser;
 import com.moneylog_backend.moneylog.account.dto.AccountDto;
 import com.moneylog_backend.moneylog.account.service.AccountService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,19 +22,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AccountController {
     private final AccountService accountService;
-    private final AuthUtils authUtils;
 
     @PostMapping
-    public ResponseEntity<?> saveAccount (@RequestBody AccountDto accountDto, Authentication authentication) {
-        String login_id = authUtils.getLoginId(authentication);
-        if (login_id == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+    public ResponseEntity<?> saveAccount (@RequestBody AccountDto accountDto, @LoginUser Integer user_id) {
         if (accountDto == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        int resultValue = accountService.saveAccount(accountDto, login_id);
+        int resultValue = accountService.saveAccount(accountDto, user_id);
         if (resultValue == -1) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } else {
@@ -44,50 +38,30 @@ public class AccountController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAccount (@RequestParam int account_id, Authentication authentication) {
-        String login_id = authUtils.getLoginId(authentication);
-        if (login_id == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
+    public ResponseEntity<?> getAccount (@RequestParam int account_id, @LoginUser Integer user_id) {
         if (account_id < 30000 || account_id > 40000) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        return ResponseEntity.ok(accountService.getAccount(account_id, login_id));
+        return ResponseEntity.ok(accountService.getAccount(account_id, user_id));
     }
 
     @PutMapping
-    public ResponseEntity<?> updateAccount (@RequestBody AccountDto accountDto, Authentication authentication) {
-        String login_id = authUtils.getLoginId(authentication);
-        if (login_id == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
+    public ResponseEntity<?> updateAccount (@RequestBody AccountDto accountDto, @LoginUser Integer user_id) {
         if (accountDto == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        return ResponseEntity.ok(accountService.updateAccount(accountDto, login_id));
+        return ResponseEntity.ok(accountService.updateAccount(accountDto, user_id));
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deleteAccount (@RequestParam int account_id, Authentication authentication) {
-        String login_id = authUtils.getLoginId(authentication);
-        if (login_id == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        return ResponseEntity.ok(accountService.deleteAccount(account_id, login_id));
+    public ResponseEntity<?> deleteAccount (@RequestParam int account_id, @LoginUser Integer user_id) {
+        return ResponseEntity.ok(accountService.deleteAccount(account_id, user_id));
     }
 
     @PutMapping("/transfer")
-    public ResponseEntity<?> transferAccountBalance (@RequestBody AccountDto accountDto, Authentication authentication) {
-        String login_id = authUtils.getLoginId(authentication);
-        if (login_id == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        return ResponseEntity.ok(accountService.transferAccountBalance(accountDto, login_id));
+    public ResponseEntity<?> transferAccountBalance (@RequestBody AccountDto accountDto, @LoginUser Integer user_id) {
+        return ResponseEntity.ok(accountService.transferAccountBalance(accountDto, user_id));
     }
 }

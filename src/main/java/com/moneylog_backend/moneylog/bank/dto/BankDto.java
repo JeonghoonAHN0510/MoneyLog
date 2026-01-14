@@ -28,5 +28,5 @@ public class BankDto {
                          .code(this.code)
                          .logo_image_url(this.logo_image_url)
                          .build();
-    } // func end
-} // class end
+    }
+}

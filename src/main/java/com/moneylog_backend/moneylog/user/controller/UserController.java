@@ -19,19 +19,18 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@ModelAttribute UserDto userDto) throws IOException {
+    public ResponseEntity<?> signup (@ModelAttribute UserDto userDto) throws IOException {
         return ResponseEntity.ok(userService.signup(userDto));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody UserDto userDto){
+    public ResponseEntity<?> login (@RequestBody UserDto userDto) {
         return ResponseEntity.ok(userService.login(userDto));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader,
-                                          Authentication authentication){
-        if (authHeader != null){
+    public ResponseEntity<?> logout (@RequestHeader("Authorization") String authHeader, Authentication authentication) {
+        if (authHeader != null) {
             String accessToken = authHeader.substring(7);
             String userId = authentication.getName();
             // 로그아웃 진행
@@ -43,10 +42,9 @@ public class UserController {
     }
 
     @GetMapping("/info")
-    public ResponseEntity<?> getUserInfo(Authentication authentication){
+    public ResponseEntity<?> getUserInfo (Authentication authentication) {
         if (authentication == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body("로그인 정보가 유효하지 않습니다. 다시 로그인해주세요.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 정보가 유효하지 않습니다. 다시 로그인해주세요.");
         }
         String loginId = authentication.getName();
         return ResponseEntity.ok(userService.getUserInfo(loginId));

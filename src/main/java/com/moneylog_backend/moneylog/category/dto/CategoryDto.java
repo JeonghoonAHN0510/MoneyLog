@@ -29,5 +29,5 @@ public class CategoryDto {
                              .name(this.name)
                              .type(this.type)
                              .build();
-    } // func end
-} // class end
+    }
+}

@@ -8,7 +8,6 @@ import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.mapper.AccountMapper;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.bank.service.BankService;
-import com.moneylog_backend.moneylog.user.service.UserService;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,13 +20,11 @@ import lombok.RequiredArgsConstructor;
 public class AccountService {
     private final AccountRepository accountRepository;
     private final AccountMapper accountMapper;
-    private final UserService userService;
     private final BankService bankService;
 
     @Transactional
-    public int saveAccount (AccountDto accountDto, String login_id) {
-        int user_pk = userService.getUserPK(login_id);
-        accountDto.setUser_id(user_pk);
+    public int saveAccount (AccountDto accountDto, int user_id) {
+        accountDto.setUser_id(user_id);
 
         int bank_id = accountDto.getBank_id();
         if (!bankService.isBankValid(bank_id)) {
@@ -38,7 +35,7 @@ public class AccountService {
             String nickname = bankService.getBankName(bank_id);
             accountDto.setNickname(nickname);
         }
-
+        // todo 같은 회원에게 같은 계좌번호로 등록된 계좌가 있으면, 계좌 등록 실패
         accountDto.setAccount_number(getRegexAccountNumber(bank_id, accountDto.getAccount_number()));
 
         AccountEntity accountEntity = accountDto.toEntity();
@@ -47,12 +44,11 @@ public class AccountService {
         return accountEntity.getAccount_id();
     }
 
-    public AccountDto getAccount (int account_id, String login_id) {
-        int user_pk = userService.getUserPK(login_id);
+    public AccountDto getAccount (int account_id, int user_id) {
         Optional<AccountEntity> accountEntityOptional = accountRepository.findById(account_id);
         if (accountEntityOptional.isPresent()) {
             AccountEntity accountEntity = accountEntityOptional.get();
-            if (user_pk == accountEntity.getUser_id()) {
+            if (user_id == accountEntity.getUser_id()) {
                 return accountEntity.toDto();
             }
         }
@@ -61,14 +57,13 @@ public class AccountService {
     }
 
     @Transactional
-    public AccountDto updateAccount (AccountDto accountDto, String login_id) {
+    public AccountDto updateAccount (AccountDto accountDto, int user_id) {
         int account_id = accountDto.getAccount_id();
-        int user_pk = userService.getUserPK(login_id);
 
         Optional<AccountEntity> accountEntityOptional = accountRepository.findById(account_id);
         if (accountEntityOptional.isPresent()) {
             AccountEntity accountEntity = accountEntityOptional.get();
-            if (user_pk == accountEntity.getUser_id()) {
+            if (user_id == accountEntity.getUser_id()) {
                 String InputNickname = accountDto.getNickname();
                 String InputAccountNumber = accountDto.getAccount_number();
                 int InputBalance = accountDto.getBalance();
@@ -89,13 +84,12 @@ public class AccountService {
     }
 
     @Transactional
-    public boolean deleteAccount (int account_id, String login_id) {
-        int user_pk = userService.getUserPK(login_id);
+    public boolean deleteAccount (int account_id, int user_id) {
 
         Optional<AccountEntity> accountEntityOptional = accountRepository.findById(account_id);
         if (accountEntityOptional.isPresent()) {
             AccountEntity accountEntity = accountEntityOptional.get();
-            if (user_pk == accountEntity.getUser_id()) {
+            if (user_id == accountEntity.getUser_id()) {
                 accountRepository.deleteById(account_id);
                 return true;
             }
@@ -104,8 +98,7 @@ public class AccountService {
     }
 
     @Transactional
-    public boolean transferAccountBalance (AccountDto accountDto, String login_id) {
-        int user_pk = userService.getUserPK(login_id);
+    public boolean transferAccountBalance (AccountDto accountDto, int user_id) {
         int transferBalance = accountDto.getBalance();
         if (transferBalance < 0) {
             return false;
@@ -119,7 +112,7 @@ public class AccountService {
 
             int from_balance = fromAccountEntity.getBalance();
             int to_balance = toAccountEntity.getBalance();
-            if (user_pk == toAccountEntity.getUser_id() && user_pk == fromAccountEntity.getUser_id()) {
+            if (user_id == toAccountEntity.getUser_id() && user_id == fromAccountEntity.getUser_id()) {
                 if (from_balance >= transferBalance) {
                     fromAccountEntity.setBalance(from_balance - transferBalance);
                     toAccountEntity.setBalance(to_balance + transferBalance);

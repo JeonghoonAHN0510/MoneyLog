@@ -8,9 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<UserEntity, Integer> {
 
-	Optional<UserEntity> findByLoginId(String loginId);
+    Optional<UserEntity> findByLoginId (String loginId);
 
-    boolean existsByLoginId(String id);
+    boolean existsByLoginId (String id);
 
-    boolean existsByEmail(String email);
-} // interface end
+    boolean existsByEmail (String email);
+}

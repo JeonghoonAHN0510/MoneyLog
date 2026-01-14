@@ -1,9 +1,9 @@
 package com.moneylog_backend.moneylog.file;
 
-
 import com.moneylog_backend.global.file.FileStore;
 
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -23,8 +23,8 @@ public class FileController {
 
     // url 파라미터 예시: /api/files/download?fileUrl=/uploads/2024/01/01/abcd.jpg&originalName=내사진.jpg
     @GetMapping("/download")
-    public ResponseEntity<Resource> download(@RequestParam String fileUrl,
-                                             @RequestParam String originalName) throws MalformedURLException {
+    public ResponseEntity<Resource> download (@RequestParam String fileUrl, @RequestParam String originalName) throws
+                                                                                                               MalformedURLException {
 
         // 실제 파일 경로 가져오기
         Path path = fileStore.getFullPath(fileUrl);
@@ -36,13 +36,11 @@ public class FileController {
         // 다운로드 헤더 설정 (attachment)
         String contentDisposition = "attachment; filename=\"" + encodedUploadFileName + "\"";
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
-                .body(resource);
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition).body(resource);
     }
 
     @DeleteMapping("/delete")
-    public String delete(@RequestParam String fileUrl) {
+    public String delete (@RequestParam String fileUrl) {
         fileStore.deleteFile(fileUrl);
         return "Deleted";
     }

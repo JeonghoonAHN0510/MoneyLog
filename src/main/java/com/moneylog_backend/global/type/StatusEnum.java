@@ -4,4 +4,4 @@ public enum StatusEnum {
     ACTIVE,
     DORMANT,
     WITHDRAWN
-} // enum end
+}

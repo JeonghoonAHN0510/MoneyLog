@@ -5,10 +5,8 @@ import com.moneylog_backend.global.file.FileStore;
 import com.moneylog_backend.global.util.BankAccountNumberFormatter;
 import com.moneylog_backend.global.util.FormatUtils;
 import com.moneylog_backend.global.util.RedisService;
-import com.moneylog_backend.moneylog.account.dto.AccountDto;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
-import com.moneylog_backend.moneylog.account.service.AccountService;
 import com.moneylog_backend.moneylog.bank.service.BankService;
 import com.moneylog_backend.moneylog.user.dto.TokenResponse;
 import com.moneylog_backend.moneylog.user.dto.UserDto;
@@ -115,24 +113,6 @@ public class UserService {
             return userEntity.toDto();
         }
         return null;
-    }
-
-    public String getUserId (int user_id) {
-        Optional<UserEntity> userEntityOptional = userRepository.findById(user_id);
-        if (userEntityOptional.isPresent()) {
-            UserEntity userEntity = userEntityOptional.get();
-            return userEntity.getLoginId();
-        }
-        return null;
-    }
-
-    public int getUserPK (String loginId) {
-        Optional<UserEntity> userEntityOptional = userRepository.findByLoginId(loginId);
-        if (userEntityOptional.isPresent()) {
-            UserEntity userEntity = userEntityOptional.get();
-            return userEntity.getUser_id();
-        }
-        return -1;
     }
 
     public void checkIdOrEmailValidity (UserDto userDto) {

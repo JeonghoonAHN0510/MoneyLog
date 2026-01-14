@@ -8,4 +8,4 @@ import com.moneylog_backend.moneylog.category.dto.CategoryDto;
 public interface CategoryMapper {
 
     int checkCategoryNameTypeUnique (CategoryDto categoryDto);
-} // interface end
+}

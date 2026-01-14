@@ -29,72 +29,69 @@ public class JwtProvider {
     private final long accessTokenValidityTime;
     private final long refreshTokenValidityTime;
 
-    public JwtProvider(
-            @Value("${jwt.secret}") String secret,
-            @Value("${jwt.access-token-validity-in-seconds}") long accessTokenValidityTime,
-            @Value("${jwt.refresh-token-validity-in-seconds}") long refreshTokenValidityTime){
+    public JwtProvider (@Value("${jwt.secret}") String secret,
+                        @Value("${jwt.access-token-validity-in-seconds}") long accessTokenValidityTime,
+                        @Value("${jwt.refresh-token-validity-in-seconds}") long refreshTokenValidityTime) {
         byte[] secretBytes = Decoders.BASE64.decode(secret);
         this.key = Keys.hmacShaKeyFor(secretBytes);
         this.accessTokenValidityTime = accessTokenValidityTime * 1000;
         this.refreshTokenValidityTime = refreshTokenValidityTime * 1000;
-    } // func end
+    }
 
     // 1. Access Token 생성
-    public String createAccessToken(Authentication authentication){
+    public String createAccessToken (Authentication authentication) {
         return createToken(authentication, accessTokenValidityTime);
-    } // func end
+    }
 
     // 2. Refresh Token 생성
-    public String createRefreshToken(Authentication authentication) {
+    public String createRefreshToken (Authentication authentication) {
         return createToken(authentication, refreshTokenValidityTime);
-    } // func end
+    }
 
     // 3. CreateToken 공통 로직
-    private String createToken(Authentication authentication, long validityTime){
-        String authorities = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(","));
+    private String createToken (Authentication authentication, long validityTime) {
+        String authorities = authentication.getAuthorities()
+                                           .stream()
+                                           .map(GrantedAuthority::getAuthority)
+                                           .collect(Collectors.joining(","));
 
-        long now = (new Date()).getTime();
+        long now = ( new Date() ).getTime();
         Date validity = new Date(now + validityTime);
 
         return Jwts.builder()
-                .subject(authentication.getName())
-                .claim(AUTHORITIES_KEY, authorities)
-                .issuedAt(new Date(now))
-                .expiration(validity)
-                .signWith(key)
-                .compact();
-    } // func end
+                   .subject(authentication.getName())
+                   .claim(AUTHORITIES_KEY, authorities)
+                   .issuedAt(new Date(now))
+                   .expiration(validity)
+                   .signWith(key)
+                   .compact();
+    }
 
     // 4. 토큰에서 인증 정보 조회 (SecurityContext에 저장할 용도)
-    public Authentication getAuthentication(String token) {
+    public Authentication getAuthentication (String token) {
         Claims claims = parseClaims(token);
 
         if (claims.get(AUTHORITIES_KEY) == null) {
             throw new RuntimeException("권한 정보가 없는 토큰입니다.");
-        } // if end
+        }
 
         // 클레임에서 권한 정보 가져오기
-        Collection<? extends GrantedAuthority> authorities =
-                Arrays.stream(claims.get(AUTHORITIES_KEY).toString().split(","))
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
+        Collection<? extends GrantedAuthority> authorities = Arrays.stream(
+                                                                       claims.get(AUTHORITIES_KEY).toString().split(","))
+                                                                   .map(SimpleGrantedAuthority::new)
+                                                                   .collect(Collectors.toList());
 
         // UserDetails 객체를 만들어서 Authentication 리턴
         UserDetails principal = new User(claims.getSubject(), "", authorities);
         return new UsernamePasswordAuthenticationToken(principal, "", authorities);
-    } // func end
+    }
 
     // 5. 토큰 검증
-    public boolean validateToken(String token) {
+    public boolean validateToken (String token) {
         try {
-            Jwts.parser()
-                    .verifyWith(key)
-                    .build()
-                    .parseSignedClaims(token);
+            Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
             return true;
-        } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
+        } catch (io.jsonwebtoken.security.SecurityException|MalformedJwtException e) {
             log.info("잘못된 JWT 서명입니다.");
         } catch (ExpiredJwtException e) {
             log.info("만료된 JWT 토큰입니다.");
@@ -104,24 +101,20 @@ public class JwtProvider {
             log.info("JWT 토큰이 잘못되었습니다.");
         }
         return false;
-    } // func end
+    }
 
     // 6. accessToken 남은 유효시간 추출
-    public Long getExpiration(String accessToken) {
+    public Long getExpiration (String accessToken) {
         Date expiration = parseClaims(accessToken).getExpiration();
         long now = new Date().getTime();
-        return (expiration.getTime() - now);
-    } // func end
+        return ( expiration.getTime() - now );
+    }
 
-    private Claims parseClaims(String accessToken) {
+    private Claims parseClaims (String accessToken) {
         try {
-            return Jwts.parser()
-                    .verifyWith(key)
-                    .build()
-                    .parseSignedClaims(accessToken)
-                    .getPayload();
+            return Jwts.parser().verifyWith(key).build().parseSignedClaims(accessToken).getPayload();
         } catch (ExpiredJwtException e) {
             return e.getClaims();
         }
-    } // func end
-} // class end
+    }
+}

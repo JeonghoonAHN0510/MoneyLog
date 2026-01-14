@@ -41,5 +41,5 @@ public class LedgerDto {
                            .memo(this.memo)
                            .trading_at(this.trading_at)
                            .build();
-    } // func end
-} // class end
+    }
+}

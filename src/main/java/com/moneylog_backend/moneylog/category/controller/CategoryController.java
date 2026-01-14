@@ -1,12 +1,11 @@
 package com.moneylog_backend.moneylog.category.controller;
 
-import com.moneylog_backend.global.util.AuthUtils;
+import com.moneylog_backend.global.auth.annotation.LoginUser;
 import com.moneylog_backend.moneylog.category.dto.CategoryDto;
 import com.moneylog_backend.moneylog.category.service.CategoryService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,16 +22,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CategoryController {
     private final CategoryService categoryService;
-    private final AuthUtils authUtils;
 
     @PostMapping
-    public ResponseEntity<?> saveCategory (@RequestBody CategoryDto categoryDto, Authentication authentication) {
-        String login_id = authUtils.getLoginId(authentication);
-        if (login_id == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        int resultValue = categoryService.saveCategory(categoryDto, login_id);
+    public ResponseEntity<?> saveCategory (@RequestBody CategoryDto categoryDto, @LoginUser Integer user_id) {
+        int resultValue = categoryService.saveCategory(categoryDto, user_id);
         if (resultValue == -1) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } else {
@@ -41,30 +34,17 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getCategoryByUserId (Authentication authentication) {
-        String login_id = authUtils.getLoginId(authentication);
-        if (login_id == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        return ResponseEntity.ok(categoryService.getCategoryByUserId(login_id));
+    public ResponseEntity<?> getCategoryByUserId (@LoginUser Integer user_id) {
+        return ResponseEntity.ok(categoryService.getCategoryByUserId(user_id));
     }
 
     @PutMapping
-    public ResponseEntity<?> updateCategory (@RequestBody CategoryDto categoryDto, Authentication authentication) {
-        String login_id = authUtils.getLoginId(authentication);
-        if (login_id == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        return ResponseEntity.ok(categoryService.updateCategory(categoryDto, login_id));
+    public ResponseEntity<?> updateCategory (@RequestBody CategoryDto categoryDto, @LoginUser Integer user_id) {
+        return ResponseEntity.ok(categoryService.updateCategory(categoryDto, user_id));
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deleteCategory (@RequestParam int category_id, Authentication authentication) {
-        String login_id = authUtils.getLoginId(authentication);
-        if (login_id == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        return ResponseEntity.ok(categoryService.deleteCategory(category_id, login_id));
+    public ResponseEntity<?> deleteCategory (@RequestParam int category_id, @LoginUser Integer user_id) {
+        return ResponseEntity.ok(categoryService.deleteCategory(category_id, user_id));
     }
 }
