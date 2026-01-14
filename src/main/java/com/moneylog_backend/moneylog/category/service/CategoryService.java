@@ -8,7 +8,6 @@ import com.moneylog_backend.moneylog.category.dto.CategoryDto;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
 import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
-import com.moneylog_backend.moneylog.user.service.UserService;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,12 +20,10 @@ import lombok.RequiredArgsConstructor;
 public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
-    private final UserService userService;
 
     @Transactional
-    public int saveCategory (CategoryDto categoryDto, String login_id) {
-        int user_pk = userService.getUserPK(login_id);
-        categoryDto.setUser_id(user_pk);
+    public int saveCategory (CategoryDto categoryDto, int user_id) {
+        categoryDto.setUser_id(user_id);
 
         int countSameCategory = categoryMapper.checkCategoryNameTypeUnique(categoryDto);
         if (countSameCategory > 0) {
@@ -39,18 +36,15 @@ public class CategoryService {
         return categoryEntity.getCategory_id();
     }
 
-    public List<CategoryDto> getCategoryByUserId (String login_id) {
-        int user_pk = userService.getUserPK(login_id);
+    public List<CategoryDto> getCategoryByUserId (int user_id) {
 
-        List<CategoryEntity> categoryEntities = categoryRepository.findByUser_id(user_pk);
+        List<CategoryEntity> categoryEntities = categoryRepository.findByUser_id(user_id);
 
         return categoryEntities.stream().map(CategoryEntity::toDto).toList();
     }
 
     @Transactional
-    public CategoryDto updateCategory (CategoryDto categoryDto, String login_id) {
-        int user_pk = userService.getUserPK(login_id);
-
+    public CategoryDto updateCategory (CategoryDto categoryDto, int user_id) {
         CategoryEntity categoryEntity = categoryRepository.findById(categoryDto.getCategory_id()).orElse(null);
         if (categoryEntity == null) {
             return null;
@@ -58,7 +52,7 @@ public class CategoryService {
 
         String InputName = categoryDto.getName();
         CategoryEnum InputType = categoryDto.getType();
-        if (categoryEntity.getUser_id() == user_pk) {
+        if (categoryEntity.getUser_id() == user_id) {
             if (InputName != null) {
                 categoryEntity.setName(InputName);
             }
@@ -71,13 +65,11 @@ public class CategoryService {
     }
 
     @Transactional
-    public boolean deleteCategory (int category_id, String login_id) {
-        int user_pk = userService.getUserPK(login_id);
-
+    public boolean deleteCategory (int category_id, int user_id) {
         Optional<CategoryEntity> categoryEntityOptional = categoryRepository.findById(category_id);
         if (categoryEntityOptional.isPresent()) {
             CategoryEntity categoryEntity = categoryEntityOptional.get();
-            if (user_pk == categoryEntity.getUser_id()) {
+            if (user_id == categoryEntity.getUser_id()) {
                 categoryRepository.deleteById(category_id);
                 return true;
             }

@@ -2,6 +2,7 @@ package com.moneylog_backend.global.config;
 
 import com.moneylog_backend.global.auth.jwt.JwtAuthenticationFilter;
 import com.moneylog_backend.global.auth.jwt.JwtProvider;
+import com.moneylog_backend.global.auth.security.CustomUserDetailsService;
 import com.moneylog_backend.global.util.RedisService;
 
 import org.springframework.context.annotation.Bean;
@@ -25,34 +26,36 @@ import lombok.RequiredArgsConstructor;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private final CustomUserDetailsService customUserDetailsService;
     private final JwtProvider jwtProvider;
     private final RedisService redisService;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+    public SecurityFilterChain filterChain (HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-                // 1. CSRF 비활성화
-                .csrf(AbstractHttpConfigurer::disable)
-                // 2. Form Login & Http Basic 비활성화
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                // 3. CORS 설정 적용
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                // 4. 세션 관리 정책 설정 : Stateless
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // 5. 요청별 권한 설정
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/api/user/**", "/api/bank").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
-                )
-                // 6. Jwt 필터 등록
-                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider, redisService), UsernamePasswordAuthenticationFilter.class);
+            // 1. CSRF 비활성화
+            .csrf(AbstractHttpConfigurer::disable)
+            // 2. Form Login & Http Basic 비활성화
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
+            // 3. CORS 설정 적용
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            // 4. 세션 관리 정책 설정 : Stateless
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // 5. 요청별 권한 설정
+            .authorizeHttpRequests(auth -> auth.requestMatchers("/", "/api/user/**", "/api/bank")
+                                               .permitAll()
+                                               .requestMatchers("/admin/**")
+                                               .hasRole("ADMIN")
+                                               .anyRequest()
+                                               .authenticated())
+            .addFilterBefore(new JwtAuthenticationFilter(customUserDetailsService, jwtProvider, redisService),
+                             UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();
-    } // func end
+    }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource(){
+    public CorsConfigurationSource corsConfigurationSource () {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173"));
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
@@ -64,5 +67,5 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", corsConfiguration);
 
         return source;
-    } // func end
-} // class end
+    }
+}
