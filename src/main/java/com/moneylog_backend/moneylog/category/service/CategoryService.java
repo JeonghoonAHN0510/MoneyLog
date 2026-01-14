@@ -1,5 +1,6 @@
 package com.moneylog_backend.moneylog.category.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.moneylog_backend.moneylog.category.dto.CategoryDto;
@@ -35,6 +36,14 @@ public class CategoryService {
         categoryEntity = categoryRepository.save(categoryEntity);
 
         return categoryEntity.getCategory_id();
+    }
+
+    public List<CategoryDto> getCategoryByUserId(String login_id) {
+        int user_pk = userService.getUserPK(login_id);
+
+        List<CategoryEntity> categoryEntities = categoryRepository.findByUser_id(user_pk);
+
+        return categoryEntities.stream().map(CategoryEntity::toDto).toList();
     }
 
     @Transactional
