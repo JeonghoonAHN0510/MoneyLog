@@ -25,7 +25,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
 
@@ -106,13 +105,13 @@ public class UserService {
     }
 
     public UserDto getUserInfo (String loginId) {
-        Optional<UserEntity> userEntityOptional = userRepository.findByLoginId(loginId);
-        if (userEntityOptional.isPresent()) {
-            UserEntity userEntity = userEntityOptional.get();
-            userEntity.setPassword(null);
-            return userEntity.toDto();
+        UserEntity userEntity = userRepository.findByLoginId(loginId).orElse(null);
+        if (userEntity == null) {
+            return null;
         }
-        return null;
+
+        userEntity.setPassword(null);
+        return userEntity.toDto();
     }
 
     public void checkIdOrEmailValidity (UserDto userDto) {

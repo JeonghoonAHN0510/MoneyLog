@@ -1,7 +1,6 @@
 package com.moneylog_backend.moneylog.category.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.moneylog_backend.global.type.CategoryEnum;
 import com.moneylog_backend.moneylog.category.dto.CategoryDto;
@@ -68,14 +67,16 @@ public class CategoryService {
 
     @Transactional
     public boolean deleteCategory (int category_id, int user_id) {
-        Optional<CategoryEntity> categoryEntityOptional = categoryRepository.findById(category_id);
-        if (categoryEntityOptional.isPresent()) {
-            CategoryEntity categoryEntity = categoryEntityOptional.get();
-            if (user_id == categoryEntity.getUser_id()) {
-                categoryRepository.deleteById(category_id);
-                return true;
-            }
+        CategoryEntity categoryEntity = categoryRepository.findById(category_id).orElse(null);
+        if (categoryEntity == null) {
+            return false;
         }
+
+        if (user_id == categoryEntity.getUser_id()) {
+            categoryRepository.deleteById(category_id);
+            return true;
+        }
+
         return false;
     }
 }
