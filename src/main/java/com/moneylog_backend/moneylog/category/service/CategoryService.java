@@ -50,15 +50,17 @@ public class CategoryService {
             return null;
         }
 
+        if (categoryEntity.getUser_id() != user_id) {
+            return null;
+        }
+
         String InputName = categoryDto.getName();
         CategoryEnum InputType = categoryDto.getType();
-        if (categoryEntity.getUser_id() == user_id) {
-            if (InputName != null) {
-                categoryEntity.setName(InputName);
-            }
-            if (InputType != null) {
-                categoryEntity.setType(InputType);
-            }
+        if (InputName != null) {
+            categoryEntity.setName(InputName);
+        }
+        if (InputType != null) {
+            categoryEntity.setType(InputType);
         }
 
         return categoryEntity.toDto();
