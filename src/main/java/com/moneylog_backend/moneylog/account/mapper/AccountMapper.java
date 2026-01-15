@@ -3,4 +3,6 @@ package com.moneylog_backend.moneylog.account.mapper;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
-public interface AccountMapper {}
+public interface AccountMapper {
+    int checkAccountNumber(String account_number);
+}

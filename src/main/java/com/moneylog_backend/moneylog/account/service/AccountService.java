@@ -31,12 +31,18 @@ public class AccountService {
             return -1;
         }
 
+        String regexAccountNumber = getRegexAccountNumber(bank_id, accountDto.getAccount_number());
+        int countAccountNumber = accountMapper.checkAccountNumber(regexAccountNumber);
+        if (countAccountNumber > 0) {
+            return -1;
+        }
+
         if (accountDto.getNickname() == null || accountDto.getNickname().isEmpty()) {
             String nickname = bankService.getBankName(bank_id);
             accountDto.setNickname(nickname);
         }
-        // todo 같은 회원에게 같은 계좌번호로 등록된 계좌가 있으면, 계좌 등록 실패
-        accountDto.setAccount_number(getRegexAccountNumber(bank_id, accountDto.getAccount_number()));
+
+        accountDto.setAccount_number(regexAccountNumber);
 
         AccountEntity accountEntity = accountDto.toEntity();
         accountRepository.save(accountEntity);
