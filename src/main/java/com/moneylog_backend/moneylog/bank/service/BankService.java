@@ -1,7 +1,6 @@
 package com.moneylog_backend.moneylog.bank.service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -32,11 +31,11 @@ public class BankService {
     }
 
     public String getBankName (int bank_id) {
-        Optional<BankEntity> optionalBankEntity = bankRepository.findById(bank_id);
-        if (optionalBankEntity.isPresent()) {
-            BankEntity bankEntity = optionalBankEntity.get();
-            return bankEntity.getName();
+        BankEntity bankEntity = bankRepository.findById(bank_id).orElse(null);
+        if (bankEntity == null) {
+            return null;
         }
-        return null;
+
+        return bankEntity.getName();
     }
 }
