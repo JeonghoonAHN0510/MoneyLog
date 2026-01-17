@@ -9,4 +9,10 @@
         FROM ACCOUNT
         WHERE account_number = #{account_number}
     </select>
+
+    <select id="getAccountsByUserId">
+        SELECT *
+        FROM ACCOUNT
+        WHERE USER_ID = #{user_id}
+    </select>
 </mapper>
