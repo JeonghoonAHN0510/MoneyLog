@@ -69,6 +69,21 @@ public class BudgetService {
         return budgetEntity.toDto();
     }
 
+    @Transactional
+    public boolean deleteBudget(BudgetDto budgetDto) {
+        BudgetEntity budgetEntity = budgetRepository.findById(budgetDto.getBudget_id()).orElse(null);
+        if (budgetEntity == null) {
+            return false;
+        }
+
+        if (budgetDto.getUser_id() != budgetEntity.getUser_id()) {
+            return false;
+        }
+
+        budgetRepository.delete(budgetEntity);
+        return true;
+    }
+
     public boolean hasBudget (int category_id) {
         return categoryRepository.existsById(category_id);
     }
