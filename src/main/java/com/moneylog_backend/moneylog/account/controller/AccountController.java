@@ -46,7 +46,10 @@ public class AccountController {
         return ResponseEntity.ok(accountService.getAccount(account_id, user_id));
     }
 
-    // todo 회원별 계좌목록 조회기능 구현 필요
+    @GetMapping("/list")
+    public ResponseEntity<?> getAccounts (@LoginUser Integer user_id) {
+        return ResponseEntity.ok(accountService.getAccounts(user_id));
+    }
 
     @PutMapping
     public ResponseEntity<?> updateAccount (@RequestBody AccountDto accountDto, @LoginUser Integer user_id) {

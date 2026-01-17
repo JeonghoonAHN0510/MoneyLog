@@ -1,5 +1,7 @@
 package com.moneylog_backend.moneylog.account.service;
 
+import java.util.List;
+
 import com.moneylog_backend.global.util.BankAccountNumberFormatter;
 import com.moneylog_backend.moneylog.account.dto.AccountDto;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
@@ -59,6 +61,10 @@ public class AccountService {
         }
 
         return accountEntity.toDto();
+    }
+
+    public List<AccountDto> getAccounts (int user_id) {
+        return accountMapper.getAccountsByUserId(user_id);
     }
 
     @Transactional
