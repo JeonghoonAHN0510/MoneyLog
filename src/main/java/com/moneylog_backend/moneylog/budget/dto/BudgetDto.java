@@ -23,7 +23,7 @@ public class BudgetDto {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
-    public BudgetEntity budgetEntity () {
+    public BudgetEntity toEntity () {
         return BudgetEntity.builder()
                            .budget_id(this.budget_id)
                            .user_id(this.user_id)

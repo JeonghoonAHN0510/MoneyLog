@@ -1,7 +1,13 @@
 package com.moneylog_backend.moneylog.budget.controller;
 
+import com.moneylog_backend.global.auth.annotation.LoginUser;
+import com.moneylog_backend.moneylog.budget.dto.BudgetDto;
 import com.moneylog_backend.moneylog.budget.service.BudgetService;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -12,4 +18,20 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class BudgetController {
     private final BudgetService budgetService;
+
+    @PostMapping
+    public ResponseEntity<?> saveBudget (@RequestBody BudgetDto budgetDto, @LoginUser Integer user_id) {
+        if (budgetDto == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        budgetDto.setUser_id(user_id);
+
+        int resultValue = budgetService.saveBudget(budgetDto);
+        if (resultValue == -1) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } else {
+            return ResponseEntity.ok(resultValue);
+        }
+    }
 }
