@@ -10,4 +10,10 @@
         WHERE USER_ID = #{user_id}
         AND CATEGORY_ID = #{category_id}
     </select>
+
+    <select id="getBudgets">
+        SELECT *
+        FROM BUDGET
+        WHERE USER_ID = #{user_id}
+    </select>
 </mapper>

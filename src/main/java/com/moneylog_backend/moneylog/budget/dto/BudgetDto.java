@@ -29,7 +29,7 @@ public class BudgetDto {
                            .user_id(this.user_id)
                            .category_id(this.category_id)
                            .amount(this.amount)
-                           .budget_date(this.budget_date)
+                           .budget_date(LocalDate.now())
                            .build();
     }
 }

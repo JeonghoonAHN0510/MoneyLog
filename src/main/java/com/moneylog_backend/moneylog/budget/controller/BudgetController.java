@@ -6,7 +6,9 @@ import com.moneylog_backend.moneylog.budget.service.BudgetService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,6 +34,27 @@ public class BudgetController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } else {
             return ResponseEntity.ok(resultValue);
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getBudgets (@LoginUser Integer user_id) {
+        return ResponseEntity.ok(budgetService.getBudgets(user_id));
+    }
+
+    @PutMapping
+    public ResponseEntity<?> updateBudget (@RequestBody BudgetDto budgetDto, @LoginUser Integer user_id) {
+        if (budgetDto == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        budgetDto.setUser_id(user_id);
+
+        BudgetDto resultBudgetDto = budgetService.updateBudget(budgetDto);
+        if (resultBudgetDto == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } else {
+            return ResponseEntity.ok(resultBudgetDto);
         }
     }
 }
