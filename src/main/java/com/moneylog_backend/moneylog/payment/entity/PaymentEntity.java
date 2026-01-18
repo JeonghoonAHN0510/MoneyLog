@@ -23,9 +23,9 @@ public class PaymentEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(columnDefinition = "INT UNSIGNED")
-    private int payment_id;
+    private Integer payment_id;
     @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private int user_id;
+    private Integer user_id;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")
     private String name;
     @Column(columnDefinition = "ENUM('CASH', 'CREDIT_CARD', 'CHECK_CARD', 'BANK') NOT NULL")

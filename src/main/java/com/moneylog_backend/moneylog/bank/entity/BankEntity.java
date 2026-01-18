@@ -19,7 +19,7 @@ public class BankEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(columnDefinition = "INT UNSIGNED")
-    private int bank_id;
+    private Integer bank_id;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")
     private String name;
     @Column(columnDefinition = "CHAR(3) NOT NULL UNIQUE")

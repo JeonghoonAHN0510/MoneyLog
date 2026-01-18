@@ -15,8 +15,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CategoryDto {
-    private int category_id;
-    private int user_id;
+    private Integer category_id;
+    private Integer user_id;
     private String name;
     private CategoryEnum type;
     private LocalDateTime created_at;

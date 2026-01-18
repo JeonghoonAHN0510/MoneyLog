@@ -15,12 +15,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FixedDto {
-    private int fixed_id;
-    private int user_id;
-    private int category_id;
+    private Integer fixed_id;
+    private Integer user_id;
+    private Integer category_id;
     private String title;
-    private int amount;
-    private int fixed_day;
+    private Integer amount;
+    private Integer fixed_day;
     private LocalDate start_date;
     private LocalDate end_date;
     private LocalDateTime created_at;

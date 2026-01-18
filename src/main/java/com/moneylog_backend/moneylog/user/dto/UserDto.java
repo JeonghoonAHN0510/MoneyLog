@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserDto {
-    private int user_id;
+    private Integer user_id;
     private Integer account_id;
     private String name;
     private String id;
@@ -37,7 +37,7 @@ public class UserDto {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
-    private int bank_id;
+    private Integer bank_id;
     private String bank_name;
     private String account_number;
 

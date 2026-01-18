@@ -15,8 +15,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PaymentDto {
-    private int payment_id;
-    private int user_id;
+    private Integer payment_id;
+    private Integer user_id;
     private String name;
     private PaymentEnum type;
     private LocalDateTime created_at;

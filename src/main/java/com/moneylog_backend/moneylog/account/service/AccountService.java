@@ -51,10 +51,9 @@ public class AccountService {
     }
 
     public AccountDto getAccount (int account_id, int user_id) {
-        AccountEntity accountEntity = accountRepository.findById(account_id).orElse(null);
-        if (accountEntity == null) {
-            return null;
-        }
+        AccountEntity accountEntity = accountRepository.findById(account_id)
+                                                       .orElseThrow(
+                                                           () -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
 
         if (user_id != accountEntity.getUser_id()) {
             return null;
@@ -69,10 +68,9 @@ public class AccountService {
 
     @Transactional
     public AccountDto updateAccount (AccountDto accountDto, int user_id) {
-        AccountEntity accountEntity = accountRepository.findById(accountDto.getAccount_id()).orElse(null);
-        if (accountEntity == null) {
-            return null;
-        }
+        AccountEntity accountEntity = accountRepository.findById(accountDto.getAccount_id())
+                                                       .orElseThrow(
+                                                           () -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
 
         if (user_id != accountEntity.getUser_id()) {
             return null;
@@ -98,10 +96,10 @@ public class AccountService {
 
     @Transactional
     public boolean deleteAccount (int account_id, int user_id) {
-        AccountEntity accountEntity = accountRepository.findById(account_id).orElse(null);
-        if (accountEntity == null) {
-            return false;
-        }
+        AccountEntity accountEntity = accountRepository.findById(account_id)
+                                                       .orElseThrow(
+                                                           () -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
+
         if (user_id != accountEntity.getUser_id()) {
             return false;
         }
@@ -117,11 +115,12 @@ public class AccountService {
             return false;
         }
 
-        AccountEntity fromAccountEntity = accountRepository.findById(accountDto.getFrom_account_id()).orElse(null);
-        AccountEntity toAccountEntity = accountRepository.findById(accountDto.getTo_account_id()).orElse(null);
-        if (fromAccountEntity == null || toAccountEntity == null) {
-            return false;
-        }
+        AccountEntity fromAccountEntity = accountRepository.findById(accountDto.getFrom_account_id())
+                                                           .orElseThrow(
+                                                               () -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
+        AccountEntity toAccountEntity = accountRepository.findById(accountDto.getTo_account_id())
+                                                         .orElseThrow(
+                                                             () -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
 
         if (user_id != toAccountEntity.getUser_id() || user_id != fromAccountEntity.getUser_id()) {
             return false;

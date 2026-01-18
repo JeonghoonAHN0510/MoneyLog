@@ -1,8 +1,5 @@
 package com.moneylog_backend.moneylog.ledger.service;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
@@ -56,9 +53,6 @@ public class LedgerService {
 
         LedgerEntity ledgerEntity = ledgerDto.toEntity();
         ledgerRepository.save(ledgerEntity);
-
-        // todo int -> Integer
-        // todo orElse -> orElseThrow
 
         return ledgerEntity.getLedger_id();
     }

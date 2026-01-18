@@ -31,7 +31,8 @@ public class BankService {
     }
 
     public String getBankName (int bank_id) {
-        BankEntity bankEntity = bankRepository.findById(bank_id).orElse(null);
+        BankEntity bankEntity = bankRepository.findById(bank_id)
+                                              .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 은행입니다."));
         if (bankEntity == null) {
             return null;
         }

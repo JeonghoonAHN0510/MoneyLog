@@ -27,7 +27,7 @@ public class UserEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(columnDefinition = "INT UNSIGNED")
-    private int user_id;
+    private Integer user_id;
     @Column(columnDefinition = "INT UNSIGNED")
     private Integer account_id;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")

@@ -24,15 +24,15 @@ public class TransferEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(columnDefinition = "INT UNSIGNED")
-    private int transfer_id;
+    private Integer transfer_id;
     @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private int user_id;
+    private Integer user_id;
     @Column(name = "from_account", columnDefinition = "INT UNSIGNED NOT NULL")
-    private int from_account;
+    private Integer from_account;
     @Column(name = "to_account", columnDefinition = "INT UNSIGNED NOT NULL")
-    private int to_account;
+    private Integer to_account;
     @Column(columnDefinition = "INT NOT NULL")
-    private int amount;
+    private Integer amount;
     @Column(columnDefinition = "DATE NOT NULL")
     private LocalDate transfer_at;
     @Column(columnDefinition = "TEXT")
