@@ -11,4 +11,10 @@
           AND NAME = #{name}
           AND TYPE = #{type}
     </select>
+
+    <select id="getCategoryTypeByCategoryId">
+        SELECT type
+        FROM CATEGORY
+        WHERE CATEGORY_ID = #{category_id}
+    </select>
 </mapper>

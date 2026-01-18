@@ -123,17 +123,12 @@ public class AccountService {
             return false;
         }
 
-        int from_balance = fromAccountEntity.getBalance();
-        int to_balance = toAccountEntity.getBalance();
         if (user_id != toAccountEntity.getUser_id() || user_id != fromAccountEntity.getUser_id()) {
             return false;
         }
-        if (from_balance < transferBalance) {
-            return false;
-        }
 
-        fromAccountEntity.setBalance(from_balance - transferBalance);
-        toAccountEntity.setBalance(to_balance + transferBalance);
+        fromAccountEntity.withdraw(transferBalance);
+        toAccountEntity.deposit(transferBalance);
 
         return true;
     }

@@ -24,15 +24,15 @@ public class AccountEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(columnDefinition = "INT UNSIGNED")
-    private int account_id;
+    private Integer account_id;
     @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private int user_id;
+    private Integer user_id;
     @Column(name = "bank_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private int bank_id;
+    private Integer bank_id;
     @Column(columnDefinition = "VARCHAR(50)")
     private String nickname;
     @Column(columnDefinition = "INT")
-    private int balance;
+    private Integer balance;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")
     private String account_number;
     @Column(columnDefinition = "ENUM('BLUE', 'RED', 'GREEN', 'YELLOW', 'PURPLE', 'PINK', 'CYAN') NOT NULL")
@@ -41,6 +41,23 @@ public class AccountEntity extends BaseTime {
     @Column(columnDefinition = "ENUM('BANK', 'CASH', 'POINT', 'OTHER') NOT NULL")
     @Enumerated(EnumType.STRING)
     private AccountTypeEnum type;
+
+    public void deposit(Integer amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("입금액은 0원보다 커야 합니다.");
+        }
+        this.balance += amount;
+    }
+
+    public void withdraw(Integer amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("출금액은 0원보다 커야 합니다.");
+        }
+        if (this.balance < amount) {
+            throw new IllegalStateException("잔액이 부족합니다. (현재 잔액: " + this.balance + ")");
+        }
+        this.balance -= amount;
+    }
 
     public AccountDto toDto () {
         return AccountDto.builder()
