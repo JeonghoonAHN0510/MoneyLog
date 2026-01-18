@@ -24,21 +24,21 @@ public class LedgerEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(columnDefinition = "INT UNSIGNED")
-    private int ledger_id;
+    private Integer ledger_id;
     @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private int user_id;
+    private Integer user_id;
     @Column(name = "category_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private int category_id;
+    private Integer category_id;
     @Column(name = "payment_id", columnDefinition = "INT UNSIGNED")
-    private int payment_id;
+    private Integer payment_id;
     @Column(name = "account_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private int account_id;
+    private Integer account_id;
     @Column(name = "fixed_id", columnDefinition = "INT UNSIGNED")
-    private int fixed_id;
+    private Integer fixed_id;
     @Column(columnDefinition = "VARCHAR(100) NOT NULL")
     private String title;
     @Column(columnDefinition = "INT NOT NULL")
-    private int amount;
+    private Integer amount;
     @Column(columnDefinition = "TEXT")
     private String memo;
     @Column(columnDefinition = "DATE NOT NULL")

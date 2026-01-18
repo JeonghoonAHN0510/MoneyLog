@@ -1,5 +1,6 @@
 package com.moneylog_backend.moneylog.ledger.dto;
 
+import com.moneylog_backend.global.type.CategoryEnum;
 import com.moneylog_backend.moneylog.ledger.entity.LedgerEntity;
 
 import java.time.LocalDate;
@@ -15,18 +16,20 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LedgerDto {
-    private int ledger_id;
-    private int user_id;
-    private int category_id;
-    private int payment_id;
-    private int account_id;
-    private int fixed_id;
+    private Integer ledger_id;
+    private Integer user_id;
+    private Integer category_id;
+    private Integer payment_id;
+    private Integer account_id;
+    private Integer fixed_id;
     private String title;
-    private int amount;
+    private Integer amount;
     private String memo;
     private LocalDate trading_at;
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
+
+    private CategoryEnum category_type;
 
     public LedgerEntity toEntity () {
         return LedgerEntity.builder()
