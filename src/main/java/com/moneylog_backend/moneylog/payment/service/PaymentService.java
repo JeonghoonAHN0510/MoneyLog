@@ -36,10 +36,9 @@ public class PaymentService {
 
     @Transactional
     public PaymentDto updatePayment (PaymentDto paymentDto, int user_id) {
-        PaymentEntity paymentEntity = paymentRepository.findById(paymentDto.getPayment_id()).orElse(null);
-        if (paymentEntity == null) {
-            return null;
-        }
+        PaymentEntity paymentEntity = paymentRepository.findById(paymentDto.getPayment_id())
+                                                       .orElseThrow(
+                                                           () -> new IllegalArgumentException("존재하지 않는 결제수단입니다."));
 
         if (paymentEntity.getUser_id() != user_id) {
             return null;
@@ -59,10 +58,9 @@ public class PaymentService {
 
     @Transactional
     public boolean deletePayment (int payment_id, int user_id) {
-        PaymentEntity paymentEntity = paymentRepository.findById(payment_id).orElse(null);
-        if (paymentEntity == null) {
-            return false;
-        }
+        PaymentEntity paymentEntity = paymentRepository.findById(payment_id)
+                                                       .orElseThrow(
+                                                           () -> new IllegalArgumentException("존재하지 않는 결제수단입니다."));
 
         if (paymentEntity.getUser_id() != user_id) {
             return false;

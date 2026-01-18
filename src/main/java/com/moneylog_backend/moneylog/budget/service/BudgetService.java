@@ -54,10 +54,8 @@ public class BudgetService {
             return null;
         }
 
-        BudgetEntity budgetEntity = budgetRepository.findById(budgetDto.getBudget_id()).orElse(null);
-        if (budgetEntity == null) {
-            return null;
-        }
+        BudgetEntity budgetEntity = budgetRepository.findById(budgetDto.getBudget_id())
+                                                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예산입니다."));
 
         if (user_id != budgetEntity.getUser_id()) {
             return null;
@@ -70,11 +68,9 @@ public class BudgetService {
     }
 
     @Transactional
-    public boolean deleteBudget(BudgetDto budgetDto) {
-        BudgetEntity budgetEntity = budgetRepository.findById(budgetDto.getBudget_id()).orElse(null);
-        if (budgetEntity == null) {
-            return false;
-        }
+    public boolean deleteBudget (BudgetDto budgetDto) {
+        BudgetEntity budgetEntity = budgetRepository.findById(budgetDto.getBudget_id())
+                                                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예산입니다."));
 
         if (budgetDto.getUser_id() != budgetEntity.getUser_id()) {
             return false;

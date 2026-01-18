@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BankDto {
-    private int bank_id;
+    private Integer bank_id;
     private String name;
     private String code;
     private String logo_image_url;

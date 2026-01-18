@@ -44,10 +44,9 @@ public class CategoryService {
 
     @Transactional
     public CategoryDto updateCategory (CategoryDto categoryDto, int user_id) {
-        CategoryEntity categoryEntity = categoryRepository.findById(categoryDto.getCategory_id()).orElse(null);
-        if (categoryEntity == null) {
-            return null;
-        }
+        CategoryEntity categoryEntity = categoryRepository.findById(categoryDto.getCategory_id())
+                                                          .orElseThrow(
+                                                              () -> new IllegalArgumentException("존재하지 않는 카테고리입니다."));
 
         if (categoryEntity.getUser_id() != user_id) {
             return null;
@@ -67,10 +66,9 @@ public class CategoryService {
 
     @Transactional
     public boolean deleteCategory (int category_id, int user_id) {
-        CategoryEntity categoryEntity = categoryRepository.findById(category_id).orElse(null);
-        if (categoryEntity == null) {
-            return false;
-        }
+        CategoryEntity categoryEntity = categoryRepository.findById(category_id)
+                                                          .orElseThrow(
+                                                              () -> new IllegalArgumentException("존재하지 않는 카테고리입니다."));
 
         if (user_id == categoryEntity.getUser_id()) {
             categoryRepository.deleteById(category_id);

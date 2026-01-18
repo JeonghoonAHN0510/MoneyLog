@@ -15,11 +15,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TransferDto {
-    private int transfer_id;
-    private int user_id;
-    private int from_account;
-    private int to_account;
-    private int amount;
+    private Integer transfer_id;
+    private Integer user_id;
+    private Integer from_account;
+    private Integer to_account;
+    private Integer amount;
     private LocalDate transfer_at;
     private String memo;
     private LocalDateTime created_at;

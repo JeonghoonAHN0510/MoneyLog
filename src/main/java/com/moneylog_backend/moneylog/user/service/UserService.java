@@ -105,10 +105,8 @@ public class UserService {
     }
 
     public UserDto getUserInfo (String loginId) {
-        UserEntity userEntity = userRepository.findByLoginId(loginId).orElse(null);
-        if (userEntity == null) {
-            return null;
-        }
+        UserEntity userEntity = userRepository.findByLoginId(loginId)
+                                              .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
         userEntity.setPassword(null);
         return userEntity.toDto();
