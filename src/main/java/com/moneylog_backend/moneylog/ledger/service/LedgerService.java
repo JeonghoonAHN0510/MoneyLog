@@ -1,5 +1,7 @@
 package com.moneylog_backend.moneylog.ledger.service;
 
+import java.util.List;
+
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
@@ -55,5 +57,22 @@ public class LedgerService {
         ledgerRepository.save(ledgerEntity);
 
         return ledgerEntity.getLedger_id();
+    }
+
+    public List<LedgerDto> getLedgersByUserId (int user_id) {
+        return ledgerMapper.getLedgersByUserId(user_id);
+    }
+
+    @Transactional
+    public boolean deleteLedger (LedgerDto ledgerDto) {
+        LedgerEntity ledgerEntity = ledgerRepository.findById(ledgerDto.getLedger_id())
+                                                    .orElseThrow(
+                                                        () -> new IllegalArgumentException("유효하지 않은 지출 내역입니다."));
+        if (!ledgerEntity.getUser_id().equals(ledgerDto.getUser_id())) {
+            throw new AccessDeniedException("본인의 지출 내역이 아닙니다.");
+        }
+
+        ledgerRepository.delete(ledgerEntity);
+        return true;
     }
 }

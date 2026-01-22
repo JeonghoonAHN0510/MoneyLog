@@ -4,5 +4,9 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.moneylog_backend.moneylog.ledger.mapper.LedgerMapper">
-
+    <select id="getLedgersByUserId">
+        SELECT *
+        FROM LEDGER
+        WHERE USER_ID = #{user_id}
+    </select>
 </mapper>
