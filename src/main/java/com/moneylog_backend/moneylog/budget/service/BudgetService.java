@@ -8,6 +8,7 @@ import com.moneylog_backend.moneylog.budget.mapper.BudgetMapper;
 import com.moneylog_backend.moneylog.budget.repository.BudgetRepository;
 import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,12 +55,7 @@ public class BudgetService {
             return null;
         }
 
-        BudgetEntity budgetEntity = budgetRepository.findById(budgetDto.getBudget_id())
-                                                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예산입니다."));
-
-        if (user_id != budgetEntity.getUser_id()) {
-            return null;
-        }
+        BudgetEntity budgetEntity = getBudgetEntityById(budgetDto.getBudget_id(), user_id);
 
         budgetEntity.setCategory_id(category_id);
         budgetEntity.setAmount(budgetDto.getAmount());
@@ -69,22 +65,28 @@ public class BudgetService {
 
     @Transactional
     public boolean deleteBudget (BudgetDto budgetDto) {
-        BudgetEntity budgetEntity = budgetRepository.findById(budgetDto.getBudget_id())
-                                                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예산입니다."));
-
-        if (budgetDto.getUser_id() != budgetEntity.getUser_id()) {
-            return false;
-        }
+        BudgetEntity budgetEntity = getBudgetEntityById(budgetDto.getBudget_id(), budgetDto.getUser_id());
 
         budgetRepository.delete(budgetEntity);
         return true;
     }
 
-    public boolean hasBudget (int category_id) {
+    private boolean hasBudget (int category_id) {
         return categoryRepository.existsById(category_id);
     }
 
-    public int checkingCategoryAndUserIsDuplicate (int category_id, int user_id) {
+    private int checkingCategoryAndUserIsDuplicate (int category_id, int user_id) {
         return budgetMapper.checkCategoryAndUserIsDuplicate(category_id, user_id);
+    }
+
+    private BudgetEntity getBudgetEntityById (int budget_id, int user_id) {
+        BudgetEntity budgetEntity = budgetRepository.findById(budget_id)
+                                                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예산입니다."));
+
+        if (user_id != budgetEntity.getUser_id()) {
+            throw new AccessDeniedException("본인의 예산이 아닙니다.");
+        }
+
+        return budgetEntity;
     }
 }

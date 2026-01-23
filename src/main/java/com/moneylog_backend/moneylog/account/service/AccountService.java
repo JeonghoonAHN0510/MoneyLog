@@ -9,6 +9,7 @@ import com.moneylog_backend.moneylog.account.mapper.AccountMapper;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.bank.service.BankService;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,13 +52,7 @@ public class AccountService {
     }
 
     public AccountDto getAccount (int account_id, int user_id) {
-        AccountEntity accountEntity = accountRepository.findById(account_id)
-                                                       .orElseThrow(
-                                                           () -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
-
-        if (user_id != accountEntity.getUser_id()) {
-            return null;
-        }
+        AccountEntity accountEntity = getAccountEntityById(account_id, user_id);
 
         return accountEntity.toDto();
     }
@@ -68,13 +63,7 @@ public class AccountService {
 
     @Transactional
     public AccountDto updateAccount (AccountDto accountDto, int user_id) {
-        AccountEntity accountEntity = accountRepository.findById(accountDto.getAccount_id())
-                                                       .orElseThrow(
-                                                           () -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
-
-        if (user_id != accountEntity.getUser_id()) {
-            return null;
-        }
+        AccountEntity accountEntity = getAccountEntityById(accountDto.getAccount_id(), user_id);
 
         String InputNickname = accountDto.getNickname();
         if (InputNickname != null) {
@@ -96,13 +85,7 @@ public class AccountService {
 
     @Transactional
     public boolean deleteAccount (int account_id, int user_id) {
-        AccountEntity accountEntity = accountRepository.findById(account_id)
-                                                       .orElseThrow(
-                                                           () -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
-
-        if (user_id != accountEntity.getUser_id()) {
-            return false;
-        }
+        AccountEntity accountEntity = getAccountEntityById(account_id, user_id);
 
         accountRepository.delete(accountEntity);
         return true;
@@ -115,16 +98,11 @@ public class AccountService {
             return false;
         }
 
-        AccountEntity fromAccountEntity = accountRepository.findById(accountDto.getFrom_account_id())
-                                                           .orElseThrow(
-                                                               () -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
-        AccountEntity toAccountEntity = accountRepository.findById(accountDto.getTo_account_id())
-                                                         .orElseThrow(
-                                                             () -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
+        int fromAccountId = accountDto.getFrom_account_id();
+        int toAccountId = accountDto.getTo_account_id();
 
-        if (user_id != toAccountEntity.getUser_id() || user_id != fromAccountEntity.getUser_id()) {
-            return false;
-        }
+        AccountEntity fromAccountEntity = getAccountEntityById(fromAccountId, user_id);
+        AccountEntity toAccountEntity = getAccountEntityById(toAccountId, user_id);
 
         fromAccountEntity.withdraw(transferBalance);
         toAccountEntity.deposit(transferBalance);
@@ -132,9 +110,21 @@ public class AccountService {
         return true;
     }
 
-    public String getRegexAccountNumber (int bank_id, String account_number) {
+    private String getRegexAccountNumber (int bank_id, String account_number) {
         String bankName = bankService.getBankName(bank_id);
 
         return BankAccountNumberFormatter.format(bankName, account_number);
+    }
+
+    private AccountEntity getAccountEntityById (int account_id, int user_id) {
+        AccountEntity accountEntity = accountRepository.findById(account_id)
+                                                       .orElseThrow(
+                                                           () -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
+
+        if (user_id != accountEntity.getUser_id()) {
+            throw new AccessDeniedException("본인의 계좌가 아닙니다.");
+        }
+
+        return accountEntity;
     }
 }
