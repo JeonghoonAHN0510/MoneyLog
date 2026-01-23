@@ -7,7 +7,8 @@ import com.moneylog_backend.moneylog.account.dto.AccountDto;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.mapper.AccountMapper;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
-import com.moneylog_backend.moneylog.bank.service.BankService;
+import com.moneylog_backend.moneylog.bank.entity.BankEntity;
+import com.moneylog_backend.moneylog.bank.repository.BankRepository;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -20,15 +21,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AccountService {
     private final AccountRepository accountRepository;
+    private final BankRepository bankRepository;
     private final AccountMapper accountMapper;
-    private final BankService bankService;
 
     @Transactional
     public int saveAccount (AccountDto accountDto, int user_id) {
         accountDto.setUser_id(user_id);
 
         int bank_id = accountDto.getBank_id();
-        if (!bankService.isBankValid(bank_id)) {
+        if (!isBankValid(bank_id)) {
             return -1;
         }
 
@@ -39,7 +40,7 @@ public class AccountService {
         }
 
         if (accountDto.getNickname() == null || accountDto.getNickname().isEmpty()) {
-            String nickname = bankService.getBankName(bank_id);
+            String nickname = getBankName(bank_id);
             accountDto.setNickname(nickname);
         }
 
@@ -111,7 +112,7 @@ public class AccountService {
     }
 
     private String getRegexAccountNumber (int bank_id, String account_number) {
-        String bankName = bankService.getBankName(bank_id);
+        String bankName = getBankName(bank_id);
 
         return BankAccountNumberFormatter.format(bankName, account_number);
     }
@@ -126,5 +127,16 @@ public class AccountService {
         }
 
         return accountEntity;
+    }
+
+    private boolean isBankValid (int bank_id) {
+        return bankRepository.existsById(bank_id);
+    }
+
+    private String getBankName (int bank_id) {
+        BankEntity bankEntity = bankRepository.findById(bank_id)
+                                              .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 은행입니다."));
+
+        return bankEntity.getName();
     }
 }

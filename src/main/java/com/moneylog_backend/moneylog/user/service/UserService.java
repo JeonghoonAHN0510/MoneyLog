@@ -7,7 +7,8 @@ import com.moneylog_backend.global.util.FormatUtils;
 import com.moneylog_backend.global.util.RedisService;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
-import com.moneylog_backend.moneylog.bank.service.BankService;
+import com.moneylog_backend.moneylog.bank.entity.BankEntity;
+import com.moneylog_backend.moneylog.bank.repository.BankRepository;
 import com.moneylog_backend.moneylog.user.dto.TokenResponse;
 import com.moneylog_backend.moneylog.user.dto.UserDto;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
@@ -36,8 +37,8 @@ public class UserService {
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final BankRepository bankRepository;
     private final RedisService redisService;
-    private final BankService bankService;
     private final JwtProvider jwtProvider;
     private final FormatUtils formatUtils;
     private final UserMapper userMapper;
@@ -57,7 +58,7 @@ public class UserService {
         userRepository.save(userEntity);
 
         int bank_id = userDto.getBank_id();
-        String bankName = bankService.getBankName(bank_id);
+        String bankName = getBankName(bank_id);
         String regexAccountNumber = BankAccountNumberFormatter.format(bankName, userDto.getAccount_number());
 
         AccountEntity accountEntity = AccountEntity.builder()
@@ -112,12 +113,19 @@ public class UserService {
         return userEntity.toDto();
     }
 
-    public void checkIdOrEmailValidity (UserDto userDto) {
+    private void checkIdOrEmailValidity (UserDto userDto) {
         if (userRepository.existsByLoginId(userDto.getId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 가입된 아이디입니다.");
         }
         if (userRepository.existsByEmail(userDto.getEmail())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 가입된 이메일입니다.");
         }
+    }
+
+    private String getBankName (int bank_id) {
+        BankEntity bankEntity = bankRepository.findById(bank_id)
+                                              .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 은행입니다."));
+
+        return bankEntity.getName();
     }
 }

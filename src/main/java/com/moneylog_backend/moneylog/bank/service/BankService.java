@@ -25,15 +25,4 @@ public class BankService {
 
         return bankEntities.stream().map(BankEntity::toDto).collect(Collectors.toList());
     }
-
-    public boolean isBankValid (int bank_id) {
-        return bankRepository.existsById(bank_id);
-    }
-
-    public String getBankName (int bank_id) {
-        BankEntity bankEntity = bankRepository.findById(bank_id)
-                                              .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 은행입니다."));
-
-        return bankEntity.getName();
-    }
 }
