@@ -22,6 +22,8 @@ public class AccountService {
     private final AccountMapper accountMapper;
     private final BankService bankService;
 
+    // todo findById 단순화 필요
+
     @Transactional
     public int saveAccount (AccountDto accountDto, int user_id) {
         accountDto.setUser_id(user_id);

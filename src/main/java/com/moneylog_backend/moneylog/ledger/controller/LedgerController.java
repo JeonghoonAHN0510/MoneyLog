@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -45,6 +46,16 @@ public class LedgerController {
         }
 
         return ResponseEntity.ok(ledgerService.getLedgersByUserId(user_id));
+    }
+
+    @PutMapping
+    public ResponseEntity<?> updateLedger(@RequestBody LedgerDto ledgerDto, @LoginUser Integer user_id) {
+        if (ledgerDto == null || user_id == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        ledgerDto.setUser_id(user_id);
+        return ResponseEntity.ok(ledgerService.updateLedger(ledgerDto));
     }
 
     @DeleteMapping
