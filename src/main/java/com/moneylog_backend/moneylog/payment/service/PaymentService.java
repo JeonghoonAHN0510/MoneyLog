@@ -8,6 +8,7 @@ import com.moneylog_backend.moneylog.payment.entity.PaymentEntity;
 import com.moneylog_backend.moneylog.payment.mapper.PaymentMapper;
 import com.moneylog_backend.moneylog.payment.repository.PaymentRepository;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,13 +37,7 @@ public class PaymentService {
 
     @Transactional
     public PaymentDto updatePayment (PaymentDto paymentDto, int user_id) {
-        PaymentEntity paymentEntity = paymentRepository.findById(paymentDto.getPayment_id())
-                                                       .orElseThrow(
-                                                           () -> new IllegalArgumentException("존재하지 않는 결제수단입니다."));
-
-        if (paymentEntity.getUser_id() != user_id) {
-            return null;
-        }
+        PaymentEntity paymentEntity = getPaymentEntityById(paymentDto.getPayment_id(), user_id);
 
         String InputName = paymentDto.getName();
         PaymentEnum InputType = paymentDto.getType();
@@ -58,15 +53,21 @@ public class PaymentService {
 
     @Transactional
     public boolean deletePayment (int payment_id, int user_id) {
+        PaymentEntity paymentEntity = getPaymentEntityById(payment_id, user_id);
+
+        paymentRepository.delete(paymentEntity);
+        return true;
+    }
+
+    private PaymentEntity getPaymentEntityById (int payment_id, int user_id) {
         PaymentEntity paymentEntity = paymentRepository.findById(payment_id)
                                                        .orElseThrow(
                                                            () -> new IllegalArgumentException("존재하지 않는 결제수단입니다."));
 
         if (paymentEntity.getUser_id() != user_id) {
-            return false;
+            throw new AccessDeniedException("본인의 결제수단이 아닙니다.");
         }
 
-        paymentRepository.delete(paymentEntity);
-        return true;
+        return paymentEntity;
     }
 }

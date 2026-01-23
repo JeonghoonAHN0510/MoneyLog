@@ -8,6 +8,7 @@ import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
 import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,13 +45,7 @@ public class CategoryService {
 
     @Transactional
     public CategoryDto updateCategory (CategoryDto categoryDto, int user_id) {
-        CategoryEntity categoryEntity = categoryRepository.findById(categoryDto.getCategory_id())
-                                                          .orElseThrow(
-                                                              () -> new IllegalArgumentException("존재하지 않는 카테고리입니다."));
-
-        if (categoryEntity.getUser_id() != user_id) {
-            return null;
-        }
+        CategoryEntity categoryEntity = getCategoryEntityById(categoryDto.getCategory_id(), user_id);
 
         String InputName = categoryDto.getName();
         CategoryEnum InputType = categoryDto.getType();
@@ -66,15 +61,21 @@ public class CategoryService {
 
     @Transactional
     public boolean deleteCategory (int category_id, int user_id) {
+        CategoryEntity categoryEntity = getCategoryEntityById(category_id, user_id);
+
+        categoryRepository.delete(categoryEntity);
+        return true;
+    }
+
+    private CategoryEntity getCategoryEntityById (int category_id, int user_id) {
         CategoryEntity categoryEntity = categoryRepository.findById(category_id)
                                                           .orElseThrow(
                                                               () -> new IllegalArgumentException("존재하지 않는 카테고리입니다."));
 
-        if (user_id == categoryEntity.getUser_id()) {
-            categoryRepository.deleteById(category_id);
-            return true;
+        if (categoryEntity.getUser_id() != user_id) {
+            throw new AccessDeniedException("본인의 카테고리가 아닙니다.");
         }
 
-        return false;
+        return categoryEntity;
     }
 }
