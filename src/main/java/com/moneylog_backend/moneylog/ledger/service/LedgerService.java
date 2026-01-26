@@ -7,6 +7,7 @@ import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
 import com.moneylog_backend.moneylog.ledger.dto.LedgerDto;
+import com.moneylog_backend.moneylog.ledger.dto.query.SelectLedgerByUserIdQuery;
 import com.moneylog_backend.moneylog.ledger.entity.LedgerEntity;
 import com.moneylog_backend.moneylog.ledger.mapper.LedgerMapper;
 import com.moneylog_backend.moneylog.ledger.repository.LedgerRepository;
@@ -53,7 +54,15 @@ public class LedgerService {
     }
 
     public List<LedgerDto> getLedgersByUserId (int user_id) {
-        return ledgerMapper.getLedgersByUserId(user_id);
+        LocalDate end_date = LocalDate.now();
+        LocalDate start_date = end_date.withDayOfMonth(1);
+
+        SelectLedgerByUserIdQuery selectQuery = SelectLedgerByUserIdQuery.builder()
+                                                                         .user_id(user_id)
+                                                                         .start_date(start_date)
+                                                                         .end_date(end_date)
+                                                                         .build();
+        return ledgerMapper.getLedgersByUserId(selectQuery);
     }
 
     @Transactional

@@ -48,6 +48,8 @@ public class LedgerController {
         return ResponseEntity.ok(ledgerService.getLedgersByUserId(user_id));
     }
 
+    // todo 검색 조건에 따른 가계부 조회 API 필요
+
     @PutMapping
     public ResponseEntity<?> updateLedger(@RequestBody LedgerDto ledgerDto, @LoginUser Integer user_id) {
         if (ledgerDto == null || user_id == null) {

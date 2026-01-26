@@ -8,5 +8,7 @@
         SELECT *
         FROM LEDGER
         WHERE USER_ID = #{user_id}
+          AND trading_at <![CDATA[ >= ]]> #{start_date}
+          AND trading_at <![CDATA[ <= ]]> #{end_date}
     </select>
 </mapper>
