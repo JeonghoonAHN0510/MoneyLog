@@ -1,7 +1,7 @@
 package com.moneylog_backend.moneylog.account.entity;
 
 import com.moneylog_backend.global.common.BaseTime;
-import com.moneylog_backend.global.type.AccountColorEnum;
+import com.moneylog_backend.global.type.ColorEnum;
 import com.moneylog_backend.global.type.AccountTypeEnum;
 import com.moneylog_backend.moneylog.account.dto.AccountDto;
 
@@ -35,9 +35,9 @@ public class AccountEntity extends BaseTime {
     private Integer balance;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")
     private String account_number;
-    @Column(columnDefinition = "ENUM('BLUE', 'RED', 'GREEN', 'YELLOW', 'PURPLE', 'PINK', 'CYAN') NOT NULL")
+    @Column(columnDefinition = "ENUM('BLUE', 'RED', 'GREEN', 'YELLOW', 'PURPLE', 'PINK', 'CYAN') DEFAULT 'BLUE'")
     @Enumerated(EnumType.STRING)
-    private AccountColorEnum color;
+    private ColorEnum color;
     @Column(columnDefinition = "ENUM('BANK', 'CASH', 'POINT', 'OTHER') NOT NULL")
     @Enumerated(EnumType.STRING)
     private AccountTypeEnum type;

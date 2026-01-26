@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum AccountColorEnum {
+public enum ColorEnum {
     BLUE("#3b82f6"),
     RED("#ef4444"),
     GREEN("#22c55e"),
@@ -29,10 +29,10 @@ public enum AccountColorEnum {
 
     // 2. [클라이언트 -> 서버] JSON으로 들어올 때 hexCode를 보고 Enum으로 변환
     @JsonCreator
-    public static AccountColorEnum fromHexCode(String hexCode) {
-        return Arrays.stream(AccountColorEnum.values())
+    public static ColorEnum fromHexCode(String hexCode) {
+        return Arrays.stream(ColorEnum.values())
                      .filter(color -> color.getHexCode().equalsIgnoreCase(hexCode))
                      .findFirst()
-                     .orElse(AccountColorEnum.BLUE);
+                     .orElse(ColorEnum.BLUE);
     }
 }

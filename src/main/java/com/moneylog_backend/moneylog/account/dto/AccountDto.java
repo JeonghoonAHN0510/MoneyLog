@@ -1,6 +1,6 @@
 package com.moneylog_backend.moneylog.account.dto;
 
-import com.moneylog_backend.global.type.AccountColorEnum;
+import com.moneylog_backend.global.type.ColorEnum;
 import com.moneylog_backend.global.type.AccountTypeEnum;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 
@@ -23,7 +23,7 @@ public class AccountDto {
     private Integer balance;
     private String account_number;
     private AccountTypeEnum type;
-    private AccountColorEnum color;
+    private ColorEnum color;
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
