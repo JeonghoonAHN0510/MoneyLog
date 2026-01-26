@@ -12,23 +12,20 @@ import { TakeHomeCalculator } from '../components/TakeHomeCalculator';
 import { BudgetManager } from '../components/BudgetManager';
 import { AccountManager } from '../components/AccountManager';
 import { CategoryManager } from '../components/CategoryManager';
-import { Transaction, Budget, Category, Account, Transfer } from '../types/finance';
+import { Budget, Category, Account, Ledger } from '../types/finance';
 import { Plus, Wallet, Calendar, ChartBar, Calculator, Target, List, User, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import useUserStore from '../stores/authStore';
 import api from '../api/axiosConfig';
+import useResourceStore from '../stores/resourceStore';
 
 export default function FinancePage() {
   const navigate = useNavigate();
   const { isAuthenticated, userInfo, setUserInfo, logout } = useUserStore();
+  const { banks, budgets, categories, accounts, ledgers, setBanks, setBudgets, setCategories, setAccounts, setLedgers } = useResourceStore();
   
   // [변경] 초기값을 빈 배열로 설정 (Mock Data 제거)
   const [loading, setLoading] = useState(true);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [transfers, setTransfers] = useState<Transfer[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
@@ -63,18 +60,22 @@ export default function FinancePage() {
     try {
       setLoading(true);
       // Promise.all로 병렬 요청 (성능 최적화)
-      const [accRes, transRes, budgetRes, catRes] = await Promise.allSettled([
+      const [accRes, ledgerRes, budgetRes, catRes, paymentRes, bankRes] = await Promise.allSettled([
         api.get('/account/list'),      // 계좌 목록
-        api.get('/transaction/list'),  // 거래 내역
-        api.get('/budget/list'),       // 예산 목록
-        api.get('/category/list')      // 카테고리 목록
+        api.get('/ledger'),            // 거래 내역
+        api.get('/budget'),            // 예산 목록
+        api.get('/category'),          // 카테고리 목록
+        api.get('/payment'),           // 결제수단
+        api.get('/bank')               // 은행
       ]);
 
       // 성공한 요청만 State에 반영
       if (accRes.status === 'fulfilled') setAccounts(accRes.value.data);
-      if (transRes.status === 'fulfilled') setTransactions(transRes.value.data);
+      if (ledgerRes.status === 'fulfilled') setLedgers(ledgerRes.value.data);
       if (budgetRes.status === 'fulfilled') setBudgets(budgetRes.value.data);
       if (catRes.status === 'fulfilled') setCategories(catRes.value.data);
+      if (paymentRes.status === 'fulfilled') setCategories(paymentRes.value.data);
+      if (bankRes.status === 'fulfilled') setBanks(bankRes.value.data);
       
       // Transfer는 별도 엔드포인트가 있다면 추가 필요
       // const transferRes = await api.get('/transfer/list');
@@ -110,7 +111,7 @@ export default function FinancePage() {
   };
 
   // --- [Transaction CRUD] ---
-  const handleAddTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+  const handleAddTransaction = async (transaction: Omit<Ledger, 'id'>) => {
     try {
       await api.post('/transaction', transaction);
       toast.success("거래 내역이 추가되었습니다.");
@@ -214,7 +215,7 @@ export default function FinancePage() {
   };
 
   // --- [Transfer Logic] ---
-  const handleAddTransfer = async (transfer: Omit<Transfer, 'id'>) => {
+  const handleAddTransfer = async (transfer: Omit<Ledger, 'id'>) => {
     try {
       await api.post('/account/transfer', transfer); // 이체 API 호출
       toast.success("이체가 완료되었습니다.");
@@ -319,17 +320,17 @@ export default function FinancePage() {
 
           <TabsContent value="dashboard" className="space-y-6">
             <DashboardView
-              transactions={transactions}
+              transactions={ledgers}
               budgets={budgets}
               categories={categories}
             />
           </TabsContent>
 
           <TabsContent value="calendar" className="space-y-6">
-            <CalendarView transactions={transactions} onDateClick={handleDateClick} />
+            <CalendarView transactions={ledgers} onDateClick={handleDateClick} />
             {selectedDate && (
               <TransactionList
-                transactions={transactions}
+                transactions={ledgers}
                 categories={categories}
                 selectedDate={selectedDate}
                 onDelete={handleDeleteTransaction}
@@ -339,7 +340,7 @@ export default function FinancePage() {
 
           <TabsContent value="transactions" className="space-y-6">
             <TransactionList
-              transactions={transactions}
+              transactions={ledgers}
               categories={categories}
               onDelete={handleDeleteTransaction}
             />

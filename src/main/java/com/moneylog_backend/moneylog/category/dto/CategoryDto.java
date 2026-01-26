@@ -1,6 +1,7 @@
 package com.moneylog_backend.moneylog.category.dto;
 
 import com.moneylog_backend.global.type.CategoryEnum;
+import com.moneylog_backend.global.type.ColorEnum;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ public class CategoryDto {
     private Integer user_id;
     private String name;
     private CategoryEnum type;
+    private ColorEnum color;
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
@@ -28,6 +30,7 @@ public class CategoryDto {
                              .user_id(this.user_id)
                              .name(this.name)
                              .type(this.type)
+                             .color(this.color)
                              .build();
     }
 }

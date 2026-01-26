@@ -5,12 +5,12 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
-import { Transfer, Account } from '../types/finance';
+import { Account, Ledger } from '../types/finance';
 
 interface TransferDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (transfer: Omit<Transfer, 'id'>) => void;
+  onAdd: (transfer: Omit<Ledger, 'id'>) => void;
   accounts: Account[];
 }
 

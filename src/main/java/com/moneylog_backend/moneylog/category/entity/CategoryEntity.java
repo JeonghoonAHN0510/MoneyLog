@@ -2,6 +2,7 @@ package com.moneylog_backend.moneylog.category.entity;
 
 import com.moneylog_backend.global.common.BaseTime;
 import com.moneylog_backend.global.type.CategoryEnum;
+import com.moneylog_backend.global.type.ColorEnum;
 import com.moneylog_backend.moneylog.category.dto.CategoryDto;
 
 import org.hibernate.annotations.DynamicInsert;
@@ -31,6 +32,9 @@ public class CategoryEntity extends BaseTime {
     @Column(columnDefinition = "ENUM('INCOME', 'EXPENSE') NOT NULL")
     @Enumerated(EnumType.STRING)
     private CategoryEnum type;
+    @Column(columnDefinition = "ENUM('BLUE', 'RED', 'GREEN', 'YELLOW', 'PURPLE', 'PINK', 'CYAN') DEFAULT 'BLUE'")
+    @Enumerated(EnumType.STRING)
+    private ColorEnum color;
 
     public CategoryDto toDto () {
         return CategoryDto.builder()
@@ -38,6 +42,7 @@ public class CategoryEntity extends BaseTime {
                           .user_id(this.user_id)
                           .name(this.name)
                           .type(this.type)
+                          .color(this.color)
                           .created_at(this.getCreated_at())
                           .updated_at(this.getUpdated_at())
                           .build();
