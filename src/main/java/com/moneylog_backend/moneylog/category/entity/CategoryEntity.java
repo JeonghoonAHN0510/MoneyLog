@@ -32,7 +32,7 @@ public class CategoryEntity extends BaseTime {
     @Column(columnDefinition = "ENUM('INCOME', 'EXPENSE') NOT NULL")
     @Enumerated(EnumType.STRING)
     private CategoryEnum type;
-    @Column(columnDefinition = "ENUM('BLUE', 'RED', 'GREEN', 'YELLOW', 'PURPLE', 'PINK', 'CYAN') DEFAULT 'BLUE'")
+    @Column(columnDefinition = "ENUM('RED', 'AMBER', 'YELLOW', 'LIME', 'GREEN', 'EMERALD', 'TEAL', 'CYAN', 'BLUE', 'PURPLE', 'PINK', 'SLATE') DEFAULT 'BLUE'")
     @Enumerated(EnumType.STRING)
     private ColorEnum color;
 

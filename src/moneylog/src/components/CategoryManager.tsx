@@ -10,9 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 interface CategoryManagerProps {
   categories: Category[];
-  onAdd: (category: Omit<Category, 'id'>) => void;
-  onUpdate: (id: string, category: Partial<Category>) => void;
-  onDelete: (id: string) => void;
+  onAdd: (category: Omit<Category, "category_id" | "user_id" | "created_at" | "updated_at">) => void;
+  onUpdate: (category: Partial<Category>) => void;
+  onDelete: (category_id: string) => void;
 }
 
 const defaultColors = [
@@ -36,12 +36,13 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const [name, setName] = useState('');
-  const [type, setType] = useState<'income' | 'expense'>('expense');
+  const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
   const [color, setColor] = useState(defaultColors[0]);
+  const [category_id, setCategoryId] = useState('');
 
   const resetForm = () => {
     setName('');
-    setType('expense');
+    setType('EXPENSE');
     setColor(defaultColors[0]);
   };
 
@@ -63,13 +64,15 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
     setName(category.name);
     setType(category.type);
     setColor(category.color);
+    setCategoryId(category.category_id);
     setIsEditDialogOpen(true);
   };
 
   const handleUpdate = () => {
     if (!editingCategory || !name) return;
 
-    onUpdate(editingCategory.id, {
+    onUpdate({
+      category_id,
       name,
       type,
       color,
@@ -80,8 +83,8 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
     setIsEditDialogOpen(false);
   };
 
-  const expenseCategories = categories.filter((c) => c.type === 'expense');
-  const incomeCategories = categories.filter((c) => c.type === 'income');
+  const expenseCategories = categories.filter((c) => c.type === 'EXPENSE');
+  const incomeCategories = categories.filter((c) => c.type === 'INCOME');
 
   const CategoryForm = () => (
     <div className="space-y-4">
@@ -100,17 +103,17 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
         <div className="flex gap-2">
           <Button
             type="button"
-            variant={type === 'expense' ? 'default' : 'outline'}
+            variant={type === 'EXPENSE' ? 'default' : 'outline'}
             className="flex-1"
-            onClick={() => setType('expense')}
+            onClick={() => setType('EXPENSE')}
           >
             지출
           </Button>
           <Button
             type="button"
-            variant={type === 'income' ? 'default' : 'outline'}
+            variant={type === 'INCOME' ? 'default' : 'outline'}
             className="flex-1"
-            onClick={() => setType('income')}
+            onClick={() => setType('INCOME')}
           >
             수입
           </Button>
@@ -143,7 +146,7 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
       ) : (
         items.map((category) => (
           <div
-            key={category.id}
+            key={category.category_id}
             className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
           >
             <div className="flex items-center gap-3">
@@ -157,7 +160,7 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
               <Button variant="ghost" size="icon" onClick={() => handleEdit(category)}>
                 <Pencil className="size-4" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => onDelete(category.id)}>
+              <Button variant="ghost" size="icon" onClick={() => onDelete(category.category_id)}>
                 <Trash className="size-4" />
               </Button>
             </div>
@@ -183,19 +186,19 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="expense">
+          <Tabs defaultValue="EXPENSE">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="expense">
+              <TabsTrigger value="EXPENSE">
                 지출 ({expenseCategories.length})
               </TabsTrigger>
-              <TabsTrigger value="income">
+              <TabsTrigger value="INCOME">
                 수입 ({incomeCategories.length})
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="expense" className="mt-4">
+            <TabsContent value="EXPENSE" className="mt-4">
               <CategoryList items={expenseCategories} />
             </TabsContent>
-            <TabsContent value="income" className="mt-4">
+            <TabsContent value="INCOME" className="mt-4">
               <CategoryList items={incomeCategories} />
             </TabsContent>
           </Tabs>

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { Account, Bank, Budget, Category, Ledger } from "../types/finance";
+import { Account, Bank, Budget, Category, Ledger, Payment } from "../types/finance";
 
 
 
@@ -11,6 +11,7 @@ interface ResourceState {
   categories: Category[];
   accounts: Account[];
   ledgers: Ledger[];
+  payments: Payment[];
 
 
   // Action
@@ -19,6 +20,7 @@ interface ResourceState {
   setCategories: (categoryList: Category[]) => void;
   setAccounts: (accountList: Account[]) => void;
   setLedgers: (ledgerList: Ledger[]) => void;
+  setPayments: (paymentList: Payment[]) => void;
 }
 
 const useResourceStore = create<ResourceState>()(
@@ -29,12 +31,14 @@ const useResourceStore = create<ResourceState>()(
       categories: [],
       accounts: [],
       ledgers: [],
+      payments: [],
 
       setBanks: (bankList) => set({ banks: bankList }),
       setBudgets: (budgetList) => set({ budgets: budgetList }),
       setCategories: (categoryList) => set({ categories: categoryList }),
       setAccounts: (accountList) => set({ accounts: accountList }),
       setLedgers: (ledgerList) => set({ ledgers: ledgerList }),
+      setPayments: (paymentList) => set({ payments: paymentList }),
     }),
     {
       name: 'resource-session-storage',

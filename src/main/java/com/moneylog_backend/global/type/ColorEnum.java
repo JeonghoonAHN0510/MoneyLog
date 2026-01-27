@@ -11,13 +11,18 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum ColorEnum {
-    BLUE("#3b82f6"),
     RED("#ef4444"),
-    GREEN("#22c55e"),
+    AMBER("#f59e0b"),
     YELLOW("#eab308"),
+    LIME("#84cc16"),
+    GREEN("#22c55e"),
+    EMERALD("#10b981"),
+    TEAL("#14b8a6"),
+    CYAN("#06b6d4"),
+    BLUE("#3b82f6"),
     PURPLE("#8b5cf6"),
     PINK("#ec4899"),
-    CYAN("#06b6d4");
+    SLATE("#64748b");
 
     private final String hexCode;
 

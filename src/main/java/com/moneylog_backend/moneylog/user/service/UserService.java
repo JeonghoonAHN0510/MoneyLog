@@ -2,6 +2,7 @@ package com.moneylog_backend.moneylog.user.service;
 
 import com.moneylog_backend.global.auth.jwt.JwtProvider;
 import com.moneylog_backend.global.file.FileStore;
+import com.moneylog_backend.global.type.AccountTypeEnum;
 import com.moneylog_backend.global.util.BankAccountNumberFormatter;
 import com.moneylog_backend.global.util.FormatUtils;
 import com.moneylog_backend.global.util.RedisService;
@@ -65,7 +66,9 @@ public class UserService {
                                                    .user_id(userEntity.getUser_id())
                                                    .bank_id(bank_id)
                                                    .nickname(userDto.getBank_name())
+                                                   .balance(0)
                                                    .account_number(regexAccountNumber)
+                                                   .type(AccountTypeEnum.BANK)
                                                    .build();
         accountRepository.save(accountEntity);
 

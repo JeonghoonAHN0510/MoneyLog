@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { CalendarView } from '../components/CalendarView';
 import { DashboardView } from '../components/DashboardView';
 import { TransactionList } from '../components/TransactionList';
-import { AddTransactionDialog } from '../components/AddTransactionDialog';
+import { AddLedgerDialog } from '../components/AddLedgerDialog';
 import { TransferDialog } from '../components/TransferDialog';
 import { TakeHomeCalculator } from '../components/TakeHomeCalculator';
 import { BudgetManager } from '../components/BudgetManager';
@@ -22,7 +22,7 @@ import useResourceStore from '../stores/resourceStore';
 export default function FinancePage() {
   const navigate = useNavigate();
   const { isAuthenticated, userInfo, setUserInfo, logout } = useUserStore();
-  const { banks, budgets, categories, accounts, ledgers, setBanks, setBudgets, setCategories, setAccounts, setLedgers } = useResourceStore();
+  const { banks, budgets, categories, accounts, ledgers, payments, setBanks, setBudgets, setCategories, setAccounts, setLedgers, setPayments } = useResourceStore();
   
   // [변경] 초기값을 빈 배열로 설정 (Mock Data 제거)
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,8 @@ export default function FinancePage() {
   useEffect(() => {
     if (isAuthenticated) {
       fetchUserInfo();
-      fetchAllData(); // 모든 금융 데이터 가져오기
+      fetchReferenceData();
+      fetchUserAssets();
     }
   }, [isAuthenticated]);
 
@@ -55,39 +56,49 @@ export default function FinancePage() {
     }
   };
 
-  // [추가] 모든 데이터를 서버에서 가져오는 함수
-  const fetchAllData = useCallback(async () => {
-    try {
-      setLoading(true);
-      // Promise.all로 병렬 요청 (성능 최적화)
-      const [accRes, ledgerRes, budgetRes, catRes, paymentRes, bankRes] = await Promise.allSettled([
-        api.get('/account/list'),      // 계좌 목록
-        api.get('/ledger'),            // 거래 내역
-        api.get('/budget'),            // 예산 목록
-        api.get('/category'),          // 카테고리 목록
-        api.get('/payment'),           // 결제수단
-        api.get('/bank')               // 은행
-      ]);
+// 1. [정적 데이터] 앱 켤 때 한 번만 불러오면 되는 것들
+const fetchReferenceData = useCallback(async () => {
+  try {
+    const [catRes, paymentRes, bankRes] = await Promise.allSettled([
+      api.get('/category'),
+      api.get('/payment'),
+      api.get('/bank')
+    ]);
 
-      // 성공한 요청만 State에 반영
-      if (accRes.status === 'fulfilled') setAccounts(accRes.value.data);
-      if (ledgerRes.status === 'fulfilled') setLedgers(ledgerRes.value.data);
-      if (budgetRes.status === 'fulfilled') setBudgets(budgetRes.value.data);
-      if (catRes.status === 'fulfilled') setCategories(catRes.value.data);
-      if (paymentRes.status === 'fulfilled') setCategories(paymentRes.value.data);
-      if (bankRes.status === 'fulfilled') setBanks(bankRes.value.data);
-      
-      // Transfer는 별도 엔드포인트가 있다면 추가 필요
-      // const transferRes = await api.get('/transfer/list');
-      // setTransfers(transferRes.data);
+    if (catRes.status === 'fulfilled') setCategories(catRes.value.data);
+    if (paymentRes.status === 'fulfilled') setPayments(paymentRes.value.data); // 변수명 주의 (setCategories -> setPayments)
+    if (bankRes.status === 'fulfilled') setBanks(bankRes.value.data);
+  } catch (e) {
+    console.error("기준 정보 로드 실패", e);
+  }
+}, []);
 
-    } catch (error) {
-      console.error("데이터 로드 실패:", error);
-      toast.error('데이터를 불러오는 중 일부 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+// 2. [동적 데이터] 거래 내역 추가 시 갱신해야 할 것들
+const fetchUserAssets = useCallback(async () => {
+  try {
+    // 로딩바는 여기서만 돌려도 됨
+    setLoading(true); 
+    const [accRes, ledgerRes, budgetRes] = await Promise.allSettled([
+      api.get('/account/list'), // 잔액이 바뀌니까 갱신 필요
+      api.get('/ledger'),       // 목록이 추가됐으니 갱신 필요
+      api.get('/budget')        // 지출 금액 바뀌니까 갱신 필요
+    ]);
+
+    if (accRes.status === 'fulfilled') setAccounts(accRes.value.data);
+    if (ledgerRes.status === 'fulfilled') setLedgers(ledgerRes.value.data);
+    if (budgetRes.status === 'fulfilled') setBudgets(budgetRes.value.data);
+  } catch (e) {
+    console.error("자산 정보 로드 실패", e);
+  } finally {
+    setLoading(false);
+  }
+}, []);
+
+// 3. useEffect에서 최초 1회는 둘 다 실행
+useEffect(() => {
+  fetchReferenceData();
+  fetchUserAssets();
+}, [fetchReferenceData, fetchUserAssets]);
 
   // 로그인 체크
   useEffect(() => {
@@ -110,22 +121,22 @@ export default function FinancePage() {
     }
   };
 
-  // --- [Transaction CRUD] ---
-  const handleAddTransaction = async (transaction: Omit<Ledger, 'id'>) => {
+  // --- [Ledger CRUD] ---
+  const handleAddLedger = async (ledger: Omit<Ledger, 'ledger_id'>) => {
     try {
-      await api.post('/transaction', transaction);
+      await api.post('/ledger', ledger);
       toast.success("거래 내역이 추가되었습니다.");
-      fetchAllData(); // 목록 새로고침
+      fetchUserAssets();
     } catch (e) {
       toast.error("거래 내역 추가 실패");
     }
   };
 
-  const handleDeleteTransaction = async (id: string) => {
+  const handleDeleteLedger = async (ledger_id: string) => {
     try {
-      await api.delete(`/transaction/${id}`);
+      await api.delete(`/ledger?ledger_id=${ledger_id}`);
       toast.success("삭제되었습니다.");
-      fetchAllData();
+      fetchUserAssets();
     } catch (e) {
       toast.error("삭제 실패");
     }
@@ -136,7 +147,7 @@ export default function FinancePage() {
     try {
       await api.post('/budget', budget);
       toast.success("예산이 설정되었습니다.");
-      fetchAllData();
+      fetchUserAssets();
     } catch (e) {
       toast.error("예산 설정 실패");
     }
@@ -146,7 +157,7 @@ export default function FinancePage() {
     try {
       await api.delete(`/budget/${id}`);
       toast.success("예산이 삭제되었습니다.");
-      fetchAllData();
+      fetchUserAssets();
     } catch (e) {
       toast.error("삭제 실패");
     }
@@ -157,7 +168,7 @@ export default function FinancePage() {
     try {
       await api.post('/account', newAccountData);
       toast.success("계좌가 추가되었습니다.");
-      fetchAllData(); // 계좌 추가 후 목록 갱신
+      fetchUserAssets(); // 계좌 추가 후 목록 갱신
     } catch (e) {
       toast.error("추가 실패");
     }
@@ -167,7 +178,7 @@ export default function FinancePage() {
     try {
       await api.put(`/account/${id}`, updateData);
       toast.success("계좌가 수정되었습니다.");
-      fetchAllData();
+      fetchUserAssets();
     } catch (e) {
       toast.error("수정 실패");
     }
@@ -177,38 +188,38 @@ export default function FinancePage() {
     try {
       await api.delete(`/account/${id}`);
       toast.success("계좌가 삭제되었습니다.");
-      fetchAllData();
+      fetchUserAssets();
     } catch (e) {
       toast.error("삭제 실패");
     }
   };
 
   // --- [Category CRUD] ---
-  const handleAddCategory = async (category: Omit<Category, 'id'>) => {
+  const handleAddCategory = async (category: Omit<Category, "category_id" | "user_id" | "created_at" | "updated_at">) => {
     try {
       await api.post('/category', category);
       toast.success("카테고리가 추가되었습니다.");
-      fetchAllData();
+      fetchReferenceData();
     } catch (e) {
       toast.error("추가 실패");
     }
   };
 
-  const handleUpdateCategory = async (id: string, updates: Partial<Category>) => {
+  const handleUpdateCategory = async (category: Partial<Category>) => {
     try {
-      await api.put(`/category/${id}`, updates);
+      await api.put(`/category`, category);
       toast.success("수정되었습니다.");
-      fetchAllData();
+      fetchReferenceData();
     } catch (e) {
       toast.error("수정 실패");
     }
   };
 
-  const handleDeleteCategory = async (id: string) => {
+  const handleDeleteCategory = async (category_id: string) => {
     try {
-      await api.delete(`/category/${id}`);
+      await api.delete(`/category?category_id=${category_id}`);
       toast.success("삭제되었습니다.");
-      fetchAllData();
+      fetchReferenceData();
     } catch (e) {
       toast.error("삭제 실패");
     }
@@ -219,7 +230,7 @@ export default function FinancePage() {
     try {
       await api.post('/account/transfer', transfer); // 이체 API 호출
       toast.success("이체가 완료되었습니다.");
-      fetchAllData(); // 계좌 잔액 변동 반영을 위해 전체 갱신
+      fetchUserAssets(); // 계좌 잔액 변동 반영을 위해 전체 갱신
     } catch (e) {
       toast.error("이체 실패");
     }
@@ -333,7 +344,7 @@ export default function FinancePage() {
                 transactions={ledgers}
                 categories={categories}
                 selectedDate={selectedDate}
-                onDelete={handleDeleteTransaction}
+                onDelete={handleDeleteLedger}
               />
             )}
           </TabsContent>
@@ -342,7 +353,7 @@ export default function FinancePage() {
             <TransactionList
               transactions={ledgers}
               categories={categories}
-              onDelete={handleDeleteTransaction}
+              onDelete={handleDeleteLedger}
             />
           </TabsContent>
 
@@ -380,11 +391,11 @@ export default function FinancePage() {
         </Tabs>
       </div>
 
-      {/* Add Transaction Dialog */}
-      <AddTransactionDialog
+      {/* Add Ledger Dialog */}
+      <AddLedgerDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        onAdd={handleAddTransaction}
+        onAdd={handleAddLedger}
         categories={categories}
         accounts={accounts}
       />

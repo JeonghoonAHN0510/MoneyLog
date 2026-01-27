@@ -35,7 +35,7 @@ public class AccountEntity extends BaseTime {
     private Integer balance;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")
     private String account_number;
-    @Column(columnDefinition = "ENUM('BLUE', 'RED', 'GREEN', 'YELLOW', 'PURPLE', 'PINK', 'CYAN') DEFAULT 'BLUE'")
+    @Column(columnDefinition = "ENUM('RED', 'AMBER', 'YELLOW', 'LIME', 'GREEN', 'EMERALD', 'TEAL', 'CYAN', 'BLUE', 'PURPLE', 'PINK', 'SLATE') DEFAULT 'BLUE'")
     @Enumerated(EnumType.STRING)
     private ColorEnum color;
     @Column(columnDefinition = "ENUM('BANK', 'CASH', 'POINT', 'OTHER') NOT NULL")
