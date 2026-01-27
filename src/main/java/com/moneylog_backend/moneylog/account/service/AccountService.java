@@ -2,6 +2,7 @@ package com.moneylog_backend.moneylog.account.service;
 
 import java.util.List;
 
+import com.moneylog_backend.global.type.ColorEnum;
 import com.moneylog_backend.global.util.BankAccountNumberFormatter;
 import com.moneylog_backend.moneylog.account.dto.AccountDto;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
@@ -23,8 +24,6 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final BankRepository bankRepository;
     private final AccountMapper accountMapper;
-
-    // todo findById 단순화 필요
 
     @Transactional
     public int saveAccount (AccountDto accountDto, int user_id) {
@@ -81,6 +80,11 @@ public class AccountService {
         int InputBalance = accountDto.getBalance();
         if (InputBalance > 0) {
             accountEntity.setBalance(InputBalance);
+        }
+
+        ColorEnum InputColor = accountDto.getColor();
+        if (InputColor != null) {
+            accountEntity.setColor(InputColor);
         }
 
         return accountEntity.toDto();

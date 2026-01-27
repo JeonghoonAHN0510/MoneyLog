@@ -38,6 +38,7 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
   const [name, setName] = useState('');
   const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
   const [color, setColor] = useState(defaultColors[0]);
+  const [category_id, setCategoryId] = useState('');
 
   const resetForm = () => {
     setName('');
@@ -63,6 +64,7 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
     setName(category.name);
     setType(category.type);
     setColor(category.color);
+    setCategoryId(category.category_id);
     setIsEditDialogOpen(true);
   };
 
@@ -70,6 +72,7 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
     if (!editingCategory || !name) return;
 
     onUpdate({
+      category_id,
       name,
       type,
       color,
@@ -80,8 +83,8 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
     setIsEditDialogOpen(false);
   };
 
-  const EXPENSECategories = categories.filter((c) => c.type === 'EXPENSE');
-  const INCOMECategories = categories.filter((c) => c.type === 'INCOME');
+  const expenseCategories = categories.filter((c) => c.type === 'EXPENSE');
+  const incomeCategories = categories.filter((c) => c.type === 'INCOME');
 
   const CategoryForm = () => (
     <div className="space-y-4">
@@ -186,17 +189,17 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
           <Tabs defaultValue="EXPENSE">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="EXPENSE">
-                지출 ({EXPENSECategories.length})
+                지출 ({expenseCategories.length})
               </TabsTrigger>
               <TabsTrigger value="INCOME">
-                수입 ({INCOMECategories.length})
+                수입 ({incomeCategories.length})
               </TabsTrigger>
             </TabsList>
             <TabsContent value="EXPENSE" className="mt-4">
-              <CategoryList items={EXPENSECategories} />
+              <CategoryList items={expenseCategories} />
             </TabsContent>
             <TabsContent value="INCOME" className="mt-4">
-              <CategoryList items={INCOMECategories} />
+              <CategoryList items={incomeCategories} />
             </TabsContent>
           </Tabs>
         </CardContent>

@@ -3,6 +3,7 @@ package com.moneylog_backend.moneylog.category.service;
 import java.util.List;
 
 import com.moneylog_backend.global.type.CategoryEnum;
+import com.moneylog_backend.global.type.ColorEnum;
 import com.moneylog_backend.moneylog.category.dto.CategoryDto;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
@@ -49,11 +50,15 @@ public class CategoryService {
 
         String InputName = categoryDto.getName();
         CategoryEnum InputType = categoryDto.getType();
+        ColorEnum InputColor = categoryDto.getColor();
         if (InputName != null) {
             categoryEntity.setName(InputName);
         }
         if (InputType != null) {
             categoryEntity.setType(InputType);
+        }
+        if (InputColor != null) {
+            categoryEntity.setColor(InputColor);
         }
 
         return categoryEntity.toDto();
