@@ -1,16 +1,15 @@
 export interface Budget {
-  budget_id: number;
-  user_id: number;
-  category_id: number;
+  id: string;
+  category: string;
   amount: number;
-  budget_date: string; // YYYY-MM-DD
+  period: 'monthly' | 'yearly';
   created_at: string;
   updated_at: string;
 }
 
 export interface Category {
-  category_id: number;
-  user_id: number;
+  category_id: string;
+  user_id: string;
   name: string;
   type: 'INCOME' | 'EXPENSE';
   color: string;
@@ -32,23 +31,23 @@ export interface Account {
 }
 
 export interface Ledger {
-  ledger_id: number;
-  user_id: number;
-  category_id: number;
-  payment_id: number;
-  account_id: number;
-  fixed_id: number | null;
+  ledger_id: string;
+  user_id: string;
+  category_id: string;
+  payment_id: string;
+  account_id: string;
+  fixed_id: string;
   title: string;
   amount: number;
   memo: string;
-  trading_at: string; // YYYY-MM-DD
+  trading_at: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface Payment {
-  payment_id: number;
-  user_id: number;
+  payment_id: string;
+  user_id: string;
   name: string;
   type: 'CASH' | 'CREDIT_CARD' | 'CHECK_CARD' | 'BANK';
   created_at: string;
@@ -56,26 +55,25 @@ export interface Payment {
 }
 
 export interface Fixed {
-  fixed_id: number;
-  user_id: number;
-  category_id: number;
+  fixed_id: string;
+  user_id: string;
+  category_id: string;
   title: string;
   amount: number;
   fixed_day: number;
   start_date: string;
-
   end_date: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface Transfer {
-  transfer_id: number;
-  user_id: number;
-  from_account_id: number;
-  to_account_id: number;
+  transfer_id: string;
+  user_id: string;
+  from_account_id: string;
+  to_account_id: string;
   amount: number;
-  transfer_at: string; // YYYY-MM-DD
+  transfer_at: string;
   memo: string;
   created_at: string;
   updated_at: string;
