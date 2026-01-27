@@ -205,7 +205,7 @@ useEffect(() => {
     }
   };
 
-  const handleUpdateCategory = async (category: Partial<Category> & Pick<Category, 'category_id'>) => {
+  const handleUpdateCategory = async (category: Partial<Category>) => {
     try {
       await api.put(`/category`, category);
       toast.success("수정되었습니다.");
