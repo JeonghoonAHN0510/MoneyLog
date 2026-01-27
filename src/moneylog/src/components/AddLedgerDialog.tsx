@@ -6,25 +6,25 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Transaction, Category, Account } from '../types/finance';
+import { Ledger, Category, Account } from '../types/finance';
 
-interface AddTransactionDialogProps {
+interface AddLedgerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (transaction: Omit<Transaction, 'id'>) => void;
+  onAdd: (ledger: Omit<Ledger, 'ledger_id'>) => void;
   categories: Category[];
   accounts: Account[];
 }
 
-export function AddTransactionDialog({
+export function AddLedgerDialog({
   open,
   onOpenChange,
   onAdd,
   categories,
   accounts,
-}: AddTransactionDialogProps) {
+}: AddLedgerDialogProps) {
   const [transactionType, setTransactionType] = useState<'general' | 'fixed'>('general');
-  const [type, setType] = useState<'income' | 'expense'>('expense');
+  const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
   
   // Common fields
   const [category, setCategory] = useState('');
@@ -121,10 +121,10 @@ export function AddTransactionDialog({
                 <div className="flex gap-2">
                   <Button
                     type="button"
-                    variant={type === 'expense' ? 'default' : 'outline'}
+                    variant={type === 'EXPENSE' ? 'default' : 'outline'}
                     className="flex-1"
                     onClick={() => {
-                      setType('expense');
+                      setType('EXPENSE');
                       setCategory('');
                     }}
                   >
@@ -132,10 +132,10 @@ export function AddTransactionDialog({
                   </Button>
                   <Button
                     type="button"
-                    variant={type === 'income' ? 'default' : 'outline'}
+                    variant={type === 'INCOME' ? 'default' : 'outline'}
                     className="flex-1"
                     onClick={() => {
-                      setType('income');
+                      setType('INCOME');
                       setCategory('');
                     }}
                   >
@@ -152,7 +152,7 @@ export function AddTransactionDialog({
                   </SelectTrigger>
                   <SelectContent>
                     {filteredCategories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.name}>
+                      <SelectItem key={cat.category_id} value={cat.category_id}>
                         {cat.name}
                       </SelectItem>
                     ))}
@@ -260,7 +260,7 @@ export function AddTransactionDialog({
                     <SelectValue placeholder="카테고리 선택" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.filter(cat => cat.type === 'expense').map((cat) => (
+                    {categories.filter(cat => cat.type === 'EXPENSE').map((cat) => (
                       <SelectItem key={cat.id} value={cat.name}>
                         {cat.name}
                       </SelectItem>
