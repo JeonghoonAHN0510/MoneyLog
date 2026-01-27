@@ -195,7 +195,7 @@ useEffect(() => {
   };
 
   // --- [Category CRUD] ---
-  const handleAddCategory = async (category: Omit<Category, 'id'>) => {
+  const handleAddCategory = async (category: Omit<Category, "category_id" | "user_id" | "created_at" | "updated_at">) => {
     try {
       await api.post('/category', category);
       toast.success("카테고리가 추가되었습니다.");
@@ -205,9 +205,9 @@ useEffect(() => {
     }
   };
 
-  const handleUpdateCategory = async (id: string, updates: Partial<Category>) => {
+  const handleUpdateCategory = async (category: Partial<Category>) => {
     try {
-      await api.put(`/category/${id}`, updates);
+      await api.put(`/category`, category);
       toast.success("수정되었습니다.");
       fetchReferenceData();
     } catch (e) {
@@ -215,9 +215,9 @@ useEffect(() => {
     }
   };
 
-  const handleDeleteCategory = async (id: string) => {
+  const handleDeleteCategory = async (category_id: string) => {
     try {
-      await api.delete(`/category/${id}`);
+      await api.delete(`/category?category_id=${category_id}`);
       toast.success("삭제되었습니다.");
       fetchReferenceData();
     } catch (e) {

@@ -12,7 +12,7 @@ export interface Category {
   user_id: string;
   name: string;
   type: 'INCOME' | 'EXPENSE';
-  color: '#3b82f6' | '#ef4444' | '#22c55e' | '#eab308' | '#8b5cf6' | '#ec4899' | '#06b6d4';
+  color: string;
   created_at: string;
   updated_at: string;
 }
@@ -25,7 +25,7 @@ export interface Account {
   nickname: string;
   balance: number;
   account_number: string;
-  color: '#3b82f6' | '#ef4444' | '#22c55e' | '#eab308' | '#8b5cf6' | '#ec4899' | '#06b6d4';
+  color: string;
   created_at: string;
   updated_at: string;
 }
