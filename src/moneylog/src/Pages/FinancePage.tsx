@@ -19,7 +19,7 @@ import {TakeHomeCalculator} from '../components/TakeHomeCalculator';
 import {BudgetManager} from '../components/BudgetManager';
 import {AccountManager} from '../components/AccountManager';
 import {CategoryManager} from '../components/CategoryManager';
-import {Budget, Category, Account, Ledger} from '../types/finance';
+import {Budget, Category, Account, Ledger, Payment} from '../types/finance';
 import {Plus, Wallet, Calendar, ChartBar, Calculator, Target, List, User, LogOut} from 'lucide-react';
 import {toast} from 'sonner';
 import useUserStore from '../stores/authStore';
@@ -222,27 +222,58 @@ export default function FinancePage() {
             toast.success("카테고리가 추가되었습니다.");
             fetchReferenceData();
         } catch (e) {
-            toast.error("추가 실패");
+            toast.error("카테고리 추가에 실패하였습니다.");
         }
     };
 
     const handleUpdateCategory = async (category: Partial<Category>) => {
         try {
             await api.put(`/category`, category);
-            toast.success("수정되었습니다.");
+            toast.success("카테고리가 수정되었습니다.");
             fetchReferenceData();
         } catch (e) {
-            toast.error("수정 실패");
+            toast.error("카테고리 수정에 실패하였습니다.");
         }
     };
 
     const handleDeleteCategory = async (category_id: string) => {
         try {
             await api.delete(`/category?category_id=${category_id}`);
-            toast.success("삭제되었습니다.");
+            toast.success("카테고리가 삭제되었습니다.");
             fetchReferenceData();
         } catch (e) {
-            toast.error("삭제 실패");
+            toast.error("카테고리 삭제에 실패하였습니다.");
+        }
+    };
+
+    // --- [Payment CRUD] ---
+    const handleAddPayment = async (payment: Omit<Payment, "payment_id" | "user_id" | "created_at" | "updated_at">) => {
+        try {
+            await api.post('/payment', payment);
+            toast.success("결제수단이 추가되었습니다.");
+            fetchReferenceData();
+        } catch (e) {
+            toast.error("결제수단 추가에 실패하였습니다.");
+        }
+    };
+
+    const handleUpdatePayment = async (payment: Partial<Payment>) => {
+        try {
+            await api.put(`/payment`, payment);
+            toast.success("결제수단이 수정되었습니다.");
+            fetchReferenceData();
+        } catch (e) {
+            toast.error("결제수단 수정에 실패하였습니다.");
+        }
+    };
+
+    const handleDeletePayment = async (payment_id: string) => {
+        try {
+            await api.delete(`/payment?payment_id=${payment_id}`);
+            toast.success("결제수단이 삭제되었습니다.");
+            fetchReferenceData();
+        } catch (e) {
+            toast.error("결제수단 삭제에 실패하였습니다.");
         }
     };
 
@@ -393,6 +424,9 @@ export default function FinancePage() {
                             onAdd={handleAddCategory}
                             onUpdate={handleUpdateCategory}
                             onDelete={handleDeleteCategory}
+                            onAddPayment={handleAddPayment}
+                            onUpdatePayment={handleUpdatePayment}
+                            onDeletePayment={handleDeletePayment}
                         />
                     </TabsContent>
 
