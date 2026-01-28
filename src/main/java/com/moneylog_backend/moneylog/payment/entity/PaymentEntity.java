@@ -32,6 +32,8 @@ public class PaymentEntity extends BaseTime {
     @Enumerated(EnumType.STRING)
     private PaymentEnum type;
 
+    // todo 신용카드, 체크카드, 계좌이체면, Account_id 컬럼 추가해서 계좌 연결하기
+
     public PaymentDto toDto () {
         return PaymentDto.builder()
                          .payment_id(this.payment_id)
