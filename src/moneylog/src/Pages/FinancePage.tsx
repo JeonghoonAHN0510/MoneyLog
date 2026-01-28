@@ -1,412 +1,432 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Button } from '../components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
-import { CalendarView } from '../components/CalendarView';
-import { DashboardView } from '../components/DashboardView';
-import { TransactionList } from '../components/TransactionList';
-import { AddLedgerDialog } from '../components/AddLedgerDialog';
-import { TransferDialog } from '../components/TransferDialog';
-import { TakeHomeCalculator } from '../components/TakeHomeCalculator';
-import { BudgetManager } from '../components/BudgetManager';
-import { AccountManager } from '../components/AccountManager';
-import { CategoryManager } from '../components/CategoryManager';
-import { Budget, Category, Account, Ledger } from '../types/finance';
-import { Plus, Wallet, Calendar, ChartBar, Calculator, Target, List, User, LogOut } from 'lucide-react';
-import { toast } from 'sonner';
+import {useState, useEffect, useCallback} from 'react';
+import {useNavigate, useSearchParams} from 'react-router-dom';
+import {Tabs, TabsContent, TabsList, TabsTrigger} from '../components/ui/tabs';
+import {Button} from '../components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
+} from '../components/ui/dropdown-menu';
+import {CalendarView} from '../components/CalendarView';
+import {DashboardView} from '../components/DashboardView';
+import {TransactionList} from '../components/TransactionList';
+import {AddLedgerDialog} from '../components/AddLedgerDialog';
+import {TransferDialog} from '../components/TransferDialog';
+import {TakeHomeCalculator} from '../components/TakeHomeCalculator';
+import {BudgetManager} from '../components/BudgetManager';
+import {AccountManager} from '../components/AccountManager';
+import {CategoryManager} from '../components/CategoryManager';
+import {Budget, Category, Account, Ledger} from '../types/finance';
+import {Plus, Wallet, Calendar, ChartBar, Calculator, Target, List, User, LogOut} from 'lucide-react';
+import {toast} from 'sonner';
 import useUserStore from '../stores/authStore';
 import api from '../api/axiosConfig';
 import useResourceStore from '../stores/resourceStore';
 
 export default function FinancePage() {
-  const navigate = useNavigate();
-  const { isAuthenticated, userInfo, setUserInfo, logout } = useUserStore();
-  const { banks, budgets, categories, accounts, ledgers, payments, setBanks, setBudgets, setCategories, setAccounts, setLedgers, setPayments } = useResourceStore();
-  
-  // [변경] 초기값을 빈 배열로 설정 (Mock Data 제거)
-  const [loading, setLoading] = useState(true);
-  
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
+    const navigate = useNavigate();
+    const {isAuthenticated, userInfo, setUserInfo, logout} = useUserStore();
+    const {
+        banks,
+        budgets,
+        categories,
+        accounts,
+        ledgers,
+        payments,
+        setBanks,
+        setBudgets,
+        setCategories,
+        setAccounts,
+        setLedgers,
+        setPayments
+    } = useResourceStore();
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const currentTab = searchParams.get('tab') || 'dashboard';
+    // [변경] 초기값을 빈 배열로 설정 (Mock Data 제거)
+    const [loading, setLoading] = useState(true);
 
-  const handleTabChange = (value: string) => {
-    setSearchParams({ tab: value });
-  };
+    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
+    const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
 
-  // 1. 사용자 정보 및 초기 데이터 로드
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchUserInfo();
-      fetchReferenceData();
-      fetchUserAssets();
-    }
-  }, [isAuthenticated]);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const currentTab = searchParams.get('tab') || 'dashboard';
 
-  const fetchUserInfo = async () => {
-    try {
-      const response = await api.get('/user/info');
-      setUserInfo(response.data);
-    } catch (error) {
-      toast.error('사용자 정보를 불러오는데 실패했습니다.');
-    }
-  };
+    const handleTabChange = (value: string) => {
+        setSearchParams({tab: value});
+    };
+
+    // 1. 사용자 정보 및 초기 데이터 로드
+    useEffect(() => {
+        if (isAuthenticated) {
+            fetchUserInfo();
+            fetchReferenceData();
+            fetchUserAssets();
+        }
+    }, [isAuthenticated]);
+
+    const fetchUserInfo = async () => {
+        try {
+            const response = await api.get('/user/info');
+            setUserInfo(response.data);
+        } catch (error) {
+            toast.error('사용자 정보를 불러오는데 실패했습니다.');
+        }
+    };
 
 // 1. [정적 데이터] 앱 켤 때 한 번만 불러오면 되는 것들
-const fetchReferenceData = useCallback(async () => {
-  try {
-    const [catRes, paymentRes, bankRes] = await Promise.allSettled([
-      api.get('/category'),
-      api.get('/payment'),
-      api.get('/bank')
-    ]);
+    const fetchReferenceData = useCallback(async () => {
+        try {
+            const [catRes, paymentRes, bankRes] = await Promise.allSettled([
+                api.get('/category'),
+                api.get('/payment'),
+                api.get('/bank')
+            ]);
 
-    if (catRes.status === 'fulfilled') setCategories(catRes.value.data);
-    if (paymentRes.status === 'fulfilled') setPayments(paymentRes.value.data); // 변수명 주의 (setCategories -> setPayments)
-    if (bankRes.status === 'fulfilled') setBanks(bankRes.value.data);
-  } catch (e) {
-    console.error("기준 정보 로드 실패", e);
-  }
-}, []);
+            if (catRes.status === 'fulfilled') setCategories(catRes.value.data);
+            if (paymentRes.status === 'fulfilled') setPayments(paymentRes.value.data); // 변수명 주의 (setCategories -> setPayments)
+            if (bankRes.status === 'fulfilled') setBanks(bankRes.value.data);
+        } catch (e) {
+            console.error("기준 정보 로드 실패", e);
+        }
+    }, []);
 
 // 2. [동적 데이터] 거래 내역 추가 시 갱신해야 할 것들
-const fetchUserAssets = useCallback(async () => {
-  try {
-    // 로딩바는 여기서만 돌려도 됨
-    setLoading(true); 
-    const [accRes, ledgerRes, budgetRes] = await Promise.allSettled([
-      api.get('/account/list'), // 잔액이 바뀌니까 갱신 필요
-      api.get('/ledger'),       // 목록이 추가됐으니 갱신 필요
-      api.get('/budget')        // 지출 금액 바뀌니까 갱신 필요
-    ]);
+    const fetchUserAssets = useCallback(async () => {
+        try {
+            // 로딩바는 여기서만 돌려도 됨
+            setLoading(true);
+            const [accRes, ledgerRes, budgetRes] = await Promise.allSettled([
+                api.get('/account/list'), // 잔액이 바뀌니까 갱신 필요
+                api.get('/ledger'),       // 목록이 추가됐으니 갱신 필요
+                api.get('/budget')        // 지출 금액 바뀌니까 갱신 필요
+            ]);
 
-    if (accRes.status === 'fulfilled') setAccounts(accRes.value.data);
-    if (ledgerRes.status === 'fulfilled') setLedgers(ledgerRes.value.data);
-    if (budgetRes.status === 'fulfilled') setBudgets(budgetRes.value.data);
-  } catch (e) {
-    console.error("자산 정보 로드 실패", e);
-  } finally {
-    setLoading(false);
-  }
-}, []);
+            if (accRes.status === 'fulfilled') setAccounts(accRes.value.data);
+            if (ledgerRes.status === 'fulfilled') setLedgers(ledgerRes.value.data);
+            if (budgetRes.status === 'fulfilled') setBudgets(budgetRes.value.data);
+        } catch (e) {
+            console.error("자산 정보 로드 실패", e);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
 // 3. useEffect에서 최초 1회는 둘 다 실행
-useEffect(() => {
-  fetchReferenceData();
-  fetchUserAssets();
-}, [fetchReferenceData, fetchUserAssets]);
+    useEffect(() => {
+        fetchReferenceData();
+        fetchUserAssets();
+    }, [fetchReferenceData, fetchUserAssets]);
 
-  // 로그인 체크
-  useEffect(() => {
-    if (!isAuthenticated && !loading) {
-      toast.error('로그인이 필요합니다');
-      navigate('/login');
+    // 로그인 체크
+    useEffect(() => {
+        if (!isAuthenticated && !loading) {
+            toast.error('로그인이 필요합니다');
+            navigate('/login');
+        }
+    }, [isAuthenticated, loading, navigate]);
+
+    const handleLogout = async () => {
+        try {
+            await api.post('/user/logout');
+            logout();
+            toast.success('로그아웃 되었습니다');
+            navigate('/');
+        } catch (error) {
+            // 토큰 만료 등으로 API 실패해도 클라이언트 로그아웃은 진행
+            logout();
+            navigate('/');
+        }
+    };
+
+    // --- [Ledger CRUD] ---
+    const handleAddLedger = async (ledger: Omit<Ledger, 'ledger_id'>) => {
+        try {
+            await api.post('/ledger', ledger);
+            toast.success("거래 내역이 추가되었습니다.");
+            fetchUserAssets();
+        } catch (e) {
+            toast.error("거래 내역 추가 실패");
+        }
+    };
+
+    const handleDeleteLedger = async (ledger_id: string) => {
+        try {
+            await api.delete(`/ledger?ledger_id=${ledger_id}`);
+            toast.success("삭제되었습니다.");
+            fetchUserAssets();
+        } catch (e) {
+            toast.error("삭제 실패");
+        }
+    };
+
+    // --- [Budget CRUD] ---
+    const handleAddBudget = async (budget: Omit<Budget, 'id'>) => {
+        try {
+            await api.post('/budget', budget);
+            toast.success("예산이 설정되었습니다.");
+            fetchUserAssets();
+        } catch (e) {
+            toast.error("예산 설정 실패");
+        }
+    };
+
+    const handleDeleteBudget = async (id: string) => {
+        try {
+            await api.delete(`/budget/${id}`);
+            toast.success("예산이 삭제되었습니다.");
+            fetchUserAssets();
+        } catch (e) {
+            toast.error("삭제 실패");
+        }
+    };
+
+    // --- [Account CRUD] ---
+    const handleAddAccount = async (newAccountData: any) => {
+        try {
+            await api.post('/account', newAccountData);
+            toast.success("계좌가 추가되었습니다.");
+            fetchUserAssets(); // 계좌 추가 후 목록 갱신
+        } catch (e) {
+            toast.error("추가 실패");
+        }
+    };
+
+    const handleUpdateAccount = async (id: number, updateData: any) => {
+        try {
+            await api.put(`/account/${id}`, updateData);
+            toast.success("계좌가 수정되었습니다.");
+            fetchUserAssets();
+        } catch (e) {
+            toast.error("수정 실패");
+        }
+    };
+
+    const handleDeleteAccount = async (id: number) => {
+        try {
+            await api.delete(`/account/${id}`);
+            toast.success("계좌가 삭제되었습니다.");
+            fetchUserAssets();
+        } catch (e) {
+            toast.error("삭제 실패");
+        }
+    };
+
+    // --- [Category CRUD] ---
+    const handleAddCategory = async (category: Omit<Category, "category_id" | "user_id" | "created_at" | "updated_at">) => {
+        console.log(category);
+        try {
+            await api.post('/category', category);
+            toast.success("카테고리가 추가되었습니다.");
+            fetchReferenceData();
+        } catch (e) {
+            toast.error("추가 실패");
+        }
+    };
+
+    const handleUpdateCategory = async (category: Partial<Category>) => {
+        try {
+            await api.put(`/category`, category);
+            toast.success("수정되었습니다.");
+            fetchReferenceData();
+        } catch (e) {
+            toast.error("수정 실패");
+        }
+    };
+
+    const handleDeleteCategory = async (category_id: string) => {
+        try {
+            await api.delete(`/category?category_id=${category_id}`);
+            toast.success("삭제되었습니다.");
+            fetchReferenceData();
+        } catch (e) {
+            toast.error("삭제 실패");
+        }
+    };
+
+    // --- [Transfer Logic] ---
+    const handleAddTransfer = async (transfer: Omit<Ledger, 'id'>) => {
+        try {
+            await api.post('/account/transfer', transfer); // 이체 API 호출
+            toast.success("이체가 완료되었습니다.");
+            fetchUserAssets(); // 계좌 잔액 변동 반영을 위해 전체 갱신
+        } catch (e) {
+            toast.error("이체 실패");
+        }
+    };
+
+    const handleDateClick = (date: string) => {
+        setSelectedDate(date);
+    };
+
+    // 로딩 화면
+    if (loading || !userInfo) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <p className="text-lg text-gray-500">정보를 불러오는 중입니다...</p>
+            </div>
+        );
     }
-  }, [isAuthenticated, loading, navigate]);
 
-  const handleLogout = async () => {
-    try {
-      await api.post('/user/logout');
-      logout();
-      toast.success('로그아웃 되었습니다');
-      navigate('/');
-    } catch (error) {
-      // 토큰 만료 등으로 API 실패해도 클라이언트 로그아웃은 진행
-      logout();
-      navigate('/');
-    }
-  };
+    if (!isAuthenticated) return null;
 
-  // --- [Ledger CRUD] ---
-  const handleAddLedger = async (ledger: Omit<Ledger, 'ledger_id'>) => {
-    try {
-      await api.post('/ledger', ledger);
-      toast.success("거래 내역이 추가되었습니다.");
-      fetchUserAssets();
-    } catch (e) {
-      toast.error("거래 내역 추가 실패");
-    }
-  };
-
-  const handleDeleteLedger = async (ledger_id: string) => {
-    try {
-      await api.delete(`/ledger?ledger_id=${ledger_id}`);
-      toast.success("삭제되었습니다.");
-      fetchUserAssets();
-    } catch (e) {
-      toast.error("삭제 실패");
-    }
-  };
-
-  // --- [Budget CRUD] ---
-  const handleAddBudget = async (budget: Omit<Budget, 'id'>) => {
-    try {
-      await api.post('/budget', budget);
-      toast.success("예산이 설정되었습니다.");
-      fetchUserAssets();
-    } catch (e) {
-      toast.error("예산 설정 실패");
-    }
-  };
-
-  const handleDeleteBudget = async (id: string) => {
-    try {
-      await api.delete(`/budget/${id}`);
-      toast.success("예산이 삭제되었습니다.");
-      fetchUserAssets();
-    } catch (e) {
-      toast.error("삭제 실패");
-    }
-  };
-
-  // --- [Account CRUD] ---
-  const handleAddAccount = async (newAccountData: any) => {
-    try {
-      await api.post('/account', newAccountData);
-      toast.success("계좌가 추가되었습니다.");
-      fetchUserAssets(); // 계좌 추가 후 목록 갱신
-    } catch (e) {
-      toast.error("추가 실패");
-    }
-  };
-
-  const handleUpdateAccount = async (id: number, updateData: any) => {
-    try {
-      await api.put(`/account/${id}`, updateData);
-      toast.success("계좌가 수정되었습니다.");
-      fetchUserAssets();
-    } catch (e) {
-      toast.error("수정 실패");
-    }
-  };
-
-  const handleDeleteAccount = async (id: number) => {
-    try {
-      await api.delete(`/account/${id}`);
-      toast.success("계좌가 삭제되었습니다.");
-      fetchUserAssets();
-    } catch (e) {
-      toast.error("삭제 실패");
-    }
-  };
-
-  // --- [Category CRUD] ---
-  const handleAddCategory = async (category: Omit<Category, "category_id" | "user_id" | "created_at" | "updated_at">) => {
-    try {
-      await api.post('/category', category);
-      toast.success("카테고리가 추가되었습니다.");
-      fetchReferenceData();
-    } catch (e) {
-      toast.error("추가 실패");
-    }
-  };
-
-  const handleUpdateCategory = async (category: Partial<Category>) => {
-    try {
-      await api.put(`/category`, category);
-      toast.success("수정되었습니다.");
-      fetchReferenceData();
-    } catch (e) {
-      toast.error("수정 실패");
-    }
-  };
-
-  const handleDeleteCategory = async (category_id: string) => {
-    try {
-      await api.delete(`/category?category_id=${category_id}`);
-      toast.success("삭제되었습니다.");
-      fetchReferenceData();
-    } catch (e) {
-      toast.error("삭제 실패");
-    }
-  };
-
-  // --- [Transfer Logic] ---
-  const handleAddTransfer = async (transfer: Omit<Ledger, 'id'>) => {
-    try {
-      await api.post('/account/transfer', transfer); // 이체 API 호출
-      toast.success("이체가 완료되었습니다.");
-      fetchUserAssets(); // 계좌 잔액 변동 반영을 위해 전체 갱신
-    } catch (e) {
-      toast.error("이체 실패");
-    }
-  };
-
-  const handleDateClick = (date: string) => {
-    setSelectedDate(date);
-  };
-
-  // 로딩 화면
-  if (loading || !userInfo) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-lg text-gray-500">정보를 불러오는 중입니다...</p>
-      </div>
-    );
-  }
+        <div className="min-h-screen bg-background">
+            <div className="container mx-auto p-4 md:p-8">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <h1 className="flex items-center gap-2">
+                            <Wallet className="size-8"/>
+                            내 가계부
+                        </h1>
+                        <p className="text-muted-foreground">사회 초년생을 위한 스마트 재무 관리</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Button onClick={() => setIsAddDialogOpen(true)}>
+                            <Plus className="size-4 mr-2"/>
+                            거래 추가
+                        </Button>
 
-  if (!isAuthenticated) return null;
+                        {/* User Menu */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="gap-2">
+                                    <User className="size-4"/>
+                                    <span className="hidden sm:inline">{userInfo?.name}</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuLabel>
+                                    <div className="flex flex-col space-y-1">
+                                        <p className="text-sm font-medium leading-none">{userInfo?.name}</p>
+                                        <p className="text-xs leading-none text-muted-foreground">
+                                            {userInfo?.email}
+                                        </p>
+                                    </div>
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator/>
+                                <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+                                    <LogOut className="size-4 mr-2"/>
+                                    로그아웃
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                </div>
 
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-4 md:p-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="flex items-center gap-2">
-              <Wallet className="size-8" />
-              내 가계부
-            </h1>
-            <p className="text-muted-foreground">사회 초년생을 위한 스마트 재무 관리</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <Plus className="size-4 mr-2" />
-              거래 추가
-            </Button>
-            
-            {/* User Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <User className="size-4" />
-                  <span className="hidden sm:inline">{userInfo?.name}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{userInfo?.name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {userInfo?.email}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
-                  <LogOut className="size-4 mr-2" />
-                  로그아웃
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
+                {/* Main Content */}
+                <Tabs defaultValue="dashboard" className="space-y-6">
+                    <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
+                        <TabsTrigger value="dashboard" className="flex items-center gap-2">
+                            <ChartBar className="size-4"/>
+                            <span className="hidden sm:inline">대시보드</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="calendar" className="flex items-center gap-2">
+                            <Calendar className="size-4"/>
+                            <span className="hidden sm:inline">캘린더</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="transactions" className="flex items-center gap-2">
+                            <Wallet className="size-4"/>
+                            <span className="hidden sm:inline">거래내역</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="accounts" className="flex items-center gap-2">
+                            <Wallet className="size-4"/>
+                            <span className="hidden sm:inline">계좌</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="categories" className="flex items-center gap-2">
+                            <List className="size-4"/>
+                            <span className="hidden sm:inline">카테고리</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="budget" className="flex items-center gap-2">
+                            <Target className="size-4"/>
+                            <span className="hidden sm:inline">예산</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="calculator" className="flex items-center gap-2">
+                            <Calculator className="size-4"/>
+                            <span className="hidden sm:inline">계산기</span>
+                        </TabsTrigger>
+                    </TabsList>
 
-        {/* Main Content */}
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
-            <TabsTrigger value="dashboard" className="flex items-center gap-2">
-              <ChartBar className="size-4" />
-              <span className="hidden sm:inline">대시보드</span>
-            </TabsTrigger>
-            <TabsTrigger value="calendar" className="flex items-center gap-2">
-              <Calendar className="size-4" />
-              <span className="hidden sm:inline">캘린더</span>
-            </TabsTrigger>
-            <TabsTrigger value="transactions" className="flex items-center gap-2">
-              <Wallet className="size-4" />
-              <span className="hidden sm:inline">거래내역</span>
-            </TabsTrigger>
-            <TabsTrigger value="accounts" className="flex items-center gap-2">
-              <Wallet className="size-4" />
-              <span className="hidden sm:inline">계좌</span>
-            </TabsTrigger>
-            <TabsTrigger value="categories" className="flex items-center gap-2">
-              <List className="size-4" />
-              <span className="hidden sm:inline">카테고리</span>
-            </TabsTrigger>
-            <TabsTrigger value="budget" className="flex items-center gap-2">
-              <Target className="size-4" />
-              <span className="hidden sm:inline">예산</span>
-            </TabsTrigger>
-            <TabsTrigger value="calculator" className="flex items-center gap-2">
-              <Calculator className="size-4" />
-              <span className="hidden sm:inline">계산기</span>
-            </TabsTrigger>
-          </TabsList>
+                    <TabsContent value="dashboard" className="space-y-6">
+                        <DashboardView
+                            transactions={ledgers}
+                            budgets={budgets}
+                            categories={categories}
+                        />
+                    </TabsContent>
 
-          <TabsContent value="dashboard" className="space-y-6">
-            <DashboardView
-              transactions={ledgers}
-              budgets={budgets}
-              categories={categories}
-            />
-          </TabsContent>
+                    <TabsContent value="calendar" className="space-y-6">
+                        <CalendarView transactions={ledgers} onDateClick={handleDateClick}/>
+                        {selectedDate && (
+                            <TransactionList
+                                transactions={ledgers}
+                                categories={categories}
+                                selectedDate={selectedDate}
+                                onDelete={handleDeleteLedger}
+                            />
+                        )}
+                    </TabsContent>
 
-          <TabsContent value="calendar" className="space-y-6">
-            <CalendarView transactions={ledgers} onDateClick={handleDateClick} />
-            {selectedDate && (
-              <TransactionList
-                transactions={ledgers}
+                    <TabsContent value="transactions" className="space-y-6">
+                        <TransactionList
+                            transactions={ledgers}
+                            categories={categories}
+                            onDelete={handleDeleteLedger}
+                        />
+                    </TabsContent>
+
+                    <TabsContent value="accounts" className="space-y-6">
+                        <AccountManager
+                            accounts={accounts}
+                            onAdd={handleAddAccount}
+                            onUpdate={handleUpdateAccount}
+                            onDelete={handleDeleteAccount}
+                            onTransferClick={() => setIsTransferDialogOpen(true)}
+                        />
+                    </TabsContent>
+
+                    <TabsContent value="categories" className="space-y-6">
+                        <CategoryManager
+                            onAdd={handleAddCategory}
+                            onUpdate={handleUpdateCategory}
+                            onDelete={handleDeleteCategory}
+                        />
+                    </TabsContent>
+
+                    <TabsContent value="budget" className="space-y-6">
+                        <BudgetManager
+                            budgets={budgets}
+                            categories={categories}
+                            onAdd={handleAddBudget}
+                            onDelete={handleDeleteBudget}
+                        />
+                    </TabsContent>
+
+                    <TabsContent value="calculator" className="space-y-6">
+                        <TakeHomeCalculator/>
+                    </TabsContent>
+                </Tabs>
+            </div>
+
+            {/* Add Ledger Dialog */}
+            <AddLedgerDialog
+                open={isAddDialogOpen}
+                onOpenChange={setIsAddDialogOpen}
+                onAdd={handleAddLedger}
                 categories={categories}
-                selectedDate={selectedDate}
-                onDelete={handleDeleteLedger}
-              />
-            )}
-          </TabsContent>
-
-          <TabsContent value="transactions" className="space-y-6">
-            <TransactionList
-              transactions={ledgers}
-              categories={categories}
-              onDelete={handleDeleteLedger}
+                accounts={accounts}
             />
-          </TabsContent>
 
-          <TabsContent value="accounts" className="space-y-6">
-            <AccountManager
-              accounts={accounts}
-              onAdd={handleAddAccount}
-              onUpdate={handleUpdateAccount}
-              onDelete={handleDeleteAccount}
-              onTransferClick={() => setIsTransferDialogOpen(true)}
+            {/* Transfer Dialog */}
+            <TransferDialog
+                open={isTransferDialogOpen}
+                onOpenChange={setIsTransferDialogOpen}
+                onAdd={handleAddTransfer}
+                accounts={accounts}
             />
-          </TabsContent>
-
-          <TabsContent value="categories" className="space-y-6">
-            <CategoryManager
-              categories={categories}
-              onAdd={handleAddCategory}
-              onUpdate={handleUpdateCategory}
-              onDelete={handleDeleteCategory}
-            />
-          </TabsContent>
-
-          <TabsContent value="budget" className="space-y-6">
-            <BudgetManager
-              budgets={budgets}
-              categories={categories}
-              onAdd={handleAddBudget}
-              onDelete={handleDeleteBudget}
-            />
-          </TabsContent>
-
-          <TabsContent value="calculator" className="space-y-6">
-            <TakeHomeCalculator />
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      {/* Add Ledger Dialog */}
-      <AddLedgerDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        onAdd={handleAddLedger}
-        categories={categories}
-        accounts={accounts}
-      />
-
-      {/* Transfer Dialog */}
-      <TransferDialog
-        open={isTransferDialogOpen}
-        onOpenChange={setIsTransferDialogOpen}
-        onAdd={handleAddTransfer}
-        accounts={accounts}
-      />
-    </div>
-  );
+        </div>
+    );
 }
