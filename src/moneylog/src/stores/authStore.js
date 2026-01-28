@@ -22,6 +22,10 @@ const useUserStore = create(
 
       setUserInfo: (user) => set({
         userInfo: user
+      }),
+
+      setAccessToken: (token) => set({
+        accessToken: token
       })
     }),
     {

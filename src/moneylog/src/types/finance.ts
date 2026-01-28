@@ -18,9 +18,9 @@ export interface Category {
 }
 
 export interface Account {
-  account_id: number;
-  user_id: number;
-  bank_id: number;
+  account_id: string;
+  user_id: string;
+  bank_id: string;
   type: 'BANK' | 'CASH' | 'POINT' | 'OTHER';
   nickname: string;
   balance: number;

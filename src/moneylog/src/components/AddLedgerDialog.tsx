@@ -182,8 +182,8 @@ export function AddLedgerDialog({
                   </SelectTrigger>
                   <SelectContent>
                     {accounts.map((acc) => (
-                      <SelectItem key={acc.id} value={acc.id}>
-                        {acc.name}
+                      <SelectItem key={acc.account_id} value={acc.account_id}>
+                        {acc.nickname}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -261,7 +261,7 @@ export function AddLedgerDialog({
                   </SelectTrigger>
                   <SelectContent>
                     {categories.filter(cat => cat.type === 'EXPENSE').map((cat) => (
-                      <SelectItem key={cat.id} value={cat.name}>
+                      <SelectItem key={cat.category_id} value={cat.name}>
                         {cat.name}
                       </SelectItem>
                     ))}

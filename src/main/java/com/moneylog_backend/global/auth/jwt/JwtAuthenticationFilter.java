@@ -25,6 +25,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final RedisService redisService;
 
+    private static final long REFRESH_THRESHOLD = 1000 * 60 * 5;
+
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER_PREFIX = "Bearer ";
 
@@ -47,6 +49,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Authentication authentication = jwtProvider.getAuthentication(token);
                 String loginId = authentication.getName();
                 UserDetails userDetails = customUserDetailsService.loadUserByUsername(loginId);
+
+                long remainingTime = jwtProvider.getExpiration(token);
+
+                if (remainingTime > 0 && remainingTime < REFRESH_THRESHOLD) {
+                    // 새 토큰 생성
+                    String newToken = jwtProvider.createAccessToken(authentication);
+
+                    // 헤더에 추가
+                    response.setHeader(AUTHORIZATION_HEADER, BEARER_PREFIX + newToken);
+                }
 
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                     userDetails, null, userDetails.getAuthorities());
