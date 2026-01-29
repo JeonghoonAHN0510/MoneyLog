@@ -4,6 +4,7 @@ import com.moneylog_backend.global.type.ColorEnum;
 import com.moneylog_backend.global.type.AccountTypeEnum;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
@@ -27,8 +28,6 @@ public class AccountDto {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
-    private Integer from_account_id;
-    private Integer to_account_id;
 
     public AccountEntity toEntity () {
         return AccountEntity.builder()

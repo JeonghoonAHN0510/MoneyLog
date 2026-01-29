@@ -8,8 +8,13 @@ import com.moneylog_backend.moneylog.account.dto.AccountDto;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.mapper.AccountMapper;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
+import com.moneylog_backend.moneylog.account.repository.TransferRepository;
 import com.moneylog_backend.moneylog.bank.entity.BankEntity;
 import com.moneylog_backend.moneylog.bank.repository.BankRepository;
+import com.moneylog_backend.moneylog.ledger.dto.TransferDto;
+import com.moneylog_backend.moneylog.ledger.entity.TransferEntity;
+import com.moneylog_backend.moneylog.user.entity.UserEntity;
+import com.moneylog_backend.moneylog.user.repository.UserRepository;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -22,6 +27,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AccountService {
     private final AccountRepository accountRepository;
+    private final TransferRepository transferRepository;
+    private final UserRepository userRepository;
     private final BankRepository bankRepository;
     private final AccountMapper accountMapper;
 
@@ -29,23 +36,25 @@ public class AccountService {
     public int saveAccount (AccountDto accountDto, int user_id) {
         accountDto.setUser_id(user_id);
 
-        int bank_id = accountDto.getBank_id();
-        if (!isBankValid(bank_id)) {
-            return -1;
-        }
+        if (accountDto.getBank_id() != null) {
+            int bank_id = accountDto.getBank_id();
+            if (!isBankValid(bank_id)) {
+                return -1;
+            }
 
-        String regexAccountNumber = getRegexAccountNumber(bank_id, accountDto.getAccount_number());
-        int countAccountNumber = accountMapper.checkAccountNumber(regexAccountNumber);
-        if (countAccountNumber > 0) {
-            return -1;
-        }
+            String regexAccountNumber = getRegexAccountNumber(bank_id, accountDto.getAccount_number());
+            int countAccountNumber = accountMapper.checkAccountNumber(regexAccountNumber);
+            if (countAccountNumber > 0) {
+                return -1;
+            }
 
-        if (accountDto.getNickname() == null || accountDto.getNickname().isEmpty()) {
-            String nickname = getBankName(bank_id);
-            accountDto.setNickname(nickname);
-        }
+            if (accountDto.getNickname() == null || accountDto.getNickname().isEmpty()) {
+                String nickname = getBankName(bank_id);
+                accountDto.setNickname(nickname);
+            }
 
-        accountDto.setAccount_number(regexAccountNumber);
+            accountDto.setAccount_number(regexAccountNumber);
+        }
 
         AccountEntity accountEntity = accountDto.toEntity();
         accountRepository.save(accountEntity);
@@ -94,25 +103,35 @@ public class AccountService {
     public boolean deleteAccount (int account_id, int user_id) {
         AccountEntity accountEntity = getAccountEntityById(account_id, user_id);
 
+        UserEntity userEntity = userRepository.findById(user_id)
+                                              .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+        if (userEntity.getAccount_id().equals(account_id)) {
+            userEntity.setAccount_id(null);
+        }
+
         accountRepository.delete(accountEntity);
         return true;
     }
 
     @Transactional
-    public boolean transferAccountBalance (AccountDto accountDto, int user_id) {
-        int transferBalance = accountDto.getBalance();
+    public boolean transferAccountBalance (TransferDto transferDto, int user_id) {
+        int transferBalance = transferDto.getAmount();
         if (transferBalance < 0) {
             return false;
         }
 
-        int fromAccountId = accountDto.getFrom_account_id();
-        int toAccountId = accountDto.getTo_account_id();
+        int fromAccountId = transferDto.getFrom_account();
+        int toAccountId = transferDto.getTo_account();
 
         AccountEntity fromAccountEntity = getAccountEntityById(fromAccountId, user_id);
         AccountEntity toAccountEntity = getAccountEntityById(toAccountId, user_id);
 
         fromAccountEntity.withdraw(transferBalance);
         toAccountEntity.deposit(transferBalance);
+
+        transferDto.setUser_id(user_id);
+        TransferEntity transferEntity = transferDto.toEntity();
+        transferRepository.save(transferEntity);
 
         return true;
     }
