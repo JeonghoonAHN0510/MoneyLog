@@ -3,6 +3,7 @@ package com.moneylog_backend.moneylog.account.controller;
 import com.moneylog_backend.global.auth.annotation.LoginUser;
 import com.moneylog_backend.moneylog.account.dto.AccountDto;
 import com.moneylog_backend.moneylog.account.service.AccountService;
+import com.moneylog_backend.moneylog.ledger.dto.TransferDto;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -66,7 +67,7 @@ public class AccountController {
     }
 
     @PutMapping("/transfer")
-    public ResponseEntity<?> transferAccountBalance (@RequestBody AccountDto accountDto, @LoginUser Integer user_id) {
-        return ResponseEntity.ok(accountService.transferAccountBalance(accountDto, user_id));
+    public ResponseEntity<?> transferAccountBalance (@RequestBody TransferDto transferDto, @LoginUser Integer user_id) {
+        return ResponseEntity.ok(accountService.transferAccountBalance(transferDto, user_id));
     }
 }

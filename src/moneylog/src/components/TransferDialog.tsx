@@ -5,39 +5,39 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
-import { Account, Ledger } from '../types/finance';
+import { Transfer } from '../types/finance';
+import useResourceStore from '../stores/resourceStore';
 
 interface TransferDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (transfer: Omit<Ledger, 'id'>) => void;
-  accounts: Account[];
+  onAdd: (transfer: Omit<Transfer, "transfer_id" | "user_id" | "created_at" | "updated_at">) => void;
 }
 
 export function TransferDialog({
   open,
   onOpenChange,
   onAdd,
-  accounts,
 }: TransferDialogProps) {
-  const [fromAccountId, setFromAccountId] = useState('');
-  const [toAccountId, setToAccountId] = useState('');
+  const { accounts } = useResourceStore();
+
+  const [fromAccountId, setFromAccountId] = useState<string>('');
+  const [toAccountId, setToAccountId] = useState<string>('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [memo, setMemo] = useState('');
+  const [memo, setMemo] = useState<string>('');
 
   const resetForm = () => {
     setFromAccountId('');
     setToAccountId('');
     setAmount('');
-    setDate(new Date().toISOString().split('T')[0]);
     setMemo('');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!fromAccountId || !toAccountId || !amount || !date) return;
+    if (!fromAccountId || !toAccountId || !amount) return;
     
     if (fromAccountId === toAccountId) {
       alert('출금 계좌와 입금 계좌가 같을 수 없습니다.');
@@ -45,10 +45,10 @@ export function TransferDialog({
     }
 
     onAdd({
-      fromAccountId,
-      toAccountId,
+      from_account: fromAccountId,
+      to_account: toAccountId,
+      transfer_at: date,
       amount: parseFloat(amount),
-      date,
       memo: memo || undefined,
     });
 
@@ -56,9 +56,8 @@ export function TransferDialog({
     onOpenChange(false);
   };
 
-  // Filter available accounts for "to" dropdown
-  const availableToAccounts = accounts.filter(acc => acc.id !== fromAccountId);
-  const availableFromAccounts = accounts.filter(acc => acc.id !== toAccountId);
+  const availableToAccounts = accounts.filter(acc => acc.account_id != fromAccountId);
+  const availableFromAccounts = accounts.filter(acc => acc.account_id != toAccountId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -76,8 +75,8 @@ export function TransferDialog({
               </SelectTrigger>
               <SelectContent>
                 {availableFromAccounts.map((acc) => (
-                  <SelectItem key={acc.id} value={acc.id}>
-                    {acc.name} ({new Intl.NumberFormat('ko-KR').format(acc.balance)}원)
+                  <SelectItem key={acc.account_id} value={String(acc.account_id)}>
+                    {acc.nickname} ({new Intl.NumberFormat('ko-KR').format(acc.balance)}원)
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -92,8 +91,8 @@ export function TransferDialog({
               </SelectTrigger>
               <SelectContent>
                 {availableToAccounts.map((acc) => (
-                  <SelectItem key={acc.id} value={acc.id}>
-                    {acc.name} ({new Intl.NumberFormat('ko-KR').format(acc.balance)}원)
+                  <SelectItem key={acc.account_id} value={String(acc.account_id)}>
+                    {acc.nickname} ({new Intl.NumberFormat('ko-KR').format(acc.balance)}원)
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -27,13 +27,13 @@ public class AccountEntity extends BaseTime {
     private Integer account_id;
     @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
     private Integer user_id;
-    @Column(name = "bank_id", columnDefinition = "INT UNSIGNED NOT NULL")
+    @Column(name = "bank_id", columnDefinition = "INT UNSIGNED")
     private Integer bank_id;
     @Column(columnDefinition = "VARCHAR(50)")
     private String nickname;
     @Column(columnDefinition = "INT")
     private Integer balance;
-    @Column(columnDefinition = "VARCHAR(50) NOT NULL")
+    @Column(columnDefinition = "VARCHAR(50)")
     private String account_number;
     @Column(columnDefinition = "ENUM('RED', 'AMBER', 'YELLOW', 'LIME', 'GREEN', 'EMERALD', 'TEAL', 'CYAN', 'BLUE', 'PURPLE', 'PINK', 'SLATE') DEFAULT 'BLUE'")
     @Enumerated(EnumType.STRING)
