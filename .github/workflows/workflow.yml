@@ -40,9 +40,9 @@ jobs:
             const fs = require("fs");
             const diff_output = fs.readFileSync("diff.txt", "utf8");
 
-            const { GoogleGenerativeAI } = require("@google/generative-ai");
             const genAI = new GoogleGenerativeAI("${{ secrets.GEMINI_API_KEY }}");
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+            const { GoogleGenerativeAI } = require("@google/generative-ai");
+            const model = genAI.getGenerativeModel({ model: "models/gemini-1.5-flash" });
 
             const prompt = `
               You are a senior backend software engineer.
