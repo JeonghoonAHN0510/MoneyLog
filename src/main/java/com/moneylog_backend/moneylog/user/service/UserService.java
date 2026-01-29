@@ -72,6 +72,8 @@ public class UserService {
                                                    .build();
         accountRepository.save(accountEntity);
 
+        userEntity.setAccount_id(accountEntity.getAccount_id());
+
         return userEntity.getUser_id();
     }
 
