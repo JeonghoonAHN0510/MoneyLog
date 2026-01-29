@@ -26,6 +26,8 @@ public class PaymentEntity extends BaseTime {
     private Integer payment_id;
     @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
     private Integer user_id;
+    @Column(name = "account_id", columnDefinition = "INT UNSIGNED")
+    private Integer account_id;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")
     private String name;
     @Column(columnDefinition = "ENUM('CASH', 'CREDIT_CARD', 'CHECK_CARD', 'BANK') NOT NULL")
@@ -38,6 +40,7 @@ public class PaymentEntity extends BaseTime {
         return PaymentDto.builder()
                          .payment_id(this.payment_id)
                          .user_id(this.user_id)
+                         .account_id(this.account_id)
                          .name(this.name)
                          .type(this.type)
                          .created_at(this.getCreated_at())

@@ -3,6 +3,8 @@ package com.moneylog_backend.moneylog.payment.service;
 import java.util.List;
 
 import com.moneylog_backend.global.type.PaymentEnum;
+import com.moneylog_backend.moneylog.account.entity.AccountEntity;
+import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.payment.dto.PaymentDto;
 import com.moneylog_backend.moneylog.payment.entity.PaymentEntity;
 import com.moneylog_backend.moneylog.payment.mapper.PaymentMapper;
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PaymentService {
     private final PaymentRepository paymentRepository;
+    private final AccountRepository accountRepository;
     private final PaymentMapper paymentMapper;
 
     @Transactional
@@ -37,7 +40,11 @@ public class PaymentService {
 
     @Transactional
     public PaymentDto updatePayment (PaymentDto paymentDto, int user_id) {
+        Integer account_id = paymentDto.getAccount_id();
+        validateAccountOwnership(account_id, user_id);
+
         PaymentEntity paymentEntity = getPaymentEntityById(paymentDto.getPayment_id(), user_id);
+        paymentEntity.setAccount_id(account_id);
 
         String InputName = paymentDto.getName();
         PaymentEnum InputType = paymentDto.getType();
@@ -69,5 +76,14 @@ public class PaymentService {
         }
 
         return paymentEntity;
+    }
+
+    private void validateAccountOwnership(int accountId, int userId) {
+        AccountEntity accountEntity = accountRepository.findById(accountId)
+                                                       .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
+
+        if (!accountEntity.getUser_id().equals(userId)) {
+            throw new AccessDeniedException("본인의 계좌가 아닙니다.");
+        }
     }
 }
