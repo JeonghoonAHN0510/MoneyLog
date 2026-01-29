@@ -19,7 +19,7 @@ import {TakeHomeCalculator} from '../components/TakeHomeCalculator';
 import {BudgetManager} from '../components/BudgetManager';
 import {AccountManager} from '../components/AccountManager';
 import {CategoryManager} from '../components/CategoryManager';
-import {Budget, Category, Account, Ledger, Payment} from '../types/finance';
+import {Budget, Category, Account, Ledger, Payment, Transfer} from '../types/finance';
 import {Plus, Wallet, Calendar, ChartBar, Calculator, Target, List, User, LogOut} from 'lucide-react';
 import {toast} from 'sonner';
 import useUserStore from '../stores/authStore';
@@ -73,6 +73,8 @@ export default function FinancePage() {
             setUserInfo(response.data);
         } catch (error) {
             toast.error('사용자 정보를 불러오는데 실패했습니다.');
+            logout();
+            navigate('/login');
         }
     };
 
@@ -86,7 +88,7 @@ export default function FinancePage() {
             ]);
 
             if (catRes.status === 'fulfilled') setCategories(catRes.value.data);
-            if (paymentRes.status === 'fulfilled') setPayments(paymentRes.value.data); // 변수명 주의 (setCategories -> setPayments)
+            if (paymentRes.status === 'fulfilled') setPayments(paymentRes.value.data);
             if (bankRes.status === 'fulfilled') setBanks(bankRes.value.data);
         } catch (e) {
             console.error("기준 정보 로드 실패", e);
@@ -96,8 +98,6 @@ export default function FinancePage() {
 // 2. [동적 데이터] 거래 내역 추가 시 갱신해야 할 것들
     const fetchUserAssets = useCallback(async () => {
         try {
-            // 로딩바는 여기서만 돌려도 됨
-            setLoading(true);
             const [accRes, ledgerRes, budgetRes] = await Promise.allSettled([
                 api.get('/account/list'), // 잔액이 바뀌니까 갱신 필요
                 api.get('/ledger'),       // 목록이 추가됐으니 갱신 필요
@@ -184,33 +184,33 @@ export default function FinancePage() {
     };
 
     // --- [Account CRUD] ---
-    const handleAddAccount = async (newAccountData: any) => {
+    const handleAddAccount = async (account: Omit<Account, "account_id" | "user_id" | "created_at" | "updated_at">) => {
         try {
-            await api.post('/account', newAccountData);
+            await api.post('/account', account);
             toast.success("계좌가 추가되었습니다.");
-            fetchUserAssets(); // 계좌 추가 후 목록 갱신
+            fetchUserAssets();
         } catch (e) {
-            toast.error("추가 실패");
+            toast.error("계좌 추가에 실패하였습니다.");
         }
     };
 
-    const handleUpdateAccount = async (id: number, updateData: any) => {
+    const handleUpdateAccount = async (account: Partial<Account>) => {
         try {
-            await api.put(`/account/${id}`, updateData);
+            await api.put(`/account`, account);
             toast.success("계좌가 수정되었습니다.");
             fetchUserAssets();
         } catch (e) {
-            toast.error("수정 실패");
+            toast.error("계좌 수정에 실패하였습니다.");
         }
     };
 
-    const handleDeleteAccount = async (id: number) => {
+    const handleDeleteAccount = async (account_id: string) => {
         try {
-            await api.delete(`/account/${id}`);
+            await api.delete(`/account?account_id=${account_id}`);
             toast.success("계좌가 삭제되었습니다.");
             fetchUserAssets();
         } catch (e) {
-            toast.error("삭제 실패");
+            toast.error("계좌 삭제에 실패하였습니다.");
         }
     };
 
@@ -278,13 +278,13 @@ export default function FinancePage() {
     };
 
     // --- [Transfer Logic] ---
-    const handleAddTransfer = async (transfer: Omit<Ledger, 'id'>) => {
+    const handleAddTransfer = async (transfer: Omit<Transfer, "transfer_id" | "user_id" | "created_at" | "updated_at">) => {
         try {
-            await api.post('/account/transfer', transfer); // 이체 API 호출
+            await api.put('/account/transfer', transfer);
             toast.success("이체가 완료되었습니다.");
-            fetchUserAssets(); // 계좌 잔액 변동 반영을 위해 전체 갱신
+            fetchUserAssets();
         } catch (e) {
-            toast.error("이체 실패");
+            toast.error("이체에 실패하였습니다.");
         }
     };
 
@@ -411,7 +411,6 @@ export default function FinancePage() {
 
                     <TabsContent value="accounts" className="space-y-6">
                         <AccountManager
-                            accounts={accounts}
                             onAdd={handleAddAccount}
                             onUpdate={handleUpdateAccount}
                             onDelete={handleDeleteAccount}
@@ -459,7 +458,6 @@ export default function FinancePage() {
                 open={isTransferDialogOpen}
                 onOpenChange={setIsTransferDialogOpen}
                 onAdd={handleAddTransfer}
-                accounts={accounts}
             />
         </div>
     );

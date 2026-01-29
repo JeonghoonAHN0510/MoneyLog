@@ -1,7 +1,7 @@
 export interface Budget {
   id: string;
   category: string;
-  amount: number;
+  amount: string;
   period: 'monthly' | 'yearly';
   created_at: string;
   updated_at: string;
@@ -20,11 +20,11 @@ export interface Category {
 export interface Account {
   account_id: string;
   user_id: string;
-  bank_id: string;
+  bank_id?: string;
   type: 'BANK' | 'CASH' | 'POINT' | 'OTHER';
   nickname: string;
   balance: number;
-  account_number: string;
+  account_number?: string;
   color: string;
   created_at: string;
   updated_at: string;
@@ -38,7 +38,7 @@ export interface Ledger {
   account_id: string;
   fixed_id: string;
   title: string;
-  amount: number;
+  amount: string;
   memo: string;
   trading_at: string;
   created_at: string;
@@ -48,6 +48,7 @@ export interface Ledger {
 export interface Payment {
   payment_id: string;
   user_id: string;
+  account_id?: string;
   name: string;
   type: 'CASH' | 'CREDIT_CARD' | 'CHECK_CARD' | 'BANK';
   created_at: string;
@@ -59,8 +60,8 @@ export interface Fixed {
   user_id: string;
   category_id: string;
   title: string;
-  amount: number;
-  fixed_day: number;
+  amount: string;
+  fixed_day: string;
   start_date: string;
   end_date: string;
   created_at: string;
@@ -70,11 +71,11 @@ export interface Fixed {
 export interface Transfer {
   transfer_id: string;
   user_id: string;
-  from_account_id: string;
-  to_account_id: string;
+  from_account: string;
+  to_account: string;
   amount: number;
   transfer_at: string;
-  memo: string;
+  memo?: string;
   created_at: string;
   updated_at: string;
 }
