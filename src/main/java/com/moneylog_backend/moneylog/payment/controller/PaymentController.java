@@ -29,7 +29,7 @@ public class PaymentController {
 
     @GetMapping
     public ResponseEntity<?> getPaymentsByUserId (@LoginUser Integer user_id) {
-        return ResponseEntity.ok(paymentService.getPaymentsByUserId(user_id));
+        // return ResponseEntity.ok(paymentService.getPaymentsByUserId(user_id));
     }
 
     @PutMapping
