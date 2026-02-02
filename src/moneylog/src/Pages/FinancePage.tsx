@@ -163,23 +163,33 @@ export default function FinancePage() {
     };
 
     // --- [Budget CRUD] ---
-    const handleAddBudget = async (budget: Omit<Budget, 'id'>) => {
+    const handleAddBudget = async (budget: Omit<Budget, 'budget_id' | "user_id" | "budget_date" | "created_at" | "updated_at" | "category_name">) => {
         try {
             await api.post('/budget', budget);
             toast.success("예산이 설정되었습니다.");
             fetchUserAssets();
         } catch (e) {
-            toast.error("예산 설정 실패");
+            toast.error("예산 설정에 실패하였습니다.");
         }
     };
 
-    const handleDeleteBudget = async (id: string) => {
+    const handleUpdateBudget = async (budget: Partial<Budget>) => {
         try {
-            await api.delete(`/budget/${id}`);
+            await api.put(`/budget`, budget);
+            toast.success("예산이 수정되었습니다.");
+            fetchUserAssets();
+        } catch (e) {
+            toast.error("예산 수정에 실패하였습니다.");
+        }
+    };
+
+    const handleDeleteBudget = async (budget_id: string) => {
+        try {
+            await api.delete(`/budget?budget_id=${budget_id}`);
             toast.success("예산이 삭제되었습니다.");
             fetchUserAssets();
         } catch (e) {
-            toast.error("삭제 실패");
+            toast.error("예산 삭제에 실패하였습니다.");
         }
     };
 
@@ -349,7 +359,11 @@ export default function FinancePage() {
                 </div>
 
                 {/* Main Content */}
-                <Tabs defaultValue="dashboard" className="space-y-6">
+                <Tabs 
+                    value={currentTab} 
+                    onValueChange={handleTabChange} 
+                    className="space-y-6"
+                >
                     <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
                         <TabsTrigger value="dashboard" className="flex items-center gap-2">
                             <ChartBar className="size-4"/>
@@ -431,9 +445,8 @@ export default function FinancePage() {
 
                     <TabsContent value="budget" className="space-y-6">
                         <BudgetManager
-                            budgets={budgets}
-                            categories={categories}
                             onAdd={handleAddBudget}
+                            onUpdate={handleUpdateBudget}
                             onDelete={handleDeleteBudget}
                         />
                     </TabsContent>

@@ -1,10 +1,12 @@
 export interface Budget {
-  id: string;
-  category: string;
-  amount: string;
-  period: 'monthly' | 'yearly';
+  budget_id: string;
+  category_id: string;
+  user_id: string;
+  amount: number;
+  budget_date: string;
   created_at: string;
   updated_at: string;
+  category_name: string;
 }
 
 export interface Category {

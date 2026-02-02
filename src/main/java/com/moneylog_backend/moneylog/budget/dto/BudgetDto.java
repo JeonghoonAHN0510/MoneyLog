@@ -23,6 +23,8 @@ public class BudgetDto {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
+    private String category_name;
+
     public BudgetEntity toEntity () {
         return BudgetEntity.builder()
                            .budget_id(this.budget_id)

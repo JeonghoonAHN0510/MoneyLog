@@ -12,8 +12,10 @@
     </select>
 
     <select id="getBudgets">
-        SELECT *
-        FROM BUDGET
-        WHERE USER_ID = #{user_id}
+        SELECT B.*,
+               C.name category_name
+        FROM BUDGET B
+        JOIN CATEGORY C ON B.CATEGORY_ID = C.CATEGORY_ID
+        WHERE B.USER_ID = #{user_id}
     </select>
 </mapper>
