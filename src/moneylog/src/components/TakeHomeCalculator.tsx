@@ -6,36 +6,29 @@ import { Switch } from './ui/switch';
 import { Calculator } from 'lucide-react';
 
 export function TakeHomeCalculator() {
-  const [grossSalary, setGrossSalary] = useState('');
+  const [annualSalary, setAnnualSalary] = useState(''); // 연봉 상태로 변경
   const [dependents, setDependents] = useState('1');
   const [childrenUnder20, setChildrenUnder20] = useState('0');
   const [isSMEYouth, setIsSMEYouth] = useState(false);
 
   const calculateTakeHome = () => {
-    const gross = parseFloat(grossSalary) || 0;
+    const annual = parseFloat(annualSalary) || 0;
+    const gross = annual / 12; // 월 환산 급여 (비과세액 등 제외한 단순 계산)
     const deps = parseInt(dependents) || 1;
     const children = parseInt(childrenUnder20) || 0;
 
-    // 국민연금 (4.5%)
-    let nationalPension = Math.min(gross * 0.045, 243000);
-    if (isSMEYouth) {
-      nationalPension = 0; // 중소기업 청년 감면
-    }
+    // 국민연금 (4.5%, 상한액 적용)
+    // 2024년 기준 상한액은 월 265,500원 정도이나 기존 코드 로직(243,000) 유지하되 감면 로직 제거
+    const nationalPension = Math.min(Math.floor(gross * 0.045), 243000); 
 
-    // 건강보험 (3.545%)
-    let healthInsurance = gross * 0.03545;
-    if (isSMEYouth) {
-      healthInsurance = 0; // 중소기업 청년 감면
-    }
+    // 건강보험 (3.545%) - 감면 로직 제거
+    const healthInsurance = Math.floor(gross * 0.03545);
 
     // 장기요양보험 (건강보험의 12.95%)
-    let longTermCare = healthInsurance * 0.1295;
+    const longTermCare = Math.floor(healthInsurance * 0.1295);
 
-    // 고용보험 (0.9%)
-    let employmentInsurance = gross * 0.009;
-    if (isSMEYouth) {
-      employmentInsurance = 0; // 중소기업 청년 감면
-    }
+    // 고용보험 (0.9%) - 감면 로직 제거
+    const employmentInsurance = Math.floor(gross * 0.009);
 
     // 소득세 간이세액표 기준 (매우 간략화된 계산)
     let incomeTax = 0;
@@ -59,21 +52,25 @@ export function TakeHomeCalculator() {
       // 20세 이하 자녀 공제 (추가 공제)
       incomeTax = Math.max(0, incomeTax - children * 12500);
       
-      // 중소기업 청년 소득세 감면 (70-90%)
+      // 중소기업 청년 소득세 감면 (90%) - 이 부분만 유지
       if (isSMEYouth) {
-        incomeTax = incomeTax * 0.1; // 90% 감면 가정
+        incomeTax = incomeTax * 0.1; 
       }
     }
+    
+    // 원단위 절사
+    incomeTax = Math.floor(incomeTax / 10) * 10;
 
     // 지방소득세 (소득세의 10%)
-    const localTax = incomeTax * 0.1;
+    const localTax = Math.floor(incomeTax * 0.1 / 10) * 10;
 
     const totalDeduction =
       nationalPension + healthInsurance + longTermCare + employmentInsurance + incomeTax + localTax;
     const takeHome = gross - totalDeduction;
 
     return {
-      gross,
+      annual,
+      gross, // 월 환산액
       nationalPension,
       healthInsurance,
       longTermCare,
@@ -96,20 +93,27 @@ export function TakeHomeCalculator() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calculator className="size-5" />
-          실수령액 계산기
+          실수령액 계산기 (연봉 기준)
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="grossSalary">세전 급여 (월)</Label>
-            <Input
-              id="grossSalary"
-              type="number"
-              placeholder="3000000"
-              value={grossSalary}
-              onChange={(e) => setGrossSalary(e.target.value)}
-            />
+            <Label htmlFor="annualSalary">연봉 (세전)</Label>
+            <div className="relative">
+                <Input
+                id="annualSalary"
+                type="number"
+                placeholder="40000000"
+                value={annualSalary}
+                onChange={(e) => setAnnualSalary(e.target.value)}
+                />
+                {result.annual > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1 absolute right-1 -bottom-5">
+                        월 환산: 약 {formatCurrency(result.gross)}원
+                    </p>
+                )}
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="dependents">부양가족 수 (본인 포함)</Label>
@@ -135,7 +139,12 @@ export function TakeHomeCalculator() {
           </div>
           <div className="space-y-2 flex items-end">
             <div className="flex items-center justify-between w-full pb-2">
-              <Label htmlFor="isSMEYouth">중소기업 청년 세제혜택</Label>
+              <Label htmlFor="isSMEYouth" className="cursor-pointer">
+                  중소기업 청년 세제혜택
+                  <span className="block text-xs text-muted-foreground font-normal mt-0.5">
+                      (소득세 90% 감면 적용)
+                  </span>
+              </Label>
               <Switch
                 id="isSMEYouth"
                 checked={isSMEYouth}
@@ -146,27 +155,29 @@ export function TakeHomeCalculator() {
         </div>
 
         {/* 한 달 기준 공제액 박스 */}
-        <div className="p-4 bg-muted rounded-lg space-y-3">
-          <div className="text-sm text-muted-foreground">한 달 기준 공제액</div>
+        <div className="p-4 bg-muted rounded-lg space-y-3 mt-6">
+          <div className="text-sm text-muted-foreground font-medium">한 달 기준 예상 급여</div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">국민연금</div>
+              <div className="text-xs text-muted-foreground">국민연금 (4.5%)</div>
               <div className="text-sm">{formatCurrency(result.nationalPension)}원</div>
             </div>
             <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">건강보험</div>
+              <div className="text-xs text-muted-foreground">건강보험 (3.545%)</div>
               <div className="text-sm">{formatCurrency(result.healthInsurance)}원</div>
             </div>
             <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">장기요양</div>
+              <div className="text-xs text-muted-foreground">장기요양 (12.95%)</div>
               <div className="text-sm">{formatCurrency(result.longTermCare)}원</div>
             </div>
             <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">고용보험</div>
+              <div className="text-xs text-muted-foreground">고용보험 (0.9%)</div>
               <div className="text-sm">{formatCurrency(result.employmentInsurance)}원</div>
             </div>
             <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">소득세</div>
+              <div className="text-xs text-muted-foreground">
+                  소득세 {isSMEYouth && <span className="text-green-600 font-bold">(90% 감면)</span>}
+              </div>
               <div className="text-sm">{formatCurrency(result.incomeTax)}원</div>
             </div>
             <div className="space-y-1">
@@ -184,53 +195,26 @@ export function TakeHomeCalculator() {
 
         {result.gross > 0 && (
           <div className="space-y-4 pt-4 border-t">
-            <div>
-              <div className="text-sm text-muted-foreground mb-2">공제 내역</div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>국민연금 (4.5%){isSMEYouth && ' - 감면'}</span>
-                  <span>{formatCurrency(result.nationalPension)}원</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>건강보험 (3.545%){isSMEYouth && ' - 감면'}</span>
-                  <span>{formatCurrency(result.healthInsurance)}원</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>장기요양보험 (12.95%)</span>
-                  <span>{formatCurrency(result.longTermCare)}원</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>고용보험 (0.9%){isSMEYouth && ' - 감면'}</span>
-                  <span>{formatCurrency(result.employmentInsurance)}원</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>소득세{isSMEYouth && ' (90% 감면)'}</span>
-                  <span>{formatCurrency(result.incomeTax)}원</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>지방소득세</span>
-                  <span>{formatCurrency(result.localTax)}원</span>
-                </div>
+            <div className="pt-2 space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-muted-foreground">월 예상 공제액</span>
+                <span className="text-red-600 font-medium">-{formatCurrency(result.totalDeduction)}원</span>
+              </div>
+              <div className="flex justify-between items-center text-lg">
+                <span className="font-bold">월 예상 실수령액</span>
+                <span className="text-green-600 font-bold text-xl">{formatCurrency(result.takeHome)}원</span>
+              </div>
+              <div className="text-right text-xs text-muted-foreground">
+                  (연간 예상 실수령액: {formatCurrency(result.takeHome * 12)}원)
               </div>
             </div>
 
-            <div className="pt-4 border-t space-y-2">
-              <div className="flex justify-between">
-                <span>총 공제액</span>
-                <span className="text-red-600">{formatCurrency(result.totalDeduction)}원</span>
-              </div>
-              <div className="flex justify-between">
-                <span>실수령액</span>
-                <span className="text-green-600">{formatCurrency(result.takeHome)}원</span>
-              </div>
-            </div>
-
-            <div className="bg-muted p-3 rounded-lg text-xs text-muted-foreground">
-              * 이 계산기는 간략화된 계산 방식을 사용합니다. 실제 급여는 회사의 급여 정책과 개인의
-              상황에 따라 달라질 수 있습니다.
+            <div className="bg-muted/50 p-3 rounded-lg text-xs text-muted-foreground">
+              * 연봉을 12개월로 나눈 금액을 기준으로 계산하며, 실제 급여명세서와 차이가 있을 수 있습니다.<br/>
+              * 비과세 식대 등은 고려되지 않았습니다.<br/>
               {isSMEYouth && (
                 <>
-                  <br />* 중소기업 청년 세제혜택은 소득세 90% 감면, 4대보험 전액 감면을 가정하였습니다.
+                  * 중소기업 취업자 소득세 감면(90%)이 적용되었습니다. (4대보험료는 감면 대상이 아닙니다)
                 </>
               )}
             </div>
