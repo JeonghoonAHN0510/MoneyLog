@@ -1,11 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Transaction, Category } from '../types/finance';
+import { Ledger, Category } from '../types/finance';
 import { Trash, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Badge } from './ui/badge';
 
 interface TransactionListProps {
-  transactions: Transaction[];
+  transactions: Ledger[];
   categories: Category[];
   selectedDate?: string;
   onDelete: (id: string) => void;

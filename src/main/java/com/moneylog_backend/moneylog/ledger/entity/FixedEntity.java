@@ -23,35 +23,35 @@ import lombok.NoArgsConstructor;
 public class FixedEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(columnDefinition = "INT UNSIGNED")
-    private int fixed_id;
+    @Column(name = "fixed_id", columnDefinition = "INT UNSIGNED")
+    private int fixedId;
     @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private int user_id;
+    private int userId;
     @Column(name = "category_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private int category_id;
+    private int categoryId;
     @Column(columnDefinition = "VARCHAR(100) NOT NULL")
     private String title;
     @Column(columnDefinition = "INT NOT NULL")
     private int amount;
-    @Column(columnDefinition = "INT NOT NULL")
-    private int fixed_day;
-    @Column(columnDefinition = "DATE NOT NULL")
-    private LocalDate start_date;
-    @Column(columnDefinition = "DATE")
-    private LocalDate end_date;
+    @Column(name = "fixed_day", columnDefinition = "INT NOT NULL")
+    private int fixedDay;
+    @Column(name = "start_date", columnDefinition = "DATE NOT NULL")
+    private LocalDate startDate;
+    @Column(name = "end_date", columnDefinition = "DATE")
+    private LocalDate endDate;
 
     public FixedDto toDto () {
         return FixedDto.builder()
-                       .fixed_id(this.fixed_id)
-                       .user_id(this.user_id)
-                       .category_id(this.category_id)
+                       .fixedId(this.fixedId)
+                       .userId(this.userId)
+                       .categoryId(this.categoryId)
                        .title(this.title)
                        .amount(this.amount)
-                       .fixed_day(this.fixed_day)
-                       .start_date(this.start_date)
-                       .end_date(this.end_date)
-                       .created_at(this.getCreated_at())
-                       .updated_at(this.getUpdated_at())
+                       .fixedDay(this.fixedDay)
+                       .startDate(this.startDate)
+                       .endDate(this.endDate)
+                       .createdAt(this.getCreatedAt())
+                       .updatedAt(this.getUpdatedAt())
                        .build();
     }
 }

@@ -8,7 +8,7 @@ import com.moneylog_backend.moneylog.budget.dto.BudgetDto;
 
 @Mapper
 public interface BudgetMapper {
-    int checkCategoryAndUserIsDuplicate (int category_id, int user_id);
+    int checkCategoryAndUserIsDuplicate (int categoryId, int userId);
 
-    List<BudgetDto> getBudgets (int user_id);
+    List<BudgetDto> getBudgets (int userId);
 }

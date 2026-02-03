@@ -24,12 +24,12 @@ public class LedgerController {
     private final LedgerService ledgerService;
 
     @PostMapping
-    public ResponseEntity<?> saveLedger (@RequestBody LedgerDto ledgerDto, @LoginUser Integer user_id) {
+    public ResponseEntity<?> saveLedger (@RequestBody LedgerDto ledgerDto, @LoginUser Integer userId) {
         if (ledgerDto == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        ledgerDto.setUser_id(user_id);
+        ledgerDto.setUserId(userId);
 
         int resultValue = ledgerService.saveLedger(ledgerDto);
         if (resultValue == -1) {
@@ -40,33 +40,33 @@ public class LedgerController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getLedgersByUserId (@LoginUser Integer user_id) {
-        if (user_id == null) {
+    public ResponseEntity<?> getLedgersByUserId (@LoginUser Integer userId) {
+        if (userId == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        return ResponseEntity.ok(ledgerService.getLedgersByUserId(user_id));
+        return ResponseEntity.ok(ledgerService.getLedgersByUserId(userId));
     }
 
     // todo 검색 조건에 따른 가계부 조회 API 필요
 
     @PutMapping
-    public ResponseEntity<?> updateLedger(@RequestBody LedgerDto ledgerDto, @LoginUser Integer user_id) {
-        if (ledgerDto == null || user_id == null) {
+    public ResponseEntity<?> updateLedger(@RequestBody LedgerDto ledgerDto, @LoginUser Integer userId) {
+        if (ledgerDto == null || userId == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        ledgerDto.setUser_id(user_id);
+        ledgerDto.setUserId(userId);
         return ResponseEntity.ok(ledgerService.updateLedger(ledgerDto));
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deleteLedger (@RequestParam Integer ledger_id, @LoginUser Integer user_id) {
-        if (ledger_id == null || user_id == null) {
+    public ResponseEntity<?> deleteLedger (@RequestParam Integer ledgerId, @LoginUser Integer userId) {
+        if (ledgerId == null || userId == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        LedgerDto ledgerDto = LedgerDto.builder().ledger_id(ledger_id).user_id(user_id).build();
+        LedgerDto ledgerDto = LedgerDto.builder().ledgerId(ledgerId).userId(userId).build();
 
         return ResponseEntity.ok(ledgerService.deleteLedger(ledgerDto));
     }

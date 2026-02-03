@@ -19,8 +19,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserDto {
-    private Integer user_id;
-    private Integer account_id;
+    private Integer userId;
+    private Integer accountId;
     private String name;
     private String id;
     private String password;
@@ -28,23 +28,23 @@ public class UserDto {
     private String phone;
     private boolean gender;
     private RoleEnum role;
-    private String profile_image_url;
-    private MultipartFile upload_file;
+    private String profileImageUrl;
+    private MultipartFile uploadFile;
     private StatusEnum status;
     private ProviderEnum provider;
-    private String provider_id;
-    private LocalDateTime last_login_at;
-    private LocalDateTime created_at;
-    private LocalDateTime updated_at;
+    private String providerId;
+    private LocalDateTime lastLoginAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
-    private Integer bank_id;
-    private String bank_name;
-    private String account_number;
+    private Integer bankId;
+    private String bankName;
+    private String accountNumber;
 
     public UserEntity toEntity () {
         return UserEntity.builder()
-                         .user_id(this.user_id)
-                         .account_id(this.account_id)
+                         .userId(this.userId)
+                         .accountId(this.accountId)
                          .name(this.name)
                          .loginId(this.id)
                          .password(this.password)
@@ -52,11 +52,11 @@ public class UserDto {
                          .phone(this.phone)
                          .gender(this.gender)
                          .role(this.role == null ? RoleEnum.USER : this.role)
-                         .profile_image_url(this.profile_image_url)
+                         .profileImageUrl(this.profileImageUrl)
                          .status(this.status)
                          .provider(this.provider)
-                         .provider_id(this.provider_id)
-                         .last_login_at(this.last_login_at)
+                         .providerId(this.providerId)
+                         .lastLoginAt(this.lastLoginAt)
                          .build();
     }
 }

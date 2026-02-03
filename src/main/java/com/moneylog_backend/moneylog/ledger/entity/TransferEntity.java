@@ -23,32 +23,32 @@ import lombok.NoArgsConstructor;
 public class TransferEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(columnDefinition = "INT UNSIGNED")
-    private Integer transfer_id;
+    @Column(name = "transfer_id", columnDefinition = "INT UNSIGNED")
+    private Integer transferId;
     @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private Integer user_id;
+    private Integer userId;
     @Column(name = "from_account", columnDefinition = "INT UNSIGNED NOT NULL")
-    private Integer from_account;
+    private Integer fromAccount;
     @Column(name = "to_account", columnDefinition = "INT UNSIGNED NOT NULL")
-    private Integer to_account;
+    private Integer toAccount;
     @Column(columnDefinition = "INT NOT NULL")
     private Integer amount;
-    @Column(columnDefinition = "DATE NOT NULL")
-    private LocalDate transfer_at;
+    @Column(name = "transfer_at", columnDefinition = "DATE NOT NULL")
+    private LocalDate transferAt;
     @Column(columnDefinition = "TEXT")
     private String memo;
 
     public TransferDto toDto () {
         return TransferDto.builder()
-                          .transfer_id(this.transfer_id)
-                          .user_id(this.user_id)
-                          .from_account(this.from_account)
-                          .to_account(this.to_account)
+                          .transferId(this.transferId)
+                          .userId(this.userId)
+                          .fromAccount(this.fromAccount)
+                          .toAccount(this.toAccount)
                           .amount(this.amount)
-                          .transfer_at(this.transfer_at)
+                          .transferAt(this.transferAt)
                           .memo(this.memo)
-                          .created_at(this.getCreated_at())
-                          .updated_at(this.getUpdated_at())
+                          .createdAt(this.getCreatedAt())
+                          .updatedAt(this.getUpdatedAt())
                           .build();
     }
 }

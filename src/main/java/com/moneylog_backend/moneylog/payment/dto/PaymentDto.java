@@ -15,19 +15,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PaymentDto {
-    private Integer payment_id;
-    private Integer user_id;
-    private Integer account_id;
+    private Integer paymentId;
+    private Integer userId;
+    private Integer accountId;
     private String name;
     private PaymentEnum type;
-    private LocalDateTime created_at;
-    private LocalDateTime updated_at;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public PaymentEntity toEntity () {
         return PaymentEntity.builder()
-                            .payment_id(this.payment_id)
-                            .user_id(this.user_id)
-                            .account_id(this.account_id)
+                            .paymentId(this.paymentId)
+                            .userId(this.userId)
+                            .accountId(this.accountId)
                             .name(this.name)
                             .type(this.type)
                             .build();

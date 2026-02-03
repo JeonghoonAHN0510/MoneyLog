@@ -15,23 +15,23 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BudgetDto {
-    private int budget_id;
-    private int user_id;
-    private int category_id;
+    private int budgetId;
+    private int userId;
+    private int categoryId;
     private int amount;
-    private LocalDate budget_date;
-    private LocalDateTime created_at;
-    private LocalDateTime updated_at;
+    private LocalDate budgetDate;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
-    private String category_name;
+    private String categoryName;
 
     public BudgetEntity toEntity () {
         return BudgetEntity.builder()
-                           .budget_id(this.budget_id)
-                           .user_id(this.user_id)
-                           .category_id(this.category_id)
+                           .budgetId(this.budgetId)
+                           .userId(this.userId)
+                           .categoryId(this.categoryId)
                            .amount(this.amount)
-                           .budget_date(LocalDate.now())
+                           .budgetDate(LocalDate.now())
                            .build();
     }
 }

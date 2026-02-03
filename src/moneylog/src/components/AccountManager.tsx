@@ -20,9 +20,9 @@ import {
 import useResourceStore from '../stores/resourceStore';
 
 interface AccountManagerProps {
-    onAdd: (account: Omit<Account, "account_id" | "user_id" | "created_at" | "updated_at">) => void;
+    onAdd: (account: Omit<Account, "accountId" | "userId" | "createdAt" | "updatedAt">) => void;
     onUpdate: (account: Partial<Account>) => void;
-    onDelete: (account_id: string) => void;
+    onDelete: (accountId: string) => void;
     onTransferClick?: () => void;
 }
 
@@ -109,7 +109,7 @@ const AccountForm = ({
                         </SelectTrigger>
                         <SelectContent>
                             {banks.map((bank) => (
-                                <SelectItem key={bank.bank_id} value={String(bank.bank_id)}>
+                                <SelectItem key={bank.bankId} value={String(bank.bankId)}>
                                     {bank.name}
                                 </SelectItem>
                             ))}
@@ -173,7 +173,7 @@ const AccountList = ({ items, onEdit, onDelete }: {
 
                 return (
                     <div
-                        key={account.account_id}
+                        key={account.accountId}
                         className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
                     >
                         <div className="flex items-center gap-3">
@@ -187,7 +187,7 @@ const AccountList = ({ items, onEdit, onDelete }: {
                                 <div>{account.nickname}</div>
                                 <div className="text-xs text-muted-foreground">
                                     {accountTypeLabels[typeKey as keyof typeof accountTypeLabels] || '기타'}
-                                    {account.type === 'BANK' && account.account_number && ` · ${account.account_number}`}
+                                    {account.type === 'BANK' && account.accountNumber && ` · ${account.accountNumber}`}
                                 </div>
                             </div>
                         </div>
@@ -196,7 +196,7 @@ const AccountList = ({ items, onEdit, onDelete }: {
                             <Button variant="ghost" size="icon" onClick={() => onEdit(account)}>
                                 <Pencil className="size-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => onDelete(account.account_id)}>
+                            <Button variant="ghost" size="icon" onClick={() => onDelete(account.accountId)}>
                                 <Trash className="size-4" />
                             </Button>
                         </div>
@@ -207,16 +207,13 @@ const AccountList = ({ items, onEdit, onDelete }: {
     </div>
 );
 
-// =========================================================
-// 3. 메인 AccountManager 컴포넌트
-// =========================================================
 export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: AccountManagerProps) {
     const { accounts, banks } = useResourceStore();
 
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editingAccount, setEditingAccount] = useState<Account | null>(null);
-    const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null); // [추가] 삭제 대상 ID
+    const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
     const [type, setType] = useState<'BANK' | 'CASH' | 'POINT' | 'OTHER'>('BANK');
     const [nickname, setNickname] = useState('');
@@ -239,12 +236,12 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
         if (type === 'BANK' && !bankId) return; 
 
         onAdd({
-            bank_id: type === 'BANK' ? bankId : undefined, 
+            bankId: type === 'BANK' ? bankId : undefined, 
             type,
             nickname,
             balance: Number(balance),
             color,
-            account_number: type === 'BANK' ? accountNumber : undefined
+            accountNumber: type === 'BANK' ? accountNumber : undefined
         });
 
         resetForm();
@@ -253,11 +250,11 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
 
     const handleEdit = (account: Account) => {
         setEditingAccount(account);
-        setBankId(account.bank_id ? String(account.bank_id) : '');
+        setBankId(account.bankId ? String(account.bankId) : '');
         setType(account.type);
         setNickname(account.nickname);
         setBalance(account.balance);
-        setAccountNumber(account.account_number || '');
+        setAccountNumber(account.accountNumber || '');
         setColor(account.color);
         setIsEditDialogOpen(true);
     };
@@ -267,13 +264,13 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
         if (type === 'BANK' && !bankId) return;
 
         onUpdate({
-            account_id: editingAccount.account_id,
-            bank_id: type === 'BANK' ? bankId : undefined,
+            accountId: editingAccount.accountId,
+            bankId: type === 'BANK' ? bankId : undefined,
             nickname,
             balance: Number(balance),
             type,
             color,
-            account_number: type === 'BANK' ? accountNumber : undefined
+            accountNumber: type === 'BANK' ? accountNumber : undefined
         });
 
         resetForm();
@@ -281,8 +278,8 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
         setIsEditDialogOpen(false);
     };
 
-    const handleDeleteClick = (account_id: string) => {
-        setDeleteTargetId(account_id);
+    const handleDeleteClick = (accountId: string) => {
+        setDeleteTargetId(accountId);
     };
 
     const confirmDelete = () => {
@@ -319,18 +316,17 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
                 <CardContent className="space-y-4">
                     <div className="p-4 bg-primary/10 rounded-lg">
                         <div className="text-sm text-muted-foreground mb-1">총 자산</div>
-                        <div className="text-primary">{formatCurrency(totalBalance)}원</div>
+                        <div className="text-primary font-bold text-xl">{formatCurrency(totalBalance)}원</div>
                     </div>
 
                     <AccountList 
                         items={accounts} 
                         onEdit={handleEdit} 
-                        onDelete={handleDeleteClick} // [수정] 바로 삭제 대신 handleDeleteClick 호출
+                        onDelete={handleDeleteClick}
                     />
                 </CardContent>
             </Card>
 
-            {/* Add Dialog */}
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
@@ -358,7 +354,6 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
                 </DialogContent>
             </Dialog>
 
-            {/* Edit Dialog */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogContent>
                     <DialogHeader>

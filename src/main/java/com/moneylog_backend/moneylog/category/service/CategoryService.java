@@ -23,8 +23,8 @@ public class CategoryService {
     private final CategoryMapper categoryMapper;
 
     @Transactional
-    public int saveCategory (CategoryDto categoryDto, int user_id) {
-        categoryDto.setUser_id(user_id);
+    public int saveCategory (CategoryDto categoryDto, int userId) {
+        categoryDto.setUserId(userId);
 
         int countSameCategory = categoryMapper.checkCategoryNameTypeUnique(categoryDto);
         if (countSameCategory > 0) {
@@ -34,19 +34,19 @@ public class CategoryService {
         CategoryEntity categoryEntity = categoryDto.toEntity();
         categoryEntity = categoryRepository.save(categoryEntity);
 
-        return categoryEntity.getCategory_id();
+        return categoryEntity.getCategoryId();
     }
 
-    public List<CategoryDto> getCategoryByUserId (int user_id) {
+    public List<CategoryDto> getCategoryByUserId (int userId) {
 
-        List<CategoryEntity> categoryEntities = categoryRepository.findByUser_id(user_id);
+        List<CategoryEntity> categoryEntities = categoryRepository.findByUserId(userId);
 
         return categoryEntities.stream().map(CategoryEntity::toDto).toList();
     }
 
     @Transactional
-    public CategoryDto updateCategory (CategoryDto categoryDto, int user_id) {
-        CategoryEntity categoryEntity = getCategoryEntityById(categoryDto.getCategory_id(), user_id);
+    public CategoryDto updateCategory (CategoryDto categoryDto, int userId) {
+        CategoryEntity categoryEntity = getCategoryEntityById(categoryDto.getCategoryId(), userId);
 
         String InputName = categoryDto.getName();
         CategoryEnum InputType = categoryDto.getType();
@@ -65,19 +65,19 @@ public class CategoryService {
     }
 
     @Transactional
-    public boolean deleteCategory (int category_id, int user_id) {
-        CategoryEntity categoryEntity = getCategoryEntityById(category_id, user_id);
+    public boolean deleteCategory (int categoryId, int userId) {
+        CategoryEntity categoryEntity = getCategoryEntityById(categoryId, userId);
 
         categoryRepository.delete(categoryEntity);
         return true;
     }
 
-    private CategoryEntity getCategoryEntityById (int category_id, int user_id) {
-        CategoryEntity categoryEntity = categoryRepository.findById(category_id)
+    private CategoryEntity getCategoryEntityById (int categoryId, int userId) {
+        CategoryEntity categoryEntity = categoryRepository.findById(categoryId)
                                                           .orElseThrow(
                                                               () -> new IllegalArgumentException("존재하지 않는 카테고리입니다."));
 
-        if (categoryEntity.getUser_id() != user_id) {
+        if (categoryEntity.getUserId() != userId) {
             throw new AccessDeniedException("본인의 카테고리가 아닙니다.");
         }
 

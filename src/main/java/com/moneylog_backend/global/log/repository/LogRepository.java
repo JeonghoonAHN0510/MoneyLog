@@ -14,6 +14,6 @@ public interface LogRepository extends JpaRepository<LogEntity, Long> {
 
     @Modifying
     @Transactional
-    @Query("DELETE FROM LogEntity s WHERE s.created_at < :cutoffDate")
+    @Query("DELETE FROM LogEntity s WHERE s.createdAt < :cutoffDate")
     void deleteLogsOlderThan (@Param("cutoffDate") LocalDateTime cutoffDate);
 }

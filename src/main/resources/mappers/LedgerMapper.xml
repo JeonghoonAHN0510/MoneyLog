@@ -7,8 +7,8 @@
     <select id="getLedgersByUserId">
         SELECT *
         FROM LEDGER
-        WHERE USER_ID = #{user_id}
-          AND trading_at <![CDATA[ >= ]]> #{start_date}
-          AND trading_at <![CDATA[ <= ]]> #{end_date}
+        WHERE USER_ID = #{userId}
+          AND trading_at <![CDATA[ >= ]]> #{startDate}
+          AND trading_at <![CDATA[ <= ]]> #{endDate}
     </select>
 </mapper>

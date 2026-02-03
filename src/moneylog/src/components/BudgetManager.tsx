@@ -20,9 +20,9 @@ import {
 import useResourceStore from '../stores/resourceStore';
 
 interface BudgetManagerProps {
-    onAdd: (budget: Omit<Budget, 'budget_id' | "user_id" | "budget_date" | "created_at" | "updated_at" | "category_name">) => void;
+    onAdd: (budget: Omit<Budget, 'budgetId' | "userId" | "budgetDate" | "createdAt" | "updatedAt" | "categoryName">) => void;
     onUpdate: (budget: Partial<Budget>) => void;
-    onDelete: (budget_id: string) => void;
+    onDelete: (budgetId: string) => void;
 }
 
 const formatCurrency = (amount: number) => {
@@ -50,7 +50,7 @@ const BudgetForm = ({ categoryId, setCategoryId, amount, setAmount, categories }
                 </SelectTrigger>
                 <SelectContent>
                     {categories.map((cat) => (
-                        <SelectItem key={cat.category_id} value={cat.category_id}>
+                        <SelectItem key={cat.categoryId} value={cat.categoryId}>
                             {cat.name}
                         </SelectItem>
                     ))}
@@ -85,11 +85,11 @@ const BudgetList = ({ items, categories, onEdit, onDelete }: {
             <div className="text-center text-muted-foreground py-8">설정된 예산이 없습니다</div>
         ) : (
             items.map((budget) => {
-                const categoryName = categories.find(c => c.category_id === budget.category_id)?.name || budget.category_name || '알 수 없음';
+                const categoryName = categories.find(c => c.categoryId === budget.categoryId)?.name || budget.categoryName || '알 수 없음';
                 
                 return (
                     <div
-                        key={budget.budget_id}
+                        key={budget.budgetId}
                         className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
                     >
                         <div className="flex items-center gap-3">
@@ -105,7 +105,7 @@ const BudgetList = ({ items, categories, onEdit, onDelete }: {
                             <Button variant="ghost" size="icon" onClick={() => onEdit(budget)}>
                                 <Pencil className="size-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => onDelete(budget.budget_id)}>
+                            <Button variant="ghost" size="icon" onClick={() => onDelete(budget.budgetId)}>
                                 <Trash className="size-4" />
                             </Button>
                         </div>
@@ -141,7 +141,7 @@ export function BudgetManager({ onAdd, onUpdate, onDelete }: BudgetManagerProps)
         if (!categoryId || !amount) return;
 
         onAdd({
-            category_id: categoryId,
+            categoryId: categoryId,
             amount: Number(amount)
         });
 
@@ -151,7 +151,7 @@ export function BudgetManager({ onAdd, onUpdate, onDelete }: BudgetManagerProps)
 
     const handleEdit = (budget: Budget) => {
         setEditingBudget(budget);
-        setCategoryId(budget.category_id);
+        setCategoryId(budget.categoryId);
         setAmount(budget.amount);
         setIsEditDialogOpen(true);
     };
@@ -160,8 +160,8 @@ export function BudgetManager({ onAdd, onUpdate, onDelete }: BudgetManagerProps)
         if (!editingBudget || !amount) return;
 
         onUpdate({
-            budget_id: editingBudget.budget_id,
-            category_id: categoryId, 
+            budgetId: editingBudget.budgetId,
+            categoryId: categoryId, 
             amount: Number(amount)
         });
 

@@ -1,92 +1,92 @@
 export interface Budget {
-  budget_id: string;
-  category_id: string;
-  user_id: string;
+  budgetId: string;
+  categoryId: string;
+  userId: string;
   amount: number;
-  budget_date: string;
-  created_at: string;
-  updated_at: string;
-  category_name: string;
+  budgetDate: string;
+  createdAt: string;
+  updatedAt: string;
+  categoryName: string;
 }
 
 export interface Category {
-  category_id: string;
-  user_id: string;
+  categoryId: string;
+  userId: string;
   name: string;
   type: 'INCOME' | 'EXPENSE';
   color: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Account {
-  account_id: string;
-  user_id: string;
-  bank_id?: string;
+  accountId: string;
+  userId: string;
+  bankId?: string;
   type: 'BANK' | 'CASH' | 'POINT' | 'OTHER';
   nickname: string;
   balance: number;
-  account_number?: string;
+  accountNumber?: string;
   color: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Ledger {
-  ledger_id: string;
-  user_id: string;
-  category_id: string;
-  payment_id: string;
-  account_id: string;
-  fixed_id: string;
+  ledgerId: string;
+  userId: string;
+  categoryId: string;
+  paymentId: string;
+  accountId: string;
+  fixedId: string;
   title: string;
   amount: string;
   memo: string;
-  trading_at: string;
-  created_at: string;
-  updated_at: string;
+  tradingAt: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Payment {
-  payment_id: string;
-  user_id: string;
-  account_id?: string;
+  paymentId: string;
+  userId: string;
+  accountId?: string;
   name: string;
   type: 'CASH' | 'CREDIT_CARD' | 'CHECK_CARD' | 'BANK';
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Fixed {
-  fixed_id: string;
-  user_id: string;
-  category_id: string;
+  fixedId: string;
+  userId: string;
+  categoryId: string;
   title: string;
   amount: string;
-  fixed_day: string;
-  start_date: string;
-  end_date: string;
-  created_at: string;
-  updated_at: string;
+  fixedDay: string;
+  startDate: string;
+  endDate: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Transfer {
-  transfer_id: string;
-  user_id: string;
-  from_account: string;
-  to_account: string;
+  transferId: string;
+  userId: string;
+  fromAccount: string;
+  toAccount: string;
   amount: number;
-  transfer_at: string;
+  transferAt: string;
   memo?: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Bank {
-  bank_id: string;
+  bankId: string;
   name: string;
   code: string;
-  logo_image_url: string;
-  created_at: string;
-  updated_at: string;
+  logoImageUrl: string;
+  createdAt: string;
+  updatedAt: string;
 }

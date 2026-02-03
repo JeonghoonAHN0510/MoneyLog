@@ -23,41 +23,41 @@ import lombok.NoArgsConstructor;
 public class LedgerEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(columnDefinition = "INT UNSIGNED")
-    private Integer ledger_id;
+    @Column(name = "ledger_id", columnDefinition = "INT UNSIGNED")
+    private Integer ledgerId;
     @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private Integer user_id;
+    private Integer userId;
     @Column(name = "category_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private Integer category_id;
+    private Integer categoryId;
     @Column(name = "payment_id", columnDefinition = "INT UNSIGNED")
-    private Integer payment_id;
+    private Integer paymentId;
     @Column(name = "account_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private Integer account_id;
+    private Integer accountId;
     @Column(name = "fixed_id", columnDefinition = "INT UNSIGNED")
-    private Integer fixed_id;
+    private Integer fixedId;
     @Column(columnDefinition = "VARCHAR(100) NOT NULL")
     private String title;
     @Column(columnDefinition = "INT NOT NULL")
     private Integer amount;
     @Column(columnDefinition = "TEXT")
     private String memo;
-    @Column(columnDefinition = "DATE NOT NULL")
-    private LocalDate trading_at;
+    @Column(name = "trading_at", columnDefinition = "DATE NOT NULL")
+    private LocalDate tradingAt;
 
     public LedgerDto toDto () {
         return LedgerDto.builder()
-                        .ledger_id(this.ledger_id)
-                        .user_id(this.user_id)
-                        .category_id(this.category_id)
-                        .payment_id(this.payment_id)
-                        .account_id(this.account_id)
-                        .fixed_id(this.fixed_id)
+                        .ledgerId(this.ledgerId)
+                        .userId(this.userId)
+                        .categoryId(this.categoryId)
+                        .paymentId(this.paymentId)
+                        .accountId(this.accountId)
+                        .fixedId(this.fixedId)
                         .title(this.title)
                         .amount(this.amount)
                         .memo(this.memo)
-                        .trading_at(this.trading_at)
-                        .created_at(this.getCreated_at())
-                        .updated_at(this.getUpdated_at())
+                        .tradingAt(this.tradingAt)
+                        .createdAt(this.getCreatedAt())
+                        .updatedAt(this.getUpdatedAt())
                         .build();
     }
 }

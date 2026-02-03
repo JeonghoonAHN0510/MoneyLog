@@ -16,33 +16,33 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LedgerDto {
-    private Integer ledger_id;
-    private Integer user_id;
-    private Integer category_id;
-    private Integer payment_id;
-    private Integer account_id;
-    private Integer fixed_id;
+    private Integer ledgerId;
+    private Integer userId;
+    private Integer categoryId;
+    private Integer paymentId;
+    private Integer accountId;
+    private Integer fixedId;
     private String title;
     private Integer amount;
     private String memo;
-    private LocalDate trading_at;
-    private LocalDateTime created_at;
-    private LocalDateTime updated_at;
+    private LocalDate tradingAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
-    private CategoryEnum category_type;
+    private CategoryEnum categoryType;
 
     public LedgerEntity toEntity () {
         return LedgerEntity.builder()
-                           .ledger_id(this.ledger_id)
-                           .user_id(this.user_id)
-                           .category_id(this.category_id)
-                           .payment_id(payment_id)
-                           .account_id(this.account_id)
-                           .fixed_id(fixed_id)
+                           .ledgerId(this.ledgerId)
+                           .userId(this.userId)
+                           .categoryId(this.categoryId)
+                           .paymentId(paymentId)
+                           .accountId(this.accountId)
+                           .fixedId(fixedId)
                            .title(this.title)
                            .amount(this.amount)
                            .memo(this.memo)
-                           .trading_at(this.trading_at)
+                           .tradingAt(this.tradingAt)
                            .build();
     }
 }
