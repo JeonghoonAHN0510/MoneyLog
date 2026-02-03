@@ -22,12 +22,12 @@ import lombok.NoArgsConstructor;
 public class PaymentEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(columnDefinition = "INT UNSIGNED")
-    private Integer payment_id;
+    @Column(name = "payment_id", columnDefinition = "INT UNSIGNED")
+    private Integer paymentId;
     @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private Integer user_id;
-    @Column(name = "account_id", columnDefinition = "INT UNSIGNED")
-    private Integer account_id;
+    private Integer userId;
+    @Column(name = "accountId", columnDefinition = "INT UNSIGNED")
+    private Integer accountId;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")
     private String name;
     @Column(columnDefinition = "ENUM('CASH', 'CREDIT_CARD', 'CHECK_CARD', 'BANK') NOT NULL")
@@ -38,13 +38,13 @@ public class PaymentEntity extends BaseTime {
 
     public PaymentDto toDto () {
         return PaymentDto.builder()
-                         .payment_id(this.payment_id)
-                         .user_id(this.user_id)
-                         .account_id(this.account_id)
+                         .paymentId(this.paymentId)
+                         .userId(this.userId)
+                         .accountId(this.accountId)
                          .name(this.name)
                          .type(this.type)
-                         .created_at(this.getCreated_at())
-                         .updated_at(this.getUpdated_at())
+                         .createdAt(this.getCreatedAt())
+                         .updatedAt(this.getUpdatedAt())
                          .build();
     }
 }

@@ -16,18 +16,18 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CategoryDto {
-    private Integer category_id;
-    private Integer user_id;
+    private Integer categoryId;
+    private Integer userId;
     private String name;
     private CategoryEnum type;
     private ColorEnum color;
-    private LocalDateTime created_at;
-    private LocalDateTime updated_at;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public CategoryEntity toEntity () {
         return CategoryEntity.builder()
-                             .category_id(this.category_id)
-                             .user_id(this.user_id)
+                             .categoryId(this.categoryId)
+                             .userId(this.userId)
                              .name(this.name)
                              .type(this.type)
                              .color(this.color)

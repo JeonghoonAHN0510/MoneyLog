@@ -23,18 +23,18 @@ import lombok.NoArgsConstructor;
 public class AccountEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(columnDefinition = "INT UNSIGNED")
-    private Integer account_id;
+    @Column(name = "account_id", columnDefinition = "INT UNSIGNED")
+    private Integer accountId;
     @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private Integer user_id;
+    private Integer userId;
     @Column(name = "bank_id", columnDefinition = "INT UNSIGNED")
-    private Integer bank_id;
+    private Integer bankId;
     @Column(columnDefinition = "VARCHAR(50)")
     private String nickname;
     @Column(columnDefinition = "INT")
     private Integer balance;
-    @Column(columnDefinition = "VARCHAR(50)")
-    private String account_number;
+    @Column(name = "account_number", columnDefinition = "VARCHAR(50)")
+    private String accountNumber;
     @Column(columnDefinition = "ENUM('RED', 'AMBER', 'YELLOW', 'LIME', 'GREEN', 'EMERALD', 'TEAL', 'CYAN', 'BLUE', 'PURPLE', 'PINK', 'SLATE') DEFAULT 'BLUE'")
     @Enumerated(EnumType.STRING)
     private ColorEnum color;
@@ -61,16 +61,16 @@ public class AccountEntity extends BaseTime {
 
     public AccountDto toDto () {
         return AccountDto.builder()
-                         .account_id(this.account_id)
-                         .user_id(this.user_id)
-                         .bank_id(this.bank_id)
+                         .accountId(this.accountId)
+                         .userId(this.userId)
+                         .bankId(this.bankId)
                          .nickname(this.nickname)
                          .balance(this.balance)
-                         .account_number(this.account_number)
+                         .accountNumber(this.accountNumber)
                          .color(this.color)
                          .type(this.type)
-                         .created_at(this.getCreated_at())
-                         .updated_at(this.getUpdated_at())
+                         .createdAt(this.getCreatedAt())
+                         .updatedAt(this.getUpdatedAt())
                          .build();
     }
 }

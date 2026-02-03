@@ -23,7 +23,7 @@ export default function SignUpPage() {
   const [gender, setGender] = useState<boolean>(true);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
-  const [bank_id, setbank_id] = useState('');
+  const [bankId, setBankId] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
 
   const { banks, setBanks } = useResourceStore();
@@ -32,24 +32,22 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // @ts-ignore
     const fetchBanks = async () => {
       if (banks.length > 0) {
-        if (!bank_id) setbank_id(String(banks[0].bank_id));
+        if (!bankId) setBankId(String(banks[0].bankId));
         return;
       }
 
       try {
         const response = await api.get("/bank");
         setBanks(response.data);
-
       } catch (error) {
         console.error("은행 목록 로드 실패:", error);
         toast.error("은행 목록을 불러오지 못했습니다.");
       }
     };
     fetchBanks();
-  }, [banks, setBanks]);
+  }, [banks, setBanks, bankId]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -61,23 +59,21 @@ export default function SignUpPage() {
   };
 
   const handleBankChange = (value: string) => {
-    setbank_id(value);
+    setBankId(value);
   };
 
   const getBankName = (targetId: string) => {
-    // @ts-ignore
-    const targetBank = banks.find(bank => String(bank.bank_id) === String(targetId));
-
+    // bank_id -> bankId
+    const targetBank = banks.find(bank => String(bank.bankId) === String(targetId));
     return targetBank?.name || "";
   }
 
-  // @ts-ignore
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     // 클라이언트 검증
-    if (!name || !id || !email || !password || !confirmPassword || !phone || !bank_id || !accountNumber) {
+    if (!name || !id || !email || !password || !confirmPassword || !phone || !bankId || !accountNumber) {
       toast.error('모든 필드를 입력해주세요');
       setIsLoading(false);
       return;
@@ -98,30 +94,32 @@ export default function SignUpPage() {
     try {
       const formData = new FormData();
 
+      // FormData 키값들도 카멜케이스로 변경 (백엔드 수용 여부에 따라 확인 필요)
       formData.append('id', id);
       formData.append('name', name);
       formData.append('email', email);
       formData.append('password', password);
       formData.append('phone', phone);
       formData.append('gender', String(gender));
-      formData.append('bank_id', bank_id);
-      formData.append('account_number', String(accountNumber));
+      formData.append('bankId', bankId);
+      formData.append('accountNumber', String(accountNumber));
 
-      const bankName = getBankName(bank_id);
-      formData.append('bank_name', String(bankName));
+      const bankName = getBankName(bankId);
+      formData.append('bankName', String(bankName));
 
       if (profileImage) {
-        formData.append('upload_file', profileImage);
+        formData.append('uploadFile', profileImage);
       }
+      
       const response = await api.post('/user/signup', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      const user_pk = response.data;
+      const userPk = response.data;
 
-      if (user_pk > 0) {
+      if (userPk > 0) {
         toast.success('회원가입이 완료되었습니다!');
         setTimeout(() => {
           navigate('/login');
@@ -129,7 +127,7 @@ export default function SignUpPage() {
       }
 
     } catch (error: any) {
-      if (error.status == 409) {
+      if (error.status === 409) {
         toast.error('중복된 아이디 또는 이메일이 존재합니다');
       } else {
         toast.error('회원가입 중 알 수 없는 오류가 발생했습니다');
@@ -142,13 +140,11 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4 py-10">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
           <Wallet className="size-10 text-blue-600" />
           <span className="text-3xl font-bold text-gray-900">내 가계부</span>
         </div>
 
-        {/* SignUp Card */}
         <Card className="border-2 shadow-lg">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">회원가입</CardTitle>
@@ -158,8 +154,6 @@ export default function SignUpPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignUp} className="space-y-4">
-
-              {/* [1] 프로필 사진 업로드 섹션 */}
               <div className="flex flex-col items-center gap-4 mb-6">
                 <div className="relative group cursor-pointer">
                   <div className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors">
@@ -188,7 +182,6 @@ export default function SignUpPage() {
                 </Label>
               </div>
 
-              {/* 아이디 & 이름 */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="id">아이디</Label>
@@ -226,7 +219,6 @@ export default function SignUpPage() {
                 />
               </div>
 
-              {/* 비밀번호 섹션 */}
               <div className="space-y-2">
                 <Label htmlFor="password">비밀번호</Label>
                 <div className="relative">
@@ -243,11 +235,7 @@ export default function SignUpPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
-                    {showPassword ? (
-                      <EyeOff className="size-4" />
-                    ) : (
-                      <Eye className="size-4" />
-                    )}
+                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </button>
                 </div>
               </div>
@@ -264,18 +252,16 @@ export default function SignUpPage() {
                 />
               </div>
 
-              {/* 주거래 은행 & 계좌번호 */}
               <div className="grid grid-cols-5 gap-4">
                 <div className="col-span-2 space-y-2">
                   <Label htmlFor="bank">주거래 은행</Label>
-                  <Select value={bank_id} onValueChange={handleBankChange}>
+                  <Select value={bankId} onValueChange={handleBankChange}>
                     <SelectTrigger id="bank" className="w-full">
                       <SelectValue placeholder="은행 선택" />
                     </SelectTrigger>
                     <SelectContent>
                       {banks.map((bank) => (
-                        // [수정] bank_id -> bank_id, 값은 반드시 String으로 변환
-                        <SelectItem key={bank.code} value={String(bank.bank_id)}>
+                        <SelectItem key={bank.code} value={String(bank.bankId)}>
                           {bank.name}
                         </SelectItem>
                       ))}
@@ -283,9 +269,8 @@ export default function SignUpPage() {
                   </Select>
                 </div>
 
-                {/* 계좌번호: 3칸 차지 (col-span-3) */}
                 <div className="col-span-3 space-y-2">
-                  <Label htmlFor="name">계좌번호</Label>
+                  <Label htmlFor="accountNumber">계좌번호</Label>
                   <Input
                     id="accountNumber"
                     type="text"
@@ -297,7 +282,6 @@ export default function SignUpPage() {
                 </div>
               </div>
 
-              {/* 전화번호 & 성별 */}
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="phone">전화번호</Label>
@@ -311,7 +295,6 @@ export default function SignUpPage() {
                   />
                 </div>
 
-                {/* [2] 성별 선택 섹션 */}
                 <div className="space-y-2">
                   <Label>성별</Label>
                   <div className="flex gap-4">

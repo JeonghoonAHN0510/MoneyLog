@@ -10,5 +10,5 @@ public interface CategoryMapper {
 
     int checkCategoryNameTypeUnique (CategoryDto categoryDto);
 
-    String getCategoryTypeByCategoryId(int category_id);
+    String getCategoryTypeByCategoryId(int categoryId);
 }

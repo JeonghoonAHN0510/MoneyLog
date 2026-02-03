@@ -24,12 +24,12 @@ public class BudgetController {
     private final BudgetService budgetService;
 
     @PostMapping
-    public ResponseEntity<?> saveBudget (@RequestBody BudgetDto budgetDto, @LoginUser Integer user_id) {
+    public ResponseEntity<?> saveBudget (@RequestBody BudgetDto budgetDto, @LoginUser Integer userId) {
         if (budgetDto == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        budgetDto.setUser_id(user_id);
+        budgetDto.setUserId(userId);
 
         int resultValue = budgetService.saveBudget(budgetDto);
         if (resultValue == -1) {
@@ -40,17 +40,17 @@ public class BudgetController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getBudgets (@LoginUser Integer user_id) {
-        return ResponseEntity.ok(budgetService.getBudgets(user_id));
+    public ResponseEntity<?> getBudgets (@LoginUser Integer userId) {
+        return ResponseEntity.ok(budgetService.getBudgets(userId));
     }
 
     @PutMapping
-    public ResponseEntity<?> updateBudget (@RequestBody BudgetDto budgetDto, @LoginUser Integer user_id) {
+    public ResponseEntity<?> updateBudget (@RequestBody BudgetDto budgetDto, @LoginUser Integer userId) {
         if (budgetDto == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        budgetDto.setUser_id(user_id);
+        budgetDto.setUserId(userId);
 
         BudgetDto resultBudgetDto = budgetService.updateBudget(budgetDto);
         if (resultBudgetDto == null) {
@@ -61,8 +61,8 @@ public class BudgetController {
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deleteBudget (@RequestParam int budget_id, @LoginUser Integer user_id) {
-        BudgetDto budgetDto = BudgetDto.builder().budget_id(budget_id).user_id(user_id).build();
+    public ResponseEntity<?> deleteBudget (@RequestParam int budgetId, @LoginUser Integer userId) {
+        BudgetDto budgetDto = BudgetDto.builder().budgetId(budgetId).userId(userId).build();
 
         return ResponseEntity.ok(budgetService.deleteBudget(budgetDto));
     }

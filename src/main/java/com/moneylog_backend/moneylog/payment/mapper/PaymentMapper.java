@@ -8,5 +8,5 @@ import com.moneylog_backend.moneylog.payment.dto.PaymentDto;
 
 @Mapper
 public interface PaymentMapper {
-    List<PaymentDto> getPaymentsByUserId(int user_id);
+    List<PaymentDto> getPaymentsByUserId(int userId);
 }

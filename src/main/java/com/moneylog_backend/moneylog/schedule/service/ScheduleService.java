@@ -32,7 +32,7 @@ public class ScheduleService {
             scheduler.clear();
 
             scheduleRepository.findAll().forEach(meta -> {
-                if (meta.is_active()) {
+                if (meta.isActive()) {
                     registerJob(meta);
                 }
             });
@@ -46,17 +46,17 @@ public class ScheduleService {
             // 실행할 Job 클래스 매핑 (여기서는 로그 삭제 Job으로 고정 예시)
             // 실제로는 Class.forName(meta.getClassName()) 등으로 동적 로딩 가능
             JobDetail jobDetail = JobBuilder.newJob(LogCleanupJob.class)
-                                            .withIdentity(meta.getJob_name(), meta.getJob_group())
+                                            .withIdentity(meta.getJobName(), meta.getJobGroup())
                                             .build();
 
             CronTrigger trigger = TriggerBuilder.newTrigger()
-                                                .withIdentity(meta.getJob_name() + "_trigger", meta.getJob_group())
+                                                .withIdentity(meta.getJobName() + "_trigger", meta.getJobGroup())
                                                 .withSchedule(
-                                                    CronScheduleBuilder.cronSchedule(meta.getCron_expression()))
+                                                    CronScheduleBuilder.cronSchedule(meta.getCronExpression()))
                                                 .build();
 
             scheduler.scheduleJob(jobDetail, trigger);
-            log.info("Job Registered: {} at {}", meta.getJob_name(), meta.getCron_expression());
+            log.info("Job Registered: {} at {}", meta.getJobName(), meta.getCronExpression());
 
         } catch (SchedulerException e) {
             log.error("Failed to register job", e);
@@ -69,10 +69,10 @@ public class ScheduleService {
             JobMetaEntity meta = scheduleRepository.findById(jobName)
                                                    .orElseThrow(() -> new RuntimeException("Job not found"));
 
-            meta.setCron_expression(newCron);
+            meta.setCronExpression(newCron);
             scheduleRepository.save(meta);
 
-            TriggerKey triggerKey = TriggerKey.triggerKey(jobName + "_trigger", meta.getJob_group());
+            TriggerKey triggerKey = TriggerKey.triggerKey(jobName + "_trigger", meta.getJobGroup());
 
             CronTrigger newTrigger = TriggerBuilder.newTrigger()
                                                    .withIdentity(triggerKey)

@@ -18,23 +18,23 @@ import lombok.NoArgsConstructor;
 public class BankEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(columnDefinition = "INT UNSIGNED")
-    private Integer bank_id;
+    @Column(name = "bank_id", columnDefinition = "INT UNSIGNED")
+    private Integer bankId;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")
     private String name;
     @Column(columnDefinition = "CHAR(3) NOT NULL UNIQUE")
     private String code;
-    @Column(columnDefinition = "VARCHAR(255)")
-    private String logo_image_url;
+    @Column(name = "logo_image_url", columnDefinition = "VARCHAR(255)")
+    private String logoImageUrl;
 
     public BankDto toDto () {
         return BankDto.builder()
-                      .bank_id(this.bank_id)
+                      .bankId(this.bankId)
                       .name(this.name)
                       .code(this.code)
-                      .logo_image_url(this.logo_image_url)
-                      .created_at(this.getCreated_at())
-                      .updated_at(this.getUpdated_at())
+                      .logoImageUrl(this.logoImageUrl)
+                      .createdAt(this.getCreatedAt())
+                      .updatedAt(this.getUpdatedAt())
                       .build();
     }
 }

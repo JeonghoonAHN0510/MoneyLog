@@ -9,6 +9,6 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface CategoryRepository extends JpaRepository<CategoryEntity, Integer> {
 
-    @Query("SELECT c FROM CategoryEntity c WHERE c.user_id = :user_id")
-    List<CategoryEntity> findByUser_id (int user_id);
+    @Query("SELECT c FROM CategoryEntity c WHERE c.userId = :userId")
+    List<CategoryEntity> findByUserId (int userId);
 }

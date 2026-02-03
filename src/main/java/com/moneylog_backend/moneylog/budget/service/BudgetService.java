@@ -24,40 +24,40 @@ public class BudgetService {
 
     @Transactional
     public int saveBudget (BudgetDto budgetDto) {
-        int category_id = budgetDto.getCategory_id();
-        if (!hasBudget(category_id)) {
+        int categoryId = budgetDto.getCategoryId();
+        if (!hasBudget(categoryId)) {
             return -1;
         }
 
-        int user_id = budgetDto.getUser_id();
-        if (checkingCategoryAndUserIsDuplicate(category_id, user_id) > 0) {
+        int userId = budgetDto.getUserId();
+        if (checkingCategoryAndUserIsDuplicate(categoryId, userId) > 0) {
             return -1;
         }
 
         BudgetEntity budgetEntity = budgetDto.toEntity();
         budgetRepository.save(budgetEntity);
-        return budgetEntity.getBudget_id();
+        return budgetEntity.getBudgetId();
     }
 
-    public List<BudgetDto> getBudgets (int user_id) {
-        return budgetMapper.getBudgets(user_id);
+    public List<BudgetDto> getBudgets (int userId) {
+        return budgetMapper.getBudgets(userId);
     }
 
     @Transactional
     public BudgetDto updateBudget (BudgetDto budgetDto) {
-        int category_id = budgetDto.getCategory_id();
-        if (!hasBudget(category_id)) {
+        int categoryId = budgetDto.getCategoryId();
+        if (!hasBudget(categoryId)) {
             return null;
         }
 
-        int user_id = budgetDto.getUser_id();
-        if (checkingCategoryAndUserIsDuplicate(category_id, user_id) > 0) {
+        int userId = budgetDto.getUserId();
+        if (checkingCategoryAndUserIsDuplicate(categoryId, userId) > 0) {
             return null;
         }
 
-        BudgetEntity budgetEntity = getBudgetEntityById(budgetDto.getBudget_id(), user_id);
+        BudgetEntity budgetEntity = getBudgetEntityById(budgetDto.getBudgetId(), userId);
 
-        budgetEntity.setCategory_id(category_id);
+        budgetEntity.setCategoryId(categoryId);
         budgetEntity.setAmount(budgetDto.getAmount());
 
         return budgetEntity.toDto();
@@ -65,25 +65,25 @@ public class BudgetService {
 
     @Transactional
     public boolean deleteBudget (BudgetDto budgetDto) {
-        BudgetEntity budgetEntity = getBudgetEntityById(budgetDto.getBudget_id(), budgetDto.getUser_id());
+        BudgetEntity budgetEntity = getBudgetEntityById(budgetDto.getBudgetId(), budgetDto.getUserId());
 
         budgetRepository.delete(budgetEntity);
         return true;
     }
 
-    private boolean hasBudget (int category_id) {
-        return categoryRepository.existsById(category_id);
+    private boolean hasBudget (int categoryId) {
+        return categoryRepository.existsById(categoryId);
     }
 
-    private int checkingCategoryAndUserIsDuplicate (int category_id, int user_id) {
-        return budgetMapper.checkCategoryAndUserIsDuplicate(category_id, user_id);
+    private int checkingCategoryAndUserIsDuplicate (int categoryId, int userId) {
+        return budgetMapper.checkCategoryAndUserIsDuplicate(categoryId, userId);
     }
 
-    private BudgetEntity getBudgetEntityById (int budget_id, int user_id) {
-        BudgetEntity budgetEntity = budgetRepository.findById(budget_id)
+    private BudgetEntity getBudgetEntityById (int budgetId, int userId) {
+        BudgetEntity budgetEntity = budgetRepository.findById(budgetId)
                                                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예산입니다."));
 
-        if (user_id != budgetEntity.getUser_id()) {
+        if (userId != budgetEntity.getUserId()) {
             throw new AccessDeniedException("본인의 예산이 아닙니다.");
         }
 

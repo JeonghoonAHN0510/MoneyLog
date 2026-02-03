@@ -1,7 +1,7 @@
-import {useState, useEffect, useCallback} from 'react';
-import {useNavigate, useSearchParams} from 'react-router-dom';
-import {Tabs, TabsContent, TabsList, TabsTrigger} from '../components/ui/tabs';
-import {Button} from '../components/ui/button';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Button } from '../components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -10,25 +10,25 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from '../components/ui/dropdown-menu';
-import {CalendarView} from '../components/CalendarView';
-import {DashboardView} from '../components/DashboardView';
-import {TransactionList} from '../components/TransactionList';
-import {AddLedgerDialog} from '../components/AddLedgerDialog';
-import {TransferDialog} from '../components/TransferDialog';
-import {TakeHomeCalculator} from '../components/TakeHomeCalculator';
-import {BudgetManager} from '../components/BudgetManager';
-import {AccountManager} from '../components/AccountManager';
-import {CategoryManager} from '../components/CategoryManager';
-import {Budget, Category, Account, Ledger, Payment, Transfer} from '../types/finance';
-import {Plus, Wallet, Calendar, ChartBar, Calculator, Target, List, User, LogOut} from 'lucide-react';
-import {toast} from 'sonner';
+import { CalendarView } from '../components/CalendarView';
+import { DashboardView } from '../components/DashboardView';
+import { TransactionList } from '../components/TransactionList';
+import { AddLedgerDialog } from '../components/AddLedgerDialog';
+import { TransferDialog } from '../components/TransferDialog';
+import { TakeHomeCalculator } from '../components/TakeHomeCalculator';
+import { BudgetManager } from '../components/BudgetManager';
+import { AccountManager } from '../components/AccountManager';
+import { CategoryManager } from '../components/CategoryManager';
+import { Budget, Category, Account, Ledger, Payment, Transfer } from '../types/finance';
+import { Plus, Wallet, Calendar, ChartBar, Calculator, Target, List, User, LogOut } from 'lucide-react';
+import { toast } from 'sonner';
 import useUserStore from '../stores/authStore';
 import api from '../api/axiosConfig';
 import useResourceStore from '../stores/resourceStore';
 
 export default function FinancePage() {
     const navigate = useNavigate();
-    const {isAuthenticated, userInfo, setUserInfo, logout} = useUserStore();
+    const { isAuthenticated, userInfo, setUserInfo, logout } = useUserStore();
     const {
         banks,
         budgets,
@@ -44,9 +44,7 @@ export default function FinancePage() {
         setPayments
     } = useResourceStore();
 
-    // [변경] 초기값을 빈 배열로 설정 (Mock Data 제거)
     const [loading, setLoading] = useState(true);
-
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
@@ -55,7 +53,7 @@ export default function FinancePage() {
     const currentTab = searchParams.get('tab') || 'dashboard';
 
     const handleTabChange = (value: string) => {
-        setSearchParams({tab: value});
+        setSearchParams({ tab: value });
     };
 
     // 1. 사용자 정보 및 초기 데이터 로드
@@ -78,7 +76,7 @@ export default function FinancePage() {
         }
     };
 
-// 1. [정적 데이터] 앱 켤 때 한 번만 불러오면 되는 것들
+    // 1. [정적 데이터] 앱 켤 때 한 번만 불러오면 되는 것들
     const fetchReferenceData = useCallback(async () => {
         try {
             const [catRes, paymentRes, bankRes] = await Promise.allSettled([
@@ -93,15 +91,15 @@ export default function FinancePage() {
         } catch (e) {
             console.error("기준 정보 로드 실패", e);
         }
-    }, []);
+    }, [setCategories, setPayments, setBanks]);
 
-// 2. [동적 데이터] 거래 내역 추가 시 갱신해야 할 것들
+    // 2. [동적 데이터] 거래 내역 추가 시 갱신해야 할 것들
     const fetchUserAssets = useCallback(async () => {
         try {
             const [accRes, ledgerRes, budgetRes] = await Promise.allSettled([
-                api.get('/account/list'), // 잔액이 바뀌니까 갱신 필요
-                api.get('/ledger'),       // 목록이 추가됐으니 갱신 필요
-                api.get('/budget')        // 지출 금액 바뀌니까 갱신 필요
+                api.get('/account/list'), 
+                api.get('/ledger'),       
+                api.get('/budget')         
             ]);
 
             if (accRes.status === 'fulfilled') setAccounts(accRes.value.data);
@@ -112,9 +110,9 @@ export default function FinancePage() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [setAccounts, setLedgers, setBudgets]);
 
-// 3. useEffect에서 최초 1회는 둘 다 실행
+    // 3. useEffect에서 최초 1회는 둘 다 실행
     useEffect(() => {
         fetchReferenceData();
         fetchUserAssets();
@@ -135,14 +133,13 @@ export default function FinancePage() {
             toast.success('로그아웃 되었습니다');
             navigate('/');
         } catch (error) {
-            // 토큰 만료 등으로 API 실패해도 클라이언트 로그아웃은 진행
             logout();
             navigate('/');
         }
     };
 
     // --- [Ledger CRUD] ---
-    const handleAddLedger = async (ledger: Omit<Ledger, 'ledger_id'>) => {
+    const handleAddLedger = async (ledger: Omit<Ledger, 'ledgerId'>) => {
         try {
             await api.post('/ledger', ledger);
             toast.success("거래 내역이 추가되었습니다.");
@@ -152,9 +149,10 @@ export default function FinancePage() {
         }
     };
 
-    const handleDeleteLedger = async (ledger_id: string) => {
+    const handleDeleteLedger = async (ledgerId: string) => {
         try {
-            await api.delete(`/ledger?ledger_id=${ledger_id}`);
+            // 쿼리 파라미터도 카멜케이스로 변경
+            await api.delete(`/ledger?ledgerId=${ledgerId}`);
             toast.success("삭제되었습니다.");
             fetchUserAssets();
         } catch (e) {
@@ -163,7 +161,7 @@ export default function FinancePage() {
     };
 
     // --- [Budget CRUD] ---
-    const handleAddBudget = async (budget: Omit<Budget, 'budget_id' | "user_id" | "budget_date" | "created_at" | "updated_at" | "category_name">) => {
+    const handleAddBudget = async (budget: Omit<Budget, 'budgetId' | "userId" | "budgetDate" | "createdAt" | "updatedAt" | "categoryName">) => {
         try {
             await api.post('/budget', budget);
             toast.success("예산이 설정되었습니다.");
@@ -183,9 +181,9 @@ export default function FinancePage() {
         }
     };
 
-    const handleDeleteBudget = async (budget_id: string) => {
+    const handleDeleteBudget = async (budgetId: string) => {
         try {
-            await api.delete(`/budget?budget_id=${budget_id}`);
+            await api.delete(`/budget?budgetId=${budgetId}`);
             toast.success("예산이 삭제되었습니다.");
             fetchUserAssets();
         } catch (e) {
@@ -194,7 +192,7 @@ export default function FinancePage() {
     };
 
     // --- [Account CRUD] ---
-    const handleAddAccount = async (account: Omit<Account, "account_id" | "user_id" | "created_at" | "updated_at">) => {
+    const handleAddAccount = async (account: Omit<Account, "accountId" | "userId" | "createdAt" | "updatedAt">) => {
         try {
             await api.post('/account', account);
             toast.success("계좌가 추가되었습니다.");
@@ -214,9 +212,9 @@ export default function FinancePage() {
         }
     };
 
-    const handleDeleteAccount = async (account_id: string) => {
+    const handleDeleteAccount = async (accountId: string) => {
         try {
-            await api.delete(`/account?account_id=${account_id}`);
+            await api.delete(`/account?accountId=${accountId}`);
             toast.success("계좌가 삭제되었습니다.");
             fetchUserAssets();
         } catch (e) {
@@ -225,8 +223,7 @@ export default function FinancePage() {
     };
 
     // --- [Category CRUD] ---
-    const handleAddCategory = async (category: Omit<Category, "category_id" | "user_id" | "created_at" | "updated_at">) => {
-        console.log(category);
+    const handleAddCategory = async (category: Omit<Category, "categoryId" | "userId" | "createdAt" | "updatedAt">) => {
         try {
             await api.post('/category', category);
             toast.success("카테고리가 추가되었습니다.");
@@ -246,9 +243,9 @@ export default function FinancePage() {
         }
     };
 
-    const handleDeleteCategory = async (category_id: string) => {
+    const handleDeleteCategory = async (categoryId: string) => {
         try {
-            await api.delete(`/category?category_id=${category_id}`);
+            await api.delete(`/category?categoryId=${categoryId}`);
             toast.success("카테고리가 삭제되었습니다.");
             fetchReferenceData();
         } catch (e) {
@@ -257,7 +254,7 @@ export default function FinancePage() {
     };
 
     // --- [Payment CRUD] ---
-    const handleAddPayment = async (payment: Omit<Payment, "payment_id" | "user_id" | "created_at" | "updated_at">) => {
+    const handleAddPayment = async (payment: Omit<Payment, "paymentId" | "userId" | "createdAt" | "updatedAt">) => {
         try {
             await api.post('/payment', payment);
             toast.success("결제수단이 추가되었습니다.");
@@ -277,9 +274,9 @@ export default function FinancePage() {
         }
     };
 
-    const handleDeletePayment = async (payment_id: string) => {
+    const handleDeletePayment = async (paymentId: string) => {
         try {
-            await api.delete(`/payment?payment_id=${payment_id}`);
+            await api.delete(`/payment?paymentId=${paymentId}`);
             toast.success("결제수단이 삭제되었습니다.");
             fetchReferenceData();
         } catch (e) {
@@ -288,7 +285,7 @@ export default function FinancePage() {
     };
 
     // --- [Transfer Logic] ---
-    const handleAddTransfer = async (transfer: Omit<Transfer, "transfer_id" | "user_id" | "created_at" | "updated_at">) => {
+    const handleAddTransfer = async (transfer: Omit<Transfer, "transferId" | "userId" | "createdAt" | "updatedAt">) => {
         try {
             await api.put('/account/transfer', transfer);
             toast.success("이체가 완료되었습니다.");
@@ -302,7 +299,6 @@ export default function FinancePage() {
         setSelectedDate(date);
     };
 
-    // 로딩 화면
     if (loading || !userInfo) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -316,10 +312,9 @@ export default function FinancePage() {
     return (
         <div className="min-h-screen bg-background">
             <div className="container mx-auto p-4 md:p-8">
-                {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h1 className="flex items-center gap-2">
+                        <h1 className="flex items-center gap-2 text-2xl font-bold">
                             <Wallet className="size-8"/>
                             내 가계부
                         </h1>
@@ -331,7 +326,6 @@ export default function FinancePage() {
                             거래 추가
                         </Button>
 
-                        {/* User Menu */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="gap-2">
@@ -358,7 +352,6 @@ export default function FinancePage() {
                     </div>
                 </div>
 
-                {/* Main Content */}
                 <Tabs 
                     value={currentTab} 
                     onValueChange={handleTabChange} 
@@ -457,7 +450,6 @@ export default function FinancePage() {
                 </Tabs>
             </div>
 
-            {/* Add Ledger Dialog */}
             <AddLedgerDialog
                 open={isAddDialogOpen}
                 onOpenChange={setIsAddDialogOpen}
@@ -466,7 +458,6 @@ export default function FinancePage() {
                 accounts={accounts}
             />
 
-            {/* Transfer Dialog */}
             <TransferDialog
                 open={isTransferDialogOpen}
                 onOpenChange={setIsTransferDialogOpen}

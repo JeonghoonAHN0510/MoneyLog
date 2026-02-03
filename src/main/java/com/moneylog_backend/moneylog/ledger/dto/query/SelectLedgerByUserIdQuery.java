@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SelectLedgerByUserIdQuery {
-    private int user_id;
-    private LocalDate start_date;
-    private LocalDate end_date;
+    private int userId;
+    private LocalDate startDate;
+    private LocalDate endDate;
 }

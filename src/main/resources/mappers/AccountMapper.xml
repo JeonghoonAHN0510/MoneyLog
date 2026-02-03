@@ -7,12 +7,12 @@
     <select id="checkAccountNumber" resultType="int">
         SELECT COUNT(*)
         FROM ACCOUNT
-        WHERE account_number = #{account_number}
+        WHERE account_number = #{accountNumber}
     </select>
 
     <select id="getAccountsByUserId">
         SELECT *
         FROM ACCOUNT
-        WHERE USER_ID = #{user_id}
+        WHERE USER_ID = #{userId}
     </select>
 </mapper>

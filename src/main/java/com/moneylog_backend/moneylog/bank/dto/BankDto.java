@@ -14,19 +14,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BankDto {
-    private Integer bank_id;
+    private Integer bankId;
     private String name;
     private String code;
-    private String logo_image_url;
-    private LocalDateTime created_at;
-    private LocalDateTime updated_at;
+    private String logoImageUrl;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public BankEntity toEntity () {
         return BankEntity.builder()
-                         .bank_id(this.bank_id)
+                         .bankId(this.bankId)
                          .name(this.name)
                          .code(this.code)
-                         .logo_image_url(this.logo_image_url)
+                         .logoImageUrl(this.logoImageUrl)
                          .build();
     }
 }

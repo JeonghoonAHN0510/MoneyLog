@@ -33,57 +33,57 @@ public class AccountService {
     private final AccountMapper accountMapper;
 
     @Transactional
-    public int saveAccount (AccountDto accountDto, int user_id) {
-        accountDto.setUser_id(user_id);
+    public int saveAccount (AccountDto accountDto, int userId) {
+        accountDto.setUserId(userId);
 
-        if (accountDto.getBank_id() != null) {
-            int bank_id = accountDto.getBank_id();
-            if (!isBankValid(bank_id)) {
+        if (accountDto.getBankId() != null) {
+            int bankId = accountDto.getBankId();
+            if (!isBankValid(bankId)) {
                 return -1;
             }
 
-            String regexAccountNumber = getRegexAccountNumber(bank_id, accountDto.getAccount_number());
+            String regexAccountNumber = getRegexAccountNumber(bankId, accountDto.getAccountNumber());
             int countAccountNumber = accountMapper.checkAccountNumber(regexAccountNumber);
             if (countAccountNumber > 0) {
                 return -1;
             }
 
             if (accountDto.getNickname() == null || accountDto.getNickname().isEmpty()) {
-                String nickname = getBankName(bank_id);
+                String nickname = getBankName(bankId);
                 accountDto.setNickname(nickname);
             }
 
-            accountDto.setAccount_number(regexAccountNumber);
+            accountDto.setAccountNumber(regexAccountNumber);
         }
 
         AccountEntity accountEntity = accountDto.toEntity();
         accountRepository.save(accountEntity);
 
-        return accountEntity.getAccount_id();
+        return accountEntity.getAccountId();
     }
 
-    public AccountDto getAccount (int account_id, int user_id) {
-        AccountEntity accountEntity = getAccountEntityById(account_id, user_id);
+    public AccountDto getAccount (int accountId, int userId) {
+        AccountEntity accountEntity = getAccountEntityById(accountId, userId);
 
         return accountEntity.toDto();
     }
 
-    public List<AccountDto> getAccounts (int user_id) {
-        return accountMapper.getAccountsByUserId(user_id);
+    public List<AccountDto> getAccounts (int userId) {
+        return accountMapper.getAccountsByUserId(userId);
     }
 
     @Transactional
-    public AccountDto updateAccount (AccountDto accountDto, int user_id) {
-        AccountEntity accountEntity = getAccountEntityById(accountDto.getAccount_id(), user_id);
+    public AccountDto updateAccount (AccountDto accountDto, int userId) {
+        AccountEntity accountEntity = getAccountEntityById(accountDto.getAccountId(), userId);
 
         String InputNickname = accountDto.getNickname();
         if (InputNickname != null) {
             accountEntity.setNickname(InputNickname);
         }
 
-        String InputAccountNumber = accountDto.getAccount_number();
+        String InputAccountNumber = accountDto.getAccountNumber();
         if (InputAccountNumber != null) {
-            accountEntity.setAccount_number(InputAccountNumber);
+            accountEntity.setAccountNumber(InputAccountNumber);
         }
 
         int InputBalance = accountDto.getBalance();
@@ -100,13 +100,13 @@ public class AccountService {
     }
 
     @Transactional
-    public boolean deleteAccount (int account_id, int user_id) {
-        AccountEntity accountEntity = getAccountEntityById(account_id, user_id);
+    public boolean deleteAccount (int accountId, int userId) {
+        AccountEntity accountEntity = getAccountEntityById(accountId, userId);
 
-        UserEntity userEntity = userRepository.findById(user_id)
+        UserEntity userEntity = userRepository.findById(userId)
                                               .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
-        if (userEntity.getAccount_id().equals(account_id)) {
-            userEntity.setAccount_id(null);
+        if (userEntity.getAccountId().equals(accountId)) {
+            userEntity.setAccountId(null);
         }
 
         accountRepository.delete(accountEntity);
@@ -114,52 +114,52 @@ public class AccountService {
     }
 
     @Transactional
-    public boolean transferAccountBalance (TransferDto transferDto, int user_id) {
+    public boolean transferAccountBalance (TransferDto transferDto, int userId) {
         int transferBalance = transferDto.getAmount();
         if (transferBalance < 0) {
             return false;
         }
 
-        int fromAccountId = transferDto.getFrom_account();
-        int toAccountId = transferDto.getTo_account();
+        int fromAccountId = transferDto.getFromAccount();
+        int toAccountId = transferDto.getToAccount();
 
-        AccountEntity fromAccountEntity = getAccountEntityById(fromAccountId, user_id);
-        AccountEntity toAccountEntity = getAccountEntityById(toAccountId, user_id);
+        AccountEntity fromAccountEntity = getAccountEntityById(fromAccountId, userId);
+        AccountEntity toAccountEntity = getAccountEntityById(toAccountId, userId);
 
         fromAccountEntity.withdraw(transferBalance);
         toAccountEntity.deposit(transferBalance);
 
-        transferDto.setUser_id(user_id);
+        transferDto.setUserId(userId);
         TransferEntity transferEntity = transferDto.toEntity();
         transferRepository.save(transferEntity);
 
         return true;
     }
 
-    private String getRegexAccountNumber (int bank_id, String account_number) {
-        String bankName = getBankName(bank_id);
+    private String getRegexAccountNumber (int bankId, String accountNumber) {
+        String bankName = getBankName(bankId);
 
-        return BankAccountNumberFormatter.format(bankName, account_number);
+        return BankAccountNumberFormatter.format(bankName, accountNumber);
     }
 
-    private AccountEntity getAccountEntityById (int account_id, int user_id) {
-        AccountEntity accountEntity = accountRepository.findById(account_id)
+    private AccountEntity getAccountEntityById (int accountId, int userId) {
+        AccountEntity accountEntity = accountRepository.findById(accountId)
                                                        .orElseThrow(
                                                            () -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
 
-        if (user_id != accountEntity.getUser_id()) {
+        if (userId != accountEntity.getUserId()) {
             throw new AccessDeniedException("본인의 계좌가 아닙니다.");
         }
 
         return accountEntity;
     }
 
-    private boolean isBankValid (int bank_id) {
-        return bankRepository.existsById(bank_id);
+    private boolean isBankValid (int bankId) {
+        return bankRepository.existsById(bankId);
     }
 
-    private String getBankName (int bank_id) {
-        BankEntity bankEntity = bankRepository.findById(bank_id)
+    private String getBankName (int bankId) {
+        BankEntity bankEntity = bankRepository.findById(bankId)
                                               .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 은행입니다."));
 
         return bankEntity.getName();

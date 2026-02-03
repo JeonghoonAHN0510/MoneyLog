@@ -26,10 +26,10 @@ import lombok.NoArgsConstructor;
 public class UserEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(columnDefinition = "INT UNSIGNED")
-    private Integer user_id;
-    @Column(columnDefinition = "INT UNSIGNED")
-    private Integer account_id;
+    @Column(name = "user_id", columnDefinition = "INT UNSIGNED")
+    private Integer userId;
+    @Column(name = "account_id", columnDefinition = "INT UNSIGNED")
+    private Integer accountId;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")
     private String name;
     @Column(name = "id", columnDefinition = "VARCHAR(50) NOT NULL UNIQUE")
@@ -45,23 +45,23 @@ public class UserEntity extends BaseTime {
     @Column(columnDefinition = "ENUM('ADMIN', 'USER') DEFAULT 'USER'")
     @Enumerated(EnumType.STRING)
     private RoleEnum role;
-    @Column(columnDefinition = "VARCHAR(255)")
-    private String profile_image_url;
+    @Column(name = "profile_image_url", columnDefinition = "VARCHAR(255)")
+    private String profileImageUrl;
     @Column(columnDefinition = "ENUM('ACTIVE', 'DORMANT', 'WITHDRAWN') DEFAULT 'ACTIVE'")
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
     @Column(columnDefinition = "ENUM('LOCAL', 'KAKAO', 'GOOGLE') DEFAULT 'LOCAL'")
     @Enumerated(EnumType.STRING)
     private ProviderEnum provider;
-    @Column(columnDefinition = "VARCHAR(255)")
-    private String provider_id;
-    @Column(columnDefinition = "DATETIME(6)")
-    private LocalDateTime last_login_at;
+    @Column(name = "provider_id", columnDefinition = "VARCHAR(255)")
+    private String providerId;
+    @Column(name = "last_login_at", columnDefinition = "DATETIME(6)")
+    private LocalDateTime lastLoginAt;
 
     public UserDto toDto () {
         return UserDto.builder()
-                      .user_id(this.user_id)
-                      .account_id(this.account_id)
+                      .userId(this.userId)
+                      .accountId(this.accountId)
                       .name(this.name)
                       .id(this.loginId)
                       .password(this.password)
@@ -69,13 +69,13 @@ public class UserEntity extends BaseTime {
                       .phone(this.phone)
                       .gender(this.gender)
                       .role(this.role)
-                      .profile_image_url(this.profile_image_url)
+                      .profileImageUrl(this.profileImageUrl)
                       .status(this.status)
                       .provider(this.provider)
-                      .provider_id(this.provider_id)
-                      .last_login_at(this.last_login_at)
-                      .created_at(this.getCreated_at())
-                      .updated_at(this.getUpdated_at())
+                      .providerId(this.providerId)
+                      .lastLoginAt(this.lastLoginAt)
+                      .createdAt(this.getCreatedAt())
+                      .updatedAt(this.getUpdatedAt())
                       .build();
     }
 }

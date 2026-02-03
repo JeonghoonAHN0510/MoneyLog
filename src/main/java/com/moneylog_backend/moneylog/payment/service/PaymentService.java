@@ -25,26 +25,26 @@ public class PaymentService {
     private final PaymentMapper paymentMapper;
 
     @Transactional
-    public int savePayment (PaymentDto paymentDto, int user_id) {
-        paymentDto.setUser_id(user_id);
+    public int savePayment (PaymentDto paymentDto, int userId) {
+        paymentDto.setUserId(userId);
 
         PaymentEntity paymentEntity = paymentDto.toEntity();
         paymentRepository.save(paymentEntity);
 
-        return paymentEntity.getPayment_id();
+        return paymentEntity.getPaymentId();
     }
 
-    public List<PaymentDto> getPaymentsByUserId (int user_id) {
-        return paymentMapper.getPaymentsByUserId(user_id);
+    public List<PaymentDto> getPaymentsByUserId (int userId) {
+        return paymentMapper.getPaymentsByUserId(userId);
     }
 
     @Transactional
-    public PaymentDto updatePayment (PaymentDto paymentDto, int user_id) {
-        Integer account_id = paymentDto.getAccount_id();
-        validateAccountOwnership(account_id, user_id);
+    public PaymentDto updatePayment (PaymentDto paymentDto, int userId) {
+        Integer accountId = paymentDto.getAccountId();
+        validateAccountOwnership(accountId, userId);
 
-        PaymentEntity paymentEntity = getPaymentEntityById(paymentDto.getPayment_id(), user_id);
-        paymentEntity.setAccount_id(account_id);
+        PaymentEntity paymentEntity = getPaymentEntityById(paymentDto.getPaymentId(), userId);
+        paymentEntity.setAccountId(accountId);
 
         String InputName = paymentDto.getName();
         PaymentEnum InputType = paymentDto.getType();
@@ -59,19 +59,19 @@ public class PaymentService {
     }
 
     @Transactional
-    public boolean deletePayment (int payment_id, int user_id) {
-        PaymentEntity paymentEntity = getPaymentEntityById(payment_id, user_id);
+    public boolean deletePayment (int paymentId, int userId) {
+        PaymentEntity paymentEntity = getPaymentEntityById(paymentId, userId);
 
         paymentRepository.delete(paymentEntity);
         return true;
     }
 
-    private PaymentEntity getPaymentEntityById (int payment_id, int user_id) {
-        PaymentEntity paymentEntity = paymentRepository.findById(payment_id)
+    private PaymentEntity getPaymentEntityById (int paymentId, int userId) {
+        PaymentEntity paymentEntity = paymentRepository.findById(paymentId)
                                                        .orElseThrow(
                                                            () -> new IllegalArgumentException("존재하지 않는 결제수단입니다."));
 
-        if (paymentEntity.getUser_id() != user_id) {
+        if (paymentEntity.getUserId() != userId) {
             throw new AccessDeniedException("본인의 결제수단이 아닙니다.");
         }
 
@@ -82,7 +82,7 @@ public class PaymentService {
         AccountEntity accountEntity = accountRepository.findById(accountId)
                                                        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
 
-        if (!accountEntity.getUser_id().equals(userId)) {
+        if (!accountEntity.getUserId().equals(userId)) {
             throw new AccessDeniedException("본인의 계좌가 아닙니다.");
         }
     }

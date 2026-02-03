@@ -21,13 +21,13 @@ import {
 import useResourceStore from '../stores/resourceStore';
 
 interface CategoryManagerProps {
-    onAdd: (category: Omit<Category, "category_id" | "user_id" | "created_at" | "updated_at">) => void;
+    onAdd: (category: Omit<Category, "categoryId" | "userId" | "createdAt" | "updatedAt">) => void;
     onUpdate: (category: Partial<Category>) => void;
-    onDelete: (category_id: string) => void;
+    onDelete: (categoryId: string) => void;
 
-    onAddPayment: (payment: Omit<Payment, "payment_id" | "user_id" | "created_at" | "updated_at">) => void;
+    onAddPayment: (payment: Omit<Payment, "paymentId" | "userId" | "createdAt" | "updatedAt">) => void;
     onUpdatePayment: (payment: Partial<Payment>) => void;
-    onDeletePayment: (payment_id: string) => void;
+    onDeletePayment: (paymentId: string) => void;
 }
 
 const defaultColors = [
@@ -103,11 +103,11 @@ interface PaymentFormProps {
     type: 'CASH' | 'CREDIT_CARD' | 'CHECK_CARD' | 'BANK';
     setType: (value: 'CASH' | 'CREDIT_CARD' | 'CHECK_CARD' | 'BANK') => void;
     accounts: Account[];
-    account_id: string;
+    accountId: string;
     setAccountId: (value: string) => void;
 }
 
-const PaymentForm = ({name, setName, type, setType, account_id, setAccountId, accounts}: PaymentFormProps) => (
+const PaymentForm = ({name, setName, type, setType, accountId, setAccountId, accounts}: PaymentFormProps) => (
     <div className="space-y-4">
         <div className="space-y-2">
             <Label htmlFor="payment-name">결제수단명</Label>
@@ -158,13 +158,13 @@ const PaymentForm = ({name, setName, type, setType, account_id, setAccountId, ac
         </div>
         <div className="space-y-2">
             <Label htmlFor="bank-select">은행 선택</Label>
-            <Select value={account_id} onValueChange={setAccountId}>
+            <Select value={accountId} onValueChange={setAccountId}>
                 <SelectTrigger id="bank-select">
                     <SelectValue placeholder="은행을 선택해주세요" />
                 </SelectTrigger>
                 <SelectContent>
                     {accounts.map((account) => (
-                        <SelectItem key={account.account_id} value={String(account.account_id)}>
+                        <SelectItem key={account.accountId} value={String(account.accountId)}>
                             {account.nickname}
                         </SelectItem>
                     ))}
@@ -185,7 +185,7 @@ const CategoryList = ({items, onEdit, onDelete}: {
         ) : (
             items.map((category) => (
                 <div
-                    key={category.category_id}
+                    key={category.categoryId}
                     className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
                 >
                     <div className="flex items-center gap-3">
@@ -199,7 +199,7 @@ const CategoryList = ({items, onEdit, onDelete}: {
                         <Button variant="ghost" size="icon" onClick={() => onEdit(category)}>
                             <Pencil className="size-4"/>
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => onDelete(category.category_id)}>
+                        <Button variant="ghost" size="icon" onClick={() => onDelete(category.categoryId)}>
                             <Trash className="size-4"/>
                         </Button>
                     </div>
@@ -220,7 +220,7 @@ const PaymentList = ({items, onEdit, onDelete}: {
         ) : (
             items.map((payment) => (
                 <div
-                    key={payment.payment_id}
+                    key={payment.paymentId}
                     className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
                 >
                     <div className="flex items-center gap-3">
@@ -238,7 +238,7 @@ const PaymentList = ({items, onEdit, onDelete}: {
                         <Button variant="ghost" size="icon" onClick={() => onEdit(payment)}>
                             <Pencil className="size-4"/>
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => onDelete(payment.payment_id)}>
+                        <Button variant="ghost" size="icon" onClick={() => onDelete(payment.paymentId)}>
                             <Trash className="size-4"/>
                         </Button>
                     </div>
@@ -255,9 +255,6 @@ export function CategoryManager({
 }: CategoryManagerProps) {
     const {categories, payments, accounts} = useResourceStore();
 
-    // =========================================================
-    // 1. 카테고리 관련 State & Handlers
-    // =========================================================
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -266,8 +263,8 @@ export function CategoryManager({
     const [name, setName] = useState('');
     const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
     const [color, setColor] = useState(defaultColors[0]);
-    const [category_id, setCategoryId] = useState('');
-    const [account_id, setAccountId] = useState('');
+    const [categoryId, setCategoryId] = useState('');
+    const [accountId, setAccountId] = useState('');
 
     const resetForm = () => {
         setName('');
@@ -287,20 +284,20 @@ export function CategoryManager({
         setName(category.name);
         setType(category.type);
         setColor(category.color);
-        setCategoryId(category.category_id);
+        setCategoryId(category.categoryId);
         setIsEditDialogOpen(true);
     };
 
     const handleUpdate = () => {
         if (!editingCategory || !name) return;
-        onUpdate({category_id, name, type, color});
+        onUpdate({categoryId, name, type, color});
         resetForm();
         setEditingCategory(null);
         setIsEditDialogOpen(false);
     };
 
-    const handleDelete = (category_id: string) => {
-        setDeleteTargetId(category_id);
+    const handleDelete = (categoryId: string) => {
+        setDeleteTargetId(categoryId);
     };
 
     const confirmDelete = () => {
@@ -309,9 +306,6 @@ export function CategoryManager({
         setDeleteTargetId(null);
     };
 
-    // =========================================================
-    // 2. 결제수단 관련 State & Handlers
-    // =========================================================
     const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
     const [isEditPaymentOpen, setIsEditPaymentOpen] = useState(false);
     const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
@@ -328,22 +322,24 @@ export function CategoryManager({
 
     const handleAddPayment = () => {
         if (!paymentName) return;
-        onAddPayment({ name: paymentName, type: paymentType, account_id });
+        onAddPayment({ name: paymentName, type: paymentType, accountId });
         resetPaymentForm();
         setIsAddPaymentOpen(false);
     };
 
-    const handleEditPayment = (payment: Payment) => {
+const handleEditPayment = (payment: Payment) => {
         setEditingPayment(payment);
         setPaymentName(payment.name);
         setPaymentType(payment.type as 'CASH' | 'CREDIT_CARD' | 'CHECK_CARD' | 'BANK');
-        setPaymentId(payment.payment_id);
+        setPaymentId(payment.paymentId);
+        setAccountId(payment.accountId ? String(payment.accountId) : '');
+        
         setIsEditPaymentOpen(true);
     };
 
     const handleUpdatePayment = () => {
         if (!editingPayment || !paymentName) return;
-        onUpdatePayment({ payment_id: paymentId, name: paymentName, type: paymentType, account_id });
+        onUpdatePayment({ paymentId, name: paymentName, type: paymentType, accountId });
         resetPaymentForm();
         setEditingPayment(null);
         setIsEditPaymentOpen(false);
@@ -360,14 +356,11 @@ export function CategoryManager({
     };
 
 
-    // 데이터 필터링
     const expenseCategories = categories.filter((c) => c.type === 'EXPENSE');
     const incomeCategories = categories.filter((c) => c.type === 'INCOME');
 
     return (
-        <div className="space-y-6"> {/* 두 개의 Card를 감싸기 위해 div 추가 */}
-            
-            {/* 1. 카테고리 관리 (기존) */}
+        <div className="space-y-6">
             <Card>
                 <CardHeader>
                     <div className="flex items-center justify-between">
@@ -384,8 +377,8 @@ export function CategoryManager({
                 <CardContent>
                     <Tabs defaultValue="EXPENSE">
                         <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="EXPENSE">지출 ({expenseCategories.length})</TabsTrigger>
-                            <TabsTrigger value="INCOME">수입 ({incomeCategories.length})</TabsTrigger>
+                            <TabsTrigger onClick={() => setType("EXPENSE")} value="EXPENSE">지출 ({expenseCategories.length})</TabsTrigger>
+                            <TabsTrigger onClick={() => setType("INCOME")} value="INCOME">수입 ({incomeCategories.length})</TabsTrigger>
                         </TabsList>
                         <TabsContent value="EXPENSE" className="mt-4">
                             <CategoryList items={expenseCategories} onEdit={handleEdit} onDelete={handleDelete} />
@@ -397,7 +390,6 @@ export function CategoryManager({
                 </CardContent>
             </Card>
 
-            {/* 2. [추가] 결제수단 관리 */}
             <Card>
                 <CardHeader>
                     <div className="flex items-center justify-between">
@@ -420,10 +412,6 @@ export function CategoryManager({
                 </CardContent>
             </Card>
 
-
-            {/* ======================= 다이얼로그 모음 ======================= */}
-
-            {/* 카테고리 추가/수정/삭제 다이얼로그 */}
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
@@ -467,15 +455,13 @@ export function CategoryManager({
                 </AlertDialogContent>
             </AlertDialog>
 
-
-            {/* 결제수단 추가/수정/삭제 다이얼로그 */}
             <Dialog open={isAddPaymentOpen} onOpenChange={setIsAddPaymentOpen}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>결제수단 추가</DialogTitle>
                         <DialogDescription>새로운 결제수단을 추가하세요.</DialogDescription>
                     </DialogHeader>
-                    <PaymentForm name={paymentName} setName={setPaymentName} type={paymentType} setType={setPaymentType} account_id={account_id} setAccountId={setAccountId} accounts={accounts}/>
+                    <PaymentForm name={paymentName} setName={setPaymentName} type={paymentType} setType={setPaymentType} accountId={accountId} setAccountId={setAccountId} accounts={accounts}/>
                     <div className="flex gap-2 pt-4">
                         <Button variant="outline" className="flex-1" onClick={() => setIsAddPaymentOpen(false)}>취소</Button>
                         <Button className="flex-1" onClick={handleAddPayment}>추가</Button>
@@ -489,7 +475,7 @@ export function CategoryManager({
                         <DialogTitle>결제수단 수정</DialogTitle>
                         <DialogDescription>결제수단 정보를 수정하세요.</DialogDescription>
                     </DialogHeader>
-                    <PaymentForm name={paymentName} setName={setPaymentName} type={paymentType} setType={setPaymentType} account_id={account_id} setAccountId={setAccountId} accounts={accounts}/>
+                    <PaymentForm name={paymentName} setName={setPaymentName} type={paymentType} setType={setPaymentType} accountId={accountId} setAccountId={setAccountId} accounts={accounts}/>
                     <div className="flex gap-2 pt-4">
                         <Button variant="outline" className="flex-1" onClick={() => setIsEditPaymentOpen(false)}>취소</Button>
                         <Button className="flex-1" onClick={handleUpdatePayment}>수정</Button>

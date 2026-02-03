@@ -15,27 +15,27 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FixedDto {
-    private Integer fixed_id;
-    private Integer user_id;
-    private Integer category_id;
+    private Integer fixedId;
+    private Integer userId;
+    private Integer categoryId;
     private String title;
     private Integer amount;
-    private Integer fixed_day;
-    private LocalDate start_date;
-    private LocalDate end_date;
-    private LocalDateTime created_at;
-    private LocalDateTime updated_at;
+    private Integer fixedDay;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public FixedEntity toEntity () {
         return FixedEntity.builder()
-                          .fixed_id(this.fixed_id)
-                          .user_id(this.user_id)
-                          .category_id(this.category_id)
+                          .fixedId(this.fixedId)
+                          .userId(this.userId)
+                          .categoryId(this.categoryId)
                           .title(this.title)
                           .amount(this.amount)
-                          .fixed_day(this.fixed_day)
-                          .start_date(this.start_date)
-                          .end_date(this.end_date)
+                          .fixedDay(this.fixedDay)
+                          .startDate(this.startDate)
+                          .endDate(this.endDate)
                           .build();
     }
 }

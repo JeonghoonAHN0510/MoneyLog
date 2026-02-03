@@ -23,22 +23,22 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping
-    public ResponseEntity<?> savePayment (@RequestBody PaymentDto paymentDto, @LoginUser Integer user_id) {
-        return ResponseEntity.ok(paymentService.savePayment(paymentDto, user_id));
+    public ResponseEntity<?> savePayment (@RequestBody PaymentDto paymentDto, @LoginUser Integer userId) {
+        return ResponseEntity.ok(paymentService.savePayment(paymentDto, userId));
     }
 
     @GetMapping
-    public ResponseEntity<?> getPaymentsByUserId (@LoginUser Integer user_id) {
-        return ResponseEntity.ok(paymentService.getPaymentsByUserId(user_id));
+    public ResponseEntity<?> getPaymentsByUserId (@LoginUser Integer userId) {
+        return ResponseEntity.ok(paymentService.getPaymentsByUserId(userId));
     }
 
     @PutMapping
-    public ResponseEntity<?> updatePayment (@RequestBody PaymentDto paymentDto, @LoginUser Integer user_id) {
-        return ResponseEntity.ok(paymentService.updatePayment(paymentDto, user_id));
+    public ResponseEntity<?> updatePayment (@RequestBody PaymentDto paymentDto, @LoginUser Integer userId) {
+        return ResponseEntity.ok(paymentService.updatePayment(paymentDto, userId));
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deletePayment (@RequestParam int payment_id, @LoginUser Integer user_id) {
-        return ResponseEntity.ok(paymentService.deletePayment(payment_id, user_id));
+    public ResponseEntity<?> deletePayment (@RequestParam int paymentId, @LoginUser Integer userId) {
+        return ResponseEntity.ok(paymentService.deletePayment(paymentId, userId));
     }
 }

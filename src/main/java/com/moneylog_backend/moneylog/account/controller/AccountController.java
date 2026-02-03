@@ -25,12 +25,12 @@ public class AccountController {
     private final AccountService accountService;
 
     @PostMapping
-    public ResponseEntity<?> saveAccount (@RequestBody AccountDto accountDto, @LoginUser Integer user_id) {
+    public ResponseEntity<?> saveAccount (@RequestBody AccountDto accountDto, @LoginUser Integer userId) {
         if (accountDto == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        int resultValue = accountService.saveAccount(accountDto, user_id);
+        int resultValue = accountService.saveAccount(accountDto, userId);
         if (resultValue == -1) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } else {
@@ -39,35 +39,35 @@ public class AccountController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAccount (@RequestParam int account_id, @LoginUser Integer user_id) {
-        if (account_id < 30000 || account_id > 40000) {
+    public ResponseEntity<?> getAccount (@RequestParam int accountId, @LoginUser Integer userId) {
+        if (accountId < 30000 || accountId > 40000) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        return ResponseEntity.ok(accountService.getAccount(account_id, user_id));
+        return ResponseEntity.ok(accountService.getAccount(accountId, userId));
     }
 
     @GetMapping("/list")
-    public ResponseEntity<?> getAccounts (@LoginUser Integer user_id) {
-        return ResponseEntity.ok(accountService.getAccounts(user_id));
+    public ResponseEntity<?> getAccounts (@LoginUser Integer userId) {
+        return ResponseEntity.ok(accountService.getAccounts(userId));
     }
 
     @PutMapping
-    public ResponseEntity<?> updateAccount (@RequestBody AccountDto accountDto, @LoginUser Integer user_id) {
+    public ResponseEntity<?> updateAccount (@RequestBody AccountDto accountDto, @LoginUser Integer userId) {
         if (accountDto == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        return ResponseEntity.ok(accountService.updateAccount(accountDto, user_id));
+        return ResponseEntity.ok(accountService.updateAccount(accountDto, userId));
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deleteAccount (@RequestParam int account_id, @LoginUser Integer user_id) {
-        return ResponseEntity.ok(accountService.deleteAccount(account_id, user_id));
+    public ResponseEntity<?> deleteAccount (@RequestParam int accountId, @LoginUser Integer userId) {
+        return ResponseEntity.ok(accountService.deleteAccount(accountId, userId));
     }
 
     @PutMapping("/transfer")
-    public ResponseEntity<?> transferAccountBalance (@RequestBody TransferDto transferDto, @LoginUser Integer user_id) {
-        return ResponseEntity.ok(accountService.transferAccountBalance(transferDto, user_id));
+    public ResponseEntity<?> transferAccountBalance (@RequestBody TransferDto transferDto, @LoginUser Integer userId) {
+        return ResponseEntity.ok(accountService.transferAccountBalance(transferDto, userId));
     }
 }

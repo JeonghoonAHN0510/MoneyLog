@@ -15,24 +15,24 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TransferDto {
-    private Integer transfer_id;
-    private Integer user_id;
-    private Integer from_account;
-    private Integer to_account;
+    private Integer transferId;
+    private Integer userId;
+    private Integer fromAccount;
+    private Integer toAccount;
     private Integer amount;
-    private LocalDate transfer_at;
+    private LocalDate transferAt;
     private String memo;
-    private LocalDateTime created_at;
-    private LocalDateTime updated_at;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public TransferEntity toEntity () {
         return TransferEntity.builder()
-                             .transfer_id(this.transfer_id)
-                             .user_id(this.user_id)
-                             .from_account(this.from_account)
-                             .to_account(this.to_account)
+                             .transferId(this.transferId)
+                             .userId(this.userId)
+                             .fromAccount(this.fromAccount)
+                             .toAccount(this.toAccount)
                              .amount(this.amount)
-                             .transfer_at(this.transfer_at)
+                             .transferAt(this.transferAt)
                              .memo(this.memo)
                              .build();
     }

@@ -23,10 +23,10 @@ import lombok.NoArgsConstructor;
 public class CategoryEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(columnDefinition = "INT UNSIGNED")
-    private Integer category_id;
+    @Column(name = "category_id", columnDefinition = "INT UNSIGNED")
+    private Integer categoryId;
     @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private Integer user_id;
+    private Integer userId;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")
     private String name;
     @Column(columnDefinition = "ENUM('INCOME', 'EXPENSE') NOT NULL")
@@ -38,13 +38,13 @@ public class CategoryEntity extends BaseTime {
 
     public CategoryDto toDto () {
         return CategoryDto.builder()
-                          .category_id(this.category_id)
-                          .user_id(this.user_id)
+                          .categoryId(this.categoryId)
+                          .userId(this.userId)
                           .name(this.name)
                           .type(this.type)
                           .color(this.color)
-                          .created_at(this.getCreated_at())
-                          .updated_at(this.getUpdated_at())
+                          .createdAt(this.getCreatedAt())
+                          .updatedAt(this.getUpdatedAt())
                           .build();
     }
 }

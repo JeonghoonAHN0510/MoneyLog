@@ -24,8 +24,8 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @PostMapping
-    public ResponseEntity<?> saveCategory (@RequestBody CategoryDto categoryDto, @LoginUser Integer user_id) {
-        int resultValue = categoryService.saveCategory(categoryDto, user_id);
+    public ResponseEntity<?> saveCategory (@RequestBody CategoryDto categoryDto, @LoginUser Integer userId) {
+        int resultValue = categoryService.saveCategory(categoryDto, userId);
         if (resultValue == -1) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } else {
@@ -34,17 +34,17 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getCategoryByUserId (@LoginUser Integer user_id) {
-        return ResponseEntity.ok(categoryService.getCategoryByUserId(user_id));
+    public ResponseEntity<?> getCategoryByUserId (@LoginUser Integer userId) {
+        return ResponseEntity.ok(categoryService.getCategoryByUserId(userId));
     }
 
     @PutMapping
-    public ResponseEntity<?> updateCategory (@RequestBody CategoryDto categoryDto, @LoginUser Integer user_id) {
-        return ResponseEntity.ok(categoryService.updateCategory(categoryDto, user_id));
+    public ResponseEntity<?> updateCategory (@RequestBody CategoryDto categoryDto, @LoginUser Integer userId) {
+        return ResponseEntity.ok(categoryService.updateCategory(categoryDto, userId));
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deleteCategory (@RequestParam int category_id, @LoginUser Integer user_id) {
-        return ResponseEntity.ok(categoryService.deleteCategory(category_id, user_id));
+    public ResponseEntity<?> deleteCategory (@RequestParam int categoryId, @LoginUser Integer userId) {
+        return ResponseEntity.ok(categoryService.deleteCategory(categoryId, userId));
     }
 }

@@ -7,7 +7,7 @@
     <select id="checkCategoryNameTypeUnique">
         SELECT COUNT(*)
         FROM CATEGORY
-        WHERE user_id = #{user_id}
+        WHERE user_id = #{userId}
           AND NAME = #{name}
           AND TYPE = #{type}
     </select>
@@ -15,6 +15,6 @@
     <select id="getCategoryTypeByCategoryId">
         SELECT type
         FROM CATEGORY
-        WHERE CATEGORY_ID = #{category_id}
+        WHERE CATEGORY_ID = #{categoryId}
     </select>
 </mapper>

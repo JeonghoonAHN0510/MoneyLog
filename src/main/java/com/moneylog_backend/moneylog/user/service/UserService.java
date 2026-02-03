@@ -51,30 +51,30 @@ public class UserService {
 
         userDto.setPhone(formatUtils.toPhone(userDto.getPhone()));
 
-        userDto.setProfile_image_url(fileStore.storeFile(userDto.getUpload_file()));
+        userDto.setProfileImageUrl(fileStore.storeFile(userDto.getUploadFile()));
 
         String encodedPassword = passwordEncoder.encode(userDto.getPassword());
         userDto.setPassword(encodedPassword);
         UserEntity userEntity = userDto.toEntity();
         userRepository.save(userEntity);
 
-        int bank_id = userDto.getBank_id();
-        String bankName = getBankName(bank_id);
-        String regexAccountNumber = BankAccountNumberFormatter.format(bankName, userDto.getAccount_number());
+        int bankId = userDto.getBankId();
+        String bankName = getBankName(bankId);
+        String regexAccountNumber = BankAccountNumberFormatter.format(bankName, userDto.getAccountNumber());
 
         AccountEntity accountEntity = AccountEntity.builder()
-                                                   .user_id(userEntity.getUser_id())
-                                                   .bank_id(bank_id)
-                                                   .nickname(userDto.getBank_name())
+                                                   .userId(userEntity.getUserId())
+                                                   .bankId(bankId)
+                                                   .nickname(userDto.getBankName())
                                                    .balance(0)
-                                                   .account_number(regexAccountNumber)
+                                                   .accountNumber(regexAccountNumber)
                                                    .type(AccountTypeEnum.BANK)
                                                    .build();
         accountRepository.save(accountEntity);
 
-        userEntity.setAccount_id(accountEntity.getAccount_id());
+        userEntity.setAccountId(accountEntity.getAccountId());
 
-        return userEntity.getUser_id();
+        return userEntity.getUserId();
     }
 
     public TokenResponse login (UserDto userDto) {
@@ -127,8 +127,8 @@ public class UserService {
         }
     }
 
-    private String getBankName (int bank_id) {
-        BankEntity bankEntity = bankRepository.findById(bank_id)
+    private String getBankName (int bankId) {
+        BankEntity bankEntity = bankRepository.findById(bankId)
                                               .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 은행입니다."));
 
         return bankEntity.getName();

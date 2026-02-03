@@ -8,7 +8,7 @@ import com.moneylog_backend.moneylog.account.dto.AccountDto;
 
 @Mapper
 public interface AccountMapper {
-    int checkAccountNumber(String account_number);
+    int checkAccountNumber(String accountNumber);
 
-    List<AccountDto> getAccountsByUserId(int user_id);
+    List<AccountDto> getAccountsByUserId(int userId);
 }
