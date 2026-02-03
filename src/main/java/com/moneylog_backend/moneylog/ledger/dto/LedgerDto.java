@@ -33,7 +33,6 @@ public class LedgerDto {
 
     public LedgerEntity toEntity () {
         return LedgerEntity.builder()
-                           .ledgerId(this.ledgerId)
                            .userId(this.userId)
                            .categoryId(this.categoryId)
                            .paymentId(paymentId)

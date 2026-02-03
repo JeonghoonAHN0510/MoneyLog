@@ -51,7 +51,7 @@ public class UserDto {
                          .email(this.email)
                          .phone(this.phone)
                          .gender(this.gender)
-                         .role(this.role == null ? RoleEnum.USER : this.role)
+                         .role(RoleEnum.USER)
                          .profileImageUrl(this.profileImageUrl)
                          .status(this.status)
                          .provider(this.provider)

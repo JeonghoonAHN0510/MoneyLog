@@ -33,6 +33,7 @@ public class LedgerService {
     public int saveLedger (LedgerDto ledgerDto) {
         AccountEntity accountEntity = getAccountByLedgerDto(ledgerDto);
 
+        // categoryId + userId를 통해서 카테고리 유효성 검사 추가 필요
         String type = categoryMapper.getCategoryTypeByCategoryId(ledgerDto.getCategoryId());
         if (type == null) {
             throw new IllegalArgumentException("유효하지 않은 카테고리입니다.");

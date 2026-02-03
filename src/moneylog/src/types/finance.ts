@@ -40,7 +40,7 @@ export interface Ledger {
   accountId: string;
   fixedId: string;
   title: string;
-  amount: string;
+  amount: number;
   memo: string;
   tradingAt: string;
   createdAt: string;
@@ -62,8 +62,8 @@ export interface Fixed {
   userId: string;
   categoryId: string;
   title: string;
-  amount: string;
-  fixedDay: string;
+  amount: number;
+  fixedDay: number;
   startDate: string;
   endDate: string;
   createdAt: string;

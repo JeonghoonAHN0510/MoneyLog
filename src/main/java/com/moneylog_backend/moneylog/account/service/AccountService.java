@@ -105,7 +105,8 @@ public class AccountService {
 
         UserEntity userEntity = userRepository.findById(userId)
                                               .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
-        if (userEntity.getAccountId().equals(accountId)) {
+        Integer userAccountId = userEntity.getAccountId();
+        if (userAccountId != null && userAccountId.equals(accountId)) {
             userEntity.setAccountId(null);
         }
 
