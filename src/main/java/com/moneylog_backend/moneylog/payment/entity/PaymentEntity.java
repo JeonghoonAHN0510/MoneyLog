@@ -26,7 +26,8 @@ public class PaymentEntity extends BaseTime {
     private Integer paymentId;
     @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
     private Integer userId;
-    @Column(name = "accountId", columnDefinition = "INT UNSIGNED")
+    @Column(name = "account_id", columnDefinition = "INT UNSIGNED")
+
     private Integer accountId;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")
     private String name;
