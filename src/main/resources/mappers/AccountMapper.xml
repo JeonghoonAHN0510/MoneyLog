@@ -11,8 +11,9 @@
     </select>
 
     <select id="getAccountsByUserId">
-        SELECT *
-        FROM ACCOUNT
+        SELECT A.*, B.NAME bankName
+        FROM ACCOUNT A
+        LEFT JOIN BANK B ON A.BANK_ID = B.BANK_ID
         WHERE USER_ID = #{userId}
     </select>
 </mapper>

@@ -3,6 +3,7 @@ package com.moneylog_backend.moneylog.ledger.service;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.moneylog_backend.global.type.CategoryEnum;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
@@ -33,18 +34,20 @@ public class LedgerService {
     public int saveLedger (LedgerDto ledgerDto) {
         AccountEntity accountEntity = getAccountByLedgerDto(ledgerDto);
 
-        // categoryId + userId를 통해서 카테고리 유효성 검사 추가 필요
-        String type = categoryMapper.getCategoryTypeByCategoryId(ledgerDto.getCategoryId());
+        // todo categoryId + userId를 통해서 카테고리 유효성 검사 추가 필요
+        CategoryEnum type = ledgerDto.getCategoryType();
         if (type == null) {
             throw new IllegalArgumentException("유효하지 않은 카테고리입니다.");
         }
 
-        if ("EXPENSE".equals(type)) {
-            if (!paymentRepository.existsById(ledgerDto.getPaymentId())) {
+        if ("EXPENSE".equals(type.name())) {
+            // todo payment + userId를 통해서 결제수단 유효성 검사 추가 필요
+            Integer paymentId = ledgerDto.getPaymentId();
+            if (paymentId != null && !paymentRepository.existsById(paymentId)) {
                 throw new IllegalArgumentException("유효하지 않은 결제 수단입니다.");
             }
             accountEntity.withdraw(ledgerDto.getAmount());
-        } else if ("INCOME".equals(type)) {
+        } else if ("INCOME".equals(type.name())) {
             accountEntity.deposit(ledgerDto.getAmount());
         }
 

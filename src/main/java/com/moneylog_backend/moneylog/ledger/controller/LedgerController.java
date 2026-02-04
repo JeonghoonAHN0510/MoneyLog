@@ -23,6 +23,8 @@ import lombok.RequiredArgsConstructor;
 public class LedgerController {
     private final LedgerService ledgerService;
 
+    // todo ledger -> transaction 명칭 변경 필요
+
     @PostMapping
     public ResponseEntity<?> saveLedger (@RequestBody LedgerDto ledgerDto, @LoginUser Integer userId) {
         if (ledgerDto == null) {

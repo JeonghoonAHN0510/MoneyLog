@@ -28,6 +28,7 @@ export interface Account {
   balance: number;
   accountNumber?: string;
   color: string;
+  bankName: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -42,6 +43,9 @@ export interface Ledger {
   title: string;
   amount: number;
   memo: string;
+  categoryType: 'INCOME' | 'EXPENSE';
+  categoryName: string;
+  paymentName: string;
   tradingAt: string;
   createdAt: string;
   updatedAt: string;

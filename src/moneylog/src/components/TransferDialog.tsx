@@ -11,7 +11,7 @@ import useResourceStore from '../stores/resourceStore';
 interface TransferDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (transfer: Omit<Transfer, "transfer_id" | "user_id" | "created_at" | "updated_at">) => void;
+  onAdd: (transfer: Omit<Transfer, "transferId" | "userId" | "createdAt" | "updatedAt">) => void;
 }
 
 export function TransferDialog({
@@ -45,9 +45,9 @@ export function TransferDialog({
     }
 
     onAdd({
-      from_account: fromAccountId,
-      to_account: toAccountId,
-      transfer_at: date,
+      fromAccount: fromAccountId,
+      toAccount: toAccountId,
+      transferAt: date,
       amount: parseFloat(amount),
       memo: memo || undefined,
     });
@@ -56,8 +56,8 @@ export function TransferDialog({
     onOpenChange(false);
   };
 
-  const availableToAccounts = accounts.filter(acc => acc.account_id != fromAccountId);
-  const availableFromAccounts = accounts.filter(acc => acc.account_id != toAccountId);
+  const availableToAccounts = accounts.filter(acc => acc.accountId != fromAccountId);
+  const availableFromAccounts = accounts.filter(acc => acc.accountId != toAccountId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -74,11 +74,13 @@ export function TransferDialog({
                 <SelectValue placeholder="출금할 계좌 선택" />
               </SelectTrigger>
               <SelectContent>
-                {availableFromAccounts.map((acc) => (
-                  <SelectItem key={acc.account_id} value={String(acc.account_id)}>
-                    {acc.nickname} ({new Intl.NumberFormat('ko-KR').format(acc.balance)}원)
-                  </SelectItem>
-                ))}
+                {availableFromAccounts
+                  .filter((acc) => acc.balance > 0)
+                  .map((acc) => (
+                    <SelectItem key={acc.accountId} value={String(acc.accountId)}>
+                      {acc.nickname} ({new Intl.NumberFormat('ko-KR').format(acc.balance)}원)
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -91,7 +93,7 @@ export function TransferDialog({
               </SelectTrigger>
               <SelectContent>
                 {availableToAccounts.map((acc) => (
-                  <SelectItem key={acc.account_id} value={String(acc.account_id)}>
+                  <SelectItem key={acc.accountId} value={String(acc.accountId)}>
                     {acc.nickname} ({new Intl.NumberFormat('ko-KR').format(acc.balance)}원)
                   </SelectItem>
                 ))}

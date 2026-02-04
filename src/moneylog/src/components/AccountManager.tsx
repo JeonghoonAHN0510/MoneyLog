@@ -20,7 +20,7 @@ import {
 import useResourceStore from '../stores/resourceStore';
 
 interface AccountManagerProps {
-    onAdd: (account: Omit<Account, "accountId" | "userId" | "createdAt" | "updatedAt">) => void;
+    onAdd: (account: Omit<Account, "accountId" | "userId" | "createdAt" | "updatedAt" | "bankName">) => void;
     onUpdate: (account: Partial<Account>) => void;
     onDelete: (accountId: string) => void;
     onTransferClick?: () => void;
