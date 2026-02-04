@@ -165,7 +165,7 @@ const PaymentForm = ({name, setName, type, setType, accountId, setAccountId, acc
                 <SelectContent>
                     {accounts.map((account) => (
                         <SelectItem key={account.accountId} value={String(account.accountId)}>
-                            {account.nickname}
+                            {account.nickname} ({account.bankName})
                         </SelectItem>
                     ))}
                 </SelectContent>
@@ -268,7 +268,6 @@ export function CategoryManager({
 
     const resetForm = () => {
         setName('');
-        setType('EXPENSE');
         setColor(defaultColors[0]);
     };
 

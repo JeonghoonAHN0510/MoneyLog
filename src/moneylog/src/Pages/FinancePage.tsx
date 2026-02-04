@@ -19,7 +19,7 @@ import { TakeHomeCalculator } from '../components/TakeHomeCalculator';
 import { BudgetManager } from '../components/BudgetManager';
 import { AccountManager } from '../components/AccountManager';
 import { CategoryManager } from '../components/CategoryManager';
-import { Budget, Category, Account, Ledger, Payment, Transfer } from '../types/finance';
+import { Budget, Category, Account, Ledger, Payment, Transfer, Fixed } from '../types/finance';
 import { Plus, Wallet, Calendar, ChartBar, Calculator, Target, List, User, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import useUserStore from '../stores/authStore';
@@ -139,10 +139,30 @@ export default function FinancePage() {
     };
 
     // --- [Ledger CRUD] ---
-    const handleAddLedger = async (ledger: Omit<Ledger, 'ledgerId'>) => {
+    const handleAddLedger = async (ledger: Partial<Ledger>) => {
         try {
             await api.post('/ledger', ledger);
             toast.success("거래 내역이 추가되었습니다.");
+            fetchUserAssets();
+        } catch (e) {
+            toast.error("거래 내역 추가 실패");
+        }
+    };
+
+    const handleAddFixed = async (fixed: Partial<Fixed>) => {
+        try {
+            await api.post('/fixed', fixed);
+            toast.success("고정 지출이 추가되었습니다.");
+            fetchUserAssets();
+        } catch (e) {
+            toast.error("고정 지출 추가 실패");
+        }
+    };
+
+    const handleUpdateLedger = async (ledger: Partial<Ledger>) => {
+        try {
+            await api.put('/ledger', ledger);
+            toast.success("거래 내역이 수정되었습니다.");
             fetchUserAssets();
         } catch (e) {
             toast.error("거래 내역 추가 실패");
@@ -192,7 +212,7 @@ export default function FinancePage() {
     };
 
     // --- [Account CRUD] ---
-    const handleAddAccount = async (account: Omit<Account, "accountId" | "userId" | "createdAt" | "updatedAt">) => {
+    const handleAddAccount = async (account: Omit<Account, "accountId" | "userId" | "createdAt" | "updatedAt" | "bankName">) => {
         try {
             await api.post('/account', account);
             toast.success("계좌가 추가되었습니다.");
@@ -453,9 +473,8 @@ export default function FinancePage() {
             <AddLedgerDialog
                 open={isAddDialogOpen}
                 onOpenChange={setIsAddDialogOpen}
-                onAdd={handleAddLedger}
-                categories={categories}
-                accounts={accounts}
+                onAddLedger={handleAddLedger}
+                onAddFixed={handleAddFixed}
             />
 
             <TransferDialog

@@ -27,6 +27,7 @@ public class AccountDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private String bankName;
 
     public AccountEntity toEntity () {
         return AccountEntity.builder()
