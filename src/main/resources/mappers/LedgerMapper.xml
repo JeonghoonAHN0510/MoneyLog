@@ -5,10 +5,14 @@
 
 <mapper namespace="com.moneylog_backend.moneylog.ledger.mapper.LedgerMapper">
     <select id="getLedgersByUserId">
-        SELECT *
-        FROM LEDGER
-        WHERE USER_ID = #{userId}
-          AND trading_at <![CDATA[ >= ]]> #{startDate}
-          AND trading_at <![CDATA[ <= ]]> #{endDate}
+        SELECT L.*,
+               C.TYPE categoryType, C.NAME categoryName,
+               P.NAME paymentName
+        FROM LEDGER L
+        JOIN CATEGORY C ON L.CATEGORY_ID = C.CATEGORY_ID
+        LEFT JOIN PAYMENT P ON L.PAYMENT_ID = P.PAYMENT_ID
+        WHERE L.USER_ID = #{userId}
+          AND L.trading_at <![CDATA[ >= ]]> #{startDate}
+          AND L.trading_at <![CDATA[ <= ]]> #{endDate}
     </select>
 </mapper>

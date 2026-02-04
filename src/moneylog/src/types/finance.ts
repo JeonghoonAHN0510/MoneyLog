@@ -43,7 +43,9 @@ export interface Ledger {
   title: string;
   amount: number;
   memo: string;
-  categoryType: string;
+  categoryType: 'INCOME' | 'EXPENSE';
+  categoryName: string;
+  paymentName: string;
   tradingAt: string;
   createdAt: string;
   updatedAt: string;

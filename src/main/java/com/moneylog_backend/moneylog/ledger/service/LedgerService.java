@@ -41,7 +41,8 @@ public class LedgerService {
         }
 
         if ("EXPENSE".equals(type.name())) {
-            if (!paymentRepository.existsById(ledgerDto.getPaymentId())) {
+            Integer paymentId = ledgerDto.getPaymentId();
+            if (paymentId != null && !paymentRepository.existsById(paymentId)) {
                 throw new IllegalArgumentException("유효하지 않은 결제 수단입니다.");
             }
             accountEntity.withdraw(ledgerDto.getAmount());

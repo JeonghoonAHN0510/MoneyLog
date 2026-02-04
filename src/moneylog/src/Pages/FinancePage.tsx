@@ -420,8 +420,6 @@ export default function FinancePage() {
                         <CalendarView transactions={ledgers} onDateClick={handleDateClick}/>
                         {selectedDate && (
                             <TransactionList
-                                transactions={ledgers}
-                                categories={categories}
                                 selectedDate={selectedDate}
                                 onDelete={handleDeleteLedger}
                             />
@@ -430,8 +428,6 @@ export default function FinancePage() {
 
                     <TabsContent value="transactions" className="space-y-6">
                         <TransactionList
-                            transactions={ledgers}
-                            categories={categories}
                             onDelete={handleDeleteLedger}
                         />
                     </TabsContent>

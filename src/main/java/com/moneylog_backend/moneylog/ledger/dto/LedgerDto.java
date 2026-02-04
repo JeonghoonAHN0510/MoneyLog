@@ -30,6 +30,8 @@ public class LedgerDto {
     private LocalDateTime updatedAt;
 
     private CategoryEnum categoryType;
+    private String categoryName;
+    private String paymentName;
 
     public LedgerEntity toEntity () {
         return LedgerEntity.builder()

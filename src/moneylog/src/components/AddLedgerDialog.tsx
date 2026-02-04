@@ -111,21 +111,23 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onLedgerSubmit
                 </Select>
             </div>
 
-            <div className="space-y-2">
-                <Label htmlFor="payment-method">결제수단</Label>
-                <Select value={paymentId} onValueChange={handlePaymentMethodChange}>
-                    <SelectTrigger id="payment-method">
-                        <SelectValue placeholder="결제수단 선택 (선택사항)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {payments.map((payment) => (
-                            <SelectItem key={payment.paymentId} value={String(payment.paymentId)}>
-                                {payment.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
+            {type === 'EXPENSE' && (
+                <div className="space-y-2">
+                    <Label htmlFor="payment-method">결제수단</Label>
+                    <Select value={paymentId} onValueChange={handlePaymentMethodChange}>
+                        <SelectTrigger id="payment-method">
+                            <SelectValue placeholder="결제수단 선택" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {payments.map((payment) => (
+                                <SelectItem key={payment.paymentId} value={String(payment.paymentId)}>
+                                    {payment.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
 
             <div className="space-y-2">
                 <Label htmlFor="account">계좌</Label>
