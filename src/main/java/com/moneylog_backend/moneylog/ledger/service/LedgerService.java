@@ -41,6 +41,7 @@ public class LedgerService {
         }
 
         if ("EXPENSE".equals(type.name())) {
+            // todo payment + userId를 통해서 결제수단 유효성 검사 추가 필요
             Integer paymentId = ledgerDto.getPaymentId();
             if (paymentId != null && !paymentRepository.existsById(paymentId)) {
                 throw new IllegalArgumentException("유효하지 않은 결제 수단입니다.");

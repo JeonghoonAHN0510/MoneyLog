@@ -13,7 +13,7 @@ interface AddLedgerDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onAddLedger: (ledger: Partial<Ledger>) => void;
-    onAddFixed: (ledger: Partial<Ledger>) => void;
+    onAddFixed: (fixed: Partial<Fixed>) => void;
 }
 
 // =========================================================
@@ -23,7 +23,7 @@ interface GeneralFormProps {
     categories: Category[];
     accounts: Account[];
     payments: Payment[];
-    onLedgerSubmit: (data: any) => void;
+    onLedgerSubmit: (data: Partial<Ledger>) => void;
     onCancel: () => void;
 }
 
@@ -207,7 +207,7 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onLedgerSubmit
 // =========================================================
 interface FixedFormProps {
     categories: Category[];
-    onFixedSubmit: (data: any) => void;
+    onFixedSubmit: (data: Partial<Fixed>) => void;
     onCancel: () => void;
 }
 

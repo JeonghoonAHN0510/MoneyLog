@@ -165,7 +165,7 @@ export default function FinancePage() {
             toast.success("거래 내역이 수정되었습니다.");
             fetchUserAssets();
         } catch (e) {
-            toast.error("거래 내역 추가 실패");
+            toast.error("거래 내역 수정 실패");
         }
     };
 

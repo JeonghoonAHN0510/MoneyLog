@@ -94,13 +94,13 @@ export function TransactionList({
 
     const filteredTransactions = selectedDate
         ? ledgers.filter((ledger) => {
-            const datePart = ledger.createdAt.split('T')[0];
+            const datePart = ledger.tradingAt.split('T')[0];
             return datePart === selectedDate;
         })
         : ledgers;
 
     const sortedTransactions = [...filteredTransactions].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a, b) => new Date(b.tradingAt).getTime() - new Date(a.tradingAt).getTime()
     );
 
     const getCategoryColor = (categoryName: string, type: 'INCOME' | 'EXPENSE') => {
@@ -121,7 +121,7 @@ export function TransactionList({
     };
 
     const groupedByDate = sortedTransactions.reduce((acc, transaction) => {
-        const dateKey = transaction.createdAt.split('T')[0];
+        const dateKey = transaction.tradingAt.split('T')[0];
         
         if (!acc[dateKey]) {
             acc[dateKey] = [];
