@@ -8,18 +8,19 @@ import com.moneylog_backend.moneylog.category.dto.CategoryDto;
 import org.hibernate.annotations.DynamicInsert;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "category")
-@Data
-@Builder
+@Getter
+@SuperBuilder
 @DynamicInsert
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CategoryEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,5 +47,19 @@ public class CategoryEntity extends BaseTime {
                           .createdAt(this.getCreatedAt())
                           .updatedAt(this.getUpdatedAt())
                           .build();
+    }
+
+    public void updateDetails(String name, CategoryEnum type, ColorEnum color) {
+        if (name != null && !name.isEmpty()) {
+            this.name = name;
+        }
+
+        if (type != null) {
+            this.type = type;
+        }
+
+        if (color != null) {
+            this.color = color;
+        }
     }
 }

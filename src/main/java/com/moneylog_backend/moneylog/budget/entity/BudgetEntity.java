@@ -8,29 +8,30 @@ import org.hibernate.annotations.DynamicInsert;
 import java.time.LocalDate;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "budget")
-@Data
-@Builder
+@Getter
+@SuperBuilder
 @DynamicInsert
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BudgetEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "budget_id", columnDefinition = "INT UNSIGNED")
-    private int budgetId;
+    private Integer budgetId;
     @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private int userId;
+    private Integer userId;
     @Column(name = "category_id", columnDefinition = "INT UNSIGNED NOT NULL")
-    private int categoryId;
+    private Integer categoryId;
     @Column(columnDefinition = "INT NOT NULL")
-    private int amount;
+    private Integer amount;
     @Column(name = "budget_date", columnDefinition = "DATE NOT NULL")
     private LocalDate budgetDate;
 
@@ -44,5 +45,15 @@ public class BudgetEntity extends BaseTime {
                         .createdAt(this.getCreatedAt())
                         .updatedAt(this.getUpdatedAt())
                         .build();
+    }
+
+    public void updateDetails(Integer categoryId, Integer amount) {
+        if (categoryId != null) {
+            this.categoryId = categoryId;
+        }
+
+        if (amount != null) {
+            this.amount = amount;
+        }
     }
 }

@@ -2,7 +2,6 @@ package com.moneylog_backend.moneylog.account.service;
 
 import java.util.List;
 
-import com.moneylog_backend.global.type.ColorEnum;
 import com.moneylog_backend.global.util.BankAccountNumberFormatter;
 import com.moneylog_backend.moneylog.account.dto.AccountDto;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
@@ -11,8 +10,8 @@ import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.account.repository.TransferRepository;
 import com.moneylog_backend.moneylog.bank.entity.BankEntity;
 import com.moneylog_backend.moneylog.bank.repository.BankRepository;
-import com.moneylog_backend.moneylog.ledger.dto.TransferDto;
-import com.moneylog_backend.moneylog.ledger.entity.TransferEntity;
+import com.moneylog_backend.moneylog.transaction.dto.TransferDto;
+import com.moneylog_backend.moneylog.transaction.entity.TransferEntity;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 import com.moneylog_backend.moneylog.user.repository.UserRepository;
 
@@ -33,30 +32,29 @@ public class AccountService {
     private final AccountMapper accountMapper;
 
     @Transactional
-    public int saveAccount (AccountDto accountDto, int userId) {
-        accountDto.setUserId(userId);
+    public int saveAccount(AccountDto accountDto, int userId) {
+
+        String finalNickname = accountDto.getNickname();
+        String finalAccountNumber = accountDto.getAccountNumber();
 
         if (accountDto.getBankId() != null) {
             int bankId = accountDto.getBankId();
+
             if (!isBankValid(bankId)) {
-                return -1;
+                throw new IllegalArgumentException("유효하지 않은 은행 ID입니다.");
             }
 
-            String regexAccountNumber = getRegexAccountNumber(bankId, accountDto.getAccountNumber());
-            int countAccountNumber = accountMapper.checkAccountNumber(regexAccountNumber);
-            if (countAccountNumber > 0) {
-                return -1;
+            finalAccountNumber = getRegexAccountNumber(bankId, accountDto.getAccountNumber());
+            if (accountMapper.checkAccountNumber(finalAccountNumber) > 0) {
+                throw new IllegalArgumentException("이미 등록된 계좌번호입니다.");
             }
 
-            if (accountDto.getNickname() == null || accountDto.getNickname().isEmpty()) {
-                String nickname = getBankName(bankId);
-                accountDto.setNickname(nickname);
+            if (finalNickname == null || finalNickname.trim().isEmpty()) {
+                finalNickname = getBankName(bankId);
             }
-
-            accountDto.setAccountNumber(regexAccountNumber);
         }
 
-        AccountEntity accountEntity = accountDto.toEntity();
+        AccountEntity accountEntity = accountDto.toEntity(userId, finalNickname, finalAccountNumber);
         accountRepository.save(accountEntity);
 
         return accountEntity.getAccountId();
@@ -73,28 +71,23 @@ public class AccountService {
     }
 
     @Transactional
-    public AccountDto updateAccount (AccountDto accountDto, int userId) {
+    public AccountDto updateAccount(AccountDto accountDto, int userId) {
         AccountEntity accountEntity = getAccountEntityById(accountDto.getAccountId(), userId);
 
-        String InputNickname = accountDto.getNickname();
-        if (InputNickname != null) {
-            accountEntity.setNickname(InputNickname);
+        String newAccountNumber = null;
+        String accountNumber = accountDto.getAccountNumber();
+        Integer bankId = accountDto.getBankId();
+        if (accountNumber != null && !accountNumber.isEmpty()) {
+            int targetBankId = ( bankId != null) ? bankId : accountEntity.getBankId();
+            newAccountNumber = getRegexAccountNumber(targetBankId, accountNumber);
         }
 
-        String InputAccountNumber = accountDto.getAccountNumber();
-        if (InputAccountNumber != null) {
-            accountEntity.setAccountNumber(InputAccountNumber);
-        }
-
-        int InputBalance = accountDto.getBalance();
-        if (InputBalance > 0) {
-            accountEntity.setBalance(InputBalance);
-        }
-
-        ColorEnum InputColor = accountDto.getColor();
-        if (InputColor != null) {
-            accountEntity.setColor(InputColor);
-        }
+        accountEntity.updateDetails(
+            accountDto.getNickname(),
+            newAccountNumber,
+            accountDto.getBalance(),
+            accountDto.getColor()
+        );
 
         return accountEntity.toDto();
     }
@@ -103,11 +96,10 @@ public class AccountService {
     public boolean deleteAccount (int accountId, int userId) {
         AccountEntity accountEntity = getAccountEntityById(accountId, userId);
 
-        UserEntity userEntity = userRepository.findById(userId)
-                                              .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+        UserEntity userEntity = getAccountEntityById(userId);
         Integer userAccountId = userEntity.getAccountId();
         if (userAccountId != null && userAccountId.equals(accountId)) {
-            userEntity.setAccountId(null);
+            userEntity.deleteAccountId();
         }
 
         accountRepository.delete(accountEntity);
@@ -130,8 +122,7 @@ public class AccountService {
         fromAccountEntity.withdraw(transferBalance);
         toAccountEntity.deposit(transferBalance);
 
-        transferDto.setUserId(userId);
-        TransferEntity transferEntity = transferDto.toEntity();
+        TransferEntity transferEntity = transferDto.toEntity(userId);
         transferRepository.save(transferEntity);
 
         return true;
@@ -141,6 +132,11 @@ public class AccountService {
         String bankName = getBankName(bankId);
 
         return BankAccountNumberFormatter.format(bankName, accountNumber);
+    }
+
+    private UserEntity getAccountEntityById (int userId) {
+        return userRepository.findById(userId)
+                             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
     }
 
     private AccountEntity getAccountEntityById (int accountId, int userId) {

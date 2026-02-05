@@ -33,8 +33,8 @@ export interface Account {
   updatedAt: string;
 }
 
-export interface Ledger {
-  ledgerId: string;
+export interface Transaction {
+  transactionId: string;
   userId: string;
   categoryId: string;
   paymentId: string;

@@ -1,4 +1,6 @@
-package com.moneylog_backend.moneylog.user.dto;
+package com.moneylog_backend.moneylog.transaction.dto.query;
+
+import java.time.LocalDate;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -10,9 +12,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class TokenResponse {
-    private String grantType;
-    private String accessToken;
-    private String refreshToken;
-    private Long accessTokenExpireTime;
+public class SelectTransactionByUserIdQuery {
+    private int userId;
+    private LocalDate startDate;
+    private LocalDate endDate;
 }

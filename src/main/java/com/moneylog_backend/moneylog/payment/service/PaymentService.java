@@ -26,9 +26,7 @@ public class PaymentService {
 
     @Transactional
     public int savePayment (PaymentDto paymentDto, int userId) {
-        paymentDto.setUserId(userId);
-
-        PaymentEntity paymentEntity = paymentDto.toEntity();
+        PaymentEntity paymentEntity = paymentDto.toEntity(userId);
         paymentRepository.save(paymentEntity);
 
         return paymentEntity.getPaymentId();
@@ -44,16 +42,11 @@ public class PaymentService {
         validateAccountOwnership(accountId, userId);
 
         PaymentEntity paymentEntity = getPaymentEntityById(paymentDto.getPaymentId(), userId);
-        paymentEntity.setAccountId(accountId);
-
-        String InputName = paymentDto.getName();
-        PaymentEnum InputType = paymentDto.getType();
-        if (InputName != null) {
-            paymentEntity.setName(InputName);
-        }
-        if (InputType != null) {
-            paymentEntity.setType(InputType);
-        }
+        paymentEntity.updateDetails(
+            accountId,
+            paymentDto.getName(),
+            paymentDto.getType()
+        );
 
         return paymentEntity.toDto();
     }

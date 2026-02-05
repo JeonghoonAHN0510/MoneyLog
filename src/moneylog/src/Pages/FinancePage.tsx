@@ -13,13 +13,13 @@ import {
 import { CalendarView } from '../components/CalendarView';
 import { DashboardView } from '../components/DashboardView';
 import { TransactionList } from '../components/TransactionList';
-import { AddLedgerDialog } from '../components/AddLedgerDialog';
+import { AddTransactionDialog } from '../components/AddTransactionDialog';
 import { TransferDialog } from '../components/TransferDialog';
 import { TakeHomeCalculator } from '../components/TakeHomeCalculator';
 import { BudgetManager } from '../components/BudgetManager';
 import { AccountManager } from '../components/AccountManager';
 import { CategoryManager } from '../components/CategoryManager';
-import { Budget, Category, Account, Ledger, Payment, Transfer, Fixed } from '../types/finance';
+import { Budget, Category, Account, Transaction, Payment, Transfer, Fixed } from '../types/finance';
 import { Plus, Wallet, Calendar, ChartBar, Calculator, Target, List, User, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import useUserStore from '../stores/authStore';
@@ -34,13 +34,13 @@ export default function FinancePage() {
         budgets,
         categories,
         accounts,
-        ledgers,
+        transactions,
         payments,
         setBanks,
         setBudgets,
         setCategories,
         setAccounts,
-        setLedgers,
+        setTransactions,
         setPayments
     } = useResourceStore();
 
@@ -96,21 +96,21 @@ export default function FinancePage() {
     // 2. [동적 데이터] 거래 내역 추가 시 갱신해야 할 것들
     const fetchUserAssets = useCallback(async () => {
         try {
-            const [accRes, ledgerRes, budgetRes] = await Promise.allSettled([
+            const [accRes, transactionRes, budgetRes] = await Promise.allSettled([
                 api.get('/account/list'), 
-                api.get('/ledger'),       
+                api.get('/transaction'),
                 api.get('/budget')         
             ]);
 
             if (accRes.status === 'fulfilled') setAccounts(accRes.value.data);
-            if (ledgerRes.status === 'fulfilled') setLedgers(ledgerRes.value.data);
+            if (transactionRes.status === 'fulfilled') setTransactions(transactionRes.value.data);
             if (budgetRes.status === 'fulfilled') setBudgets(budgetRes.value.data);
         } catch (e) {
             console.error("자산 정보 로드 실패", e);
         } finally {
             setLoading(false);
         }
-    }, [setAccounts, setLedgers, setBudgets]);
+    }, [setAccounts, setTransactions, setBudgets]);
 
     // 3. useEffect에서 최초 1회는 둘 다 실행
     useEffect(() => {
@@ -138,10 +138,10 @@ export default function FinancePage() {
         }
     };
 
-    // --- [Ledger CRUD] ---
-    const handleAddLedger = async (ledger: Partial<Ledger>) => {
+    // --- [Transaction CRUD] ---
+    const handleAddTransaction = async (transaction: Partial<Transaction>) => {
         try {
-            await api.post('/ledger', ledger);
+            await api.post('/transaction', transaction);
             toast.success("거래 내역이 추가되었습니다.");
             fetchUserAssets();
         } catch (e) {
@@ -159,9 +159,9 @@ export default function FinancePage() {
         }
     };
 
-    const handleUpdateLedger = async (ledger: Partial<Ledger>) => {
+    const handleUpdateTransaction = async (transaction: Partial<Transaction>) => {
         try {
-            await api.put('/ledger', ledger);
+            await api.put('/transaction', transaction);
             toast.success("거래 내역이 수정되었습니다.");
             fetchUserAssets();
         } catch (e) {
@@ -169,10 +169,10 @@ export default function FinancePage() {
         }
     };
 
-    const handleDeleteLedger = async (ledgerId: string) => {
+    const handleDeleteTransaction = async (transactionId: string) => {
         try {
             // 쿼리 파라미터도 카멜케이스로 변경
-            await api.delete(`/ledger?ledgerId=${ledgerId}`);
+            await api.delete(`/transaction?transactionId=${transactionId}`);
             toast.success("삭제되었습니다.");
             fetchUserAssets();
         } catch (e) {
@@ -410,25 +410,25 @@ export default function FinancePage() {
 
                     <TabsContent value="dashboard" className="space-y-6">
                         <DashboardView
-                            transactions={ledgers}
+                            transactions={transactions}
                             budgets={budgets}
                             categories={categories}
                         />
                     </TabsContent>
 
                     <TabsContent value="calendar" className="space-y-6">
-                        <CalendarView transactions={ledgers} onDateClick={handleDateClick}/>
+                        <CalendarView transactions={transactions} onDateClick={handleDateClick}/>
                         {selectedDate && (
                             <TransactionList
                                 selectedDate={selectedDate}
-                                onDelete={handleDeleteLedger}
+                                onDelete={handleDeleteTransaction}
                             />
                         )}
                     </TabsContent>
 
                     <TabsContent value="transactions" className="space-y-6">
                         <TransactionList
-                            onDelete={handleDeleteLedger}
+                            onDelete={handleDeleteTransaction}
                         />
                     </TabsContent>
 
@@ -466,10 +466,10 @@ export default function FinancePage() {
                 </Tabs>
             </div>
 
-            <AddLedgerDialog
+            <AddTransactionDialog
                 open={isAddDialogOpen}
                 onOpenChange={setIsAddDialogOpen}
-                onAddLedger={handleAddLedger}
+                onAddTransaction={handleAddTransaction}
                 onAddFixed={handleAddFixed}
             />
 

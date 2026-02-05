@@ -1,19 +1,20 @@
-package com.moneylog_backend.moneylog.ledger.dto;
+package com.moneylog_backend.moneylog.transaction.dto;
 
-import com.moneylog_backend.moneylog.ledger.entity.TransferEntity;
+import com.moneylog_backend.moneylog.transaction.entity.TransferEntity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@Builder
+@Getter
+@SuperBuilder
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TransferDto {
     private Integer transferId;
     private Integer userId;
@@ -25,10 +26,13 @@ public class TransferDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public TransferEntity toEntity () {
+    public void setLoginUserId (int userId) {
+        this.userId = userId;
+    }
+
+    public TransferEntity toEntity (Integer userId) {
         return TransferEntity.builder()
-                             .transferId(this.transferId)
-                             .userId(this.userId)
+                             .userId(userId)
                              .fromAccount(this.fromAccount)
                              .toAccount(this.toAccount)
                              .amount(this.amount)

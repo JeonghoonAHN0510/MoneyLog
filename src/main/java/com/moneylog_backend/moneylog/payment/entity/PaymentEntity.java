@@ -7,18 +7,19 @@ import com.moneylog_backend.moneylog.payment.dto.PaymentDto;
 import org.hibernate.annotations.DynamicInsert;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "payment")
-@Data
-@Builder
+@Getter
+@SuperBuilder
 @DynamicInsert
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PaymentEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,7 +28,6 @@ public class PaymentEntity extends BaseTime {
     @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
     private Integer userId;
     @Column(name = "account_id", columnDefinition = "INT UNSIGNED")
-
     private Integer accountId;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")
     private String name;
@@ -47,5 +47,19 @@ public class PaymentEntity extends BaseTime {
                          .createdAt(this.getCreatedAt())
                          .updatedAt(this.getUpdatedAt())
                          .build();
+    }
+
+    public void updateDetails(Integer accountId, String name, PaymentEnum type) {
+        if (accountId != null) {
+            this.accountId = accountId;
+        }
+
+        if (name != null && !name.isEmpty()) {
+            this.name = name;
+        }
+
+        if (type != null) {
+            this.type = type;
+        }
     }
 }

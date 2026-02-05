@@ -5,15 +5,16 @@ import com.moneylog_backend.moneylog.payment.entity.PaymentEntity;
 
 import java.time.LocalDateTime;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@Builder
+@Getter
+@SuperBuilder
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PaymentDto {
     private Integer paymentId;
     private Integer userId;
@@ -23,10 +24,9 @@ public class PaymentDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public PaymentEntity toEntity () {
+    public PaymentEntity toEntity (Integer userId) {
         return PaymentEntity.builder()
-                            .paymentId(this.paymentId)
-                            .userId(this.userId)
+                            .userId(userId)
                             .accountId(this.accountId)
                             .name(this.name)
                             .type(this.type)

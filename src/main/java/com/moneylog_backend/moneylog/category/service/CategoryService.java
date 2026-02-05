@@ -24,14 +24,12 @@ public class CategoryService {
 
     @Transactional
     public int saveCategory (CategoryDto categoryDto, int userId) {
-        categoryDto.setUserId(userId);
-
         int countSameCategory = categoryMapper.checkCategoryNameTypeUnique(categoryDto);
         if (countSameCategory > 0) {
             return -1;
         }
 
-        CategoryEntity categoryEntity = categoryDto.toEntity();
+        CategoryEntity categoryEntity = categoryDto.toEntity(userId);
         categoryEntity = categoryRepository.save(categoryEntity);
 
         return categoryEntity.getCategoryId();
@@ -48,18 +46,11 @@ public class CategoryService {
     public CategoryDto updateCategory (CategoryDto categoryDto, int userId) {
         CategoryEntity categoryEntity = getCategoryEntityById(categoryDto.getCategoryId(), userId);
 
-        String InputName = categoryDto.getName();
-        CategoryEnum InputType = categoryDto.getType();
-        ColorEnum InputColor = categoryDto.getColor();
-        if (InputName != null) {
-            categoryEntity.setName(InputName);
-        }
-        if (InputType != null) {
-            categoryEntity.setType(InputType);
-        }
-        if (InputColor != null) {
-            categoryEntity.setColor(InputColor);
-        }
+        categoryEntity.updateDetails(
+            categoryDto.getName(),
+            categoryDto.getType(),
+            categoryDto.getColor()
+        );
 
         return categoryEntity.toDto();
     }

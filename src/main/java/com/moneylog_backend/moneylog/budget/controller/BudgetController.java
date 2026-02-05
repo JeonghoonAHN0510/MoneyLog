@@ -29,9 +29,7 @@ public class BudgetController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        budgetDto.setUserId(userId);
-
-        int resultValue = budgetService.saveBudget(budgetDto);
+        int resultValue = budgetService.saveBudget(budgetDto, userId);
         if (resultValue == -1) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } else {
@@ -50,9 +48,7 @@ public class BudgetController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        budgetDto.setUserId(userId);
-
-        BudgetDto resultBudgetDto = budgetService.updateBudget(budgetDto);
+        BudgetDto resultBudgetDto = budgetService.updateBudget(budgetDto, userId);
         if (resultBudgetDto == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } else {

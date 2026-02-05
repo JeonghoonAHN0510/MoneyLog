@@ -1,25 +1,26 @@
-package com.moneylog_backend.moneylog.ledger.entity;
+package com.moneylog_backend.moneylog.transaction.entity;
 
 import com.moneylog_backend.global.common.BaseTime;
-import com.moneylog_backend.moneylog.ledger.dto.TransferDto;
+import com.moneylog_backend.moneylog.transaction.dto.TransferDto;
 
 import org.hibernate.annotations.DynamicInsert;
 
 import java.time.LocalDate;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "transfer")
-@Data
-@Builder
+@Getter
+@SuperBuilder
 @DynamicInsert
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TransferEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
