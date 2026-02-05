@@ -9,15 +9,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@Builder
+@Getter
+@SuperBuilder
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserDto {
     private Integer userId;
     private Integer accountId;
@@ -41,18 +42,17 @@ public class UserDto {
     private String bankName;
     private String accountNumber;
 
-    public UserEntity toEntity () {
+    public UserEntity toEntity (String regexPhone, String profileImageUrl, String encodedPassword) {
         return UserEntity.builder()
-                         .userId(this.userId)
                          .accountId(this.accountId)
                          .name(this.name)
                          .loginId(this.id)
-                         .password(this.password)
+                         .password(encodedPassword)
                          .email(this.email)
-                         .phone(this.phone)
+                         .phone(regexPhone)
                          .gender(this.gender)
                          .role(RoleEnum.USER)
-                         .profileImageUrl(this.profileImageUrl)
+                         .profileImageUrl(profileImageUrl)
                          .status(this.status)
                          .provider(this.provider)
                          .providerId(this.providerId)

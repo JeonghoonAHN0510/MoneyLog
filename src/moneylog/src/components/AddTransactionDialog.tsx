@@ -1,18 +1,18 @@
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Textarea } from './ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Ledger, Category, Account, Payment, Fixed } from '../types/finance';
+import {useState} from 'react';
+import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription} from './ui/dialog';
+import {Button} from './ui/button';
+import {Input} from './ui/input';
+import {Label} from './ui/label';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from './ui/select';
+import {Textarea} from './ui/textarea';
+import {Tabs, TabsContent, TabsList, TabsTrigger} from './ui/tabs';
+import {Transaction, Category, Account, Payment, Fixed} from '../types/finance';
 import useResourceStore from '../stores/resourceStore';
 
-interface AddLedgerDialogProps {
+interface AddTransactionDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onAddLedger: (ledger: Partial<Ledger>) => void;
+    onAddTransaction: (transaction: Partial<Transaction>) => void;
     onAddFixed: (fixed: Partial<Fixed>) => void;
 }
 
@@ -23,11 +23,11 @@ interface GeneralFormProps {
     categories: Category[];
     accounts: Account[];
     payments: Payment[];
-    onLedgerSubmit: (data: Partial<Ledger>) => void;
+    onTransactionSubmit: (data: Partial<Transaction>) => void;
     onCancel: () => void;
 }
 
-const GeneralTransactionForm = ({ categories, accounts, payments, onLedgerSubmit, onCancel }: GeneralFormProps) => {
+const GeneralTransactionForm = ({categories, accounts, payments, onTransactionSubmit, onCancel}: GeneralFormProps) => {
     const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
     const [categoryId, setCategoryId] = useState('');
     const [amount, setAmount] = useState('');
@@ -53,11 +53,11 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onLedgerSubmit
         e.preventDefault();
         if (!categoryId || !amount || !date) return;
 
-        onLedgerSubmit({
+        onTransactionSubmit({
             categoryType: type,
             categoryId,
             accountId,
-            paymentId: paymentId || null,
+            paymentId: paymentId || undefined,
             amount: parseFloat(amount),
             title: description,
             memo,
@@ -99,7 +99,7 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onLedgerSubmit
                 <Label htmlFor="category">카테고리</Label>
                 <Select value={categoryId} onValueChange={setCategoryId}>
                     <SelectTrigger id="category">
-                        <SelectValue placeholder="카테고리 선택" />
+                        <SelectValue placeholder="카테고리 선택"/>
                     </SelectTrigger>
                     <SelectContent>
                         {filteredCategories.map((cat) => (
@@ -116,7 +116,7 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onLedgerSubmit
                     <Label htmlFor="payment-method">결제수단</Label>
                     <Select value={paymentId} onValueChange={handlePaymentMethodChange}>
                         <SelectTrigger id="payment-method">
-                            <SelectValue placeholder="결제수단 선택" />
+                            <SelectValue placeholder="결제수단 선택"/>
                         </SelectTrigger>
                         <SelectContent>
                             {payments.map((payment) => (
@@ -133,7 +133,7 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onLedgerSubmit
                 <Label htmlFor="account">계좌</Label>
                 <Select value={accountId} onValueChange={setAccountId}>
                     <SelectTrigger id="account">
-                        <SelectValue placeholder="계좌 선택" />
+                        <SelectValue placeholder="계좌 선택"/>
                     </SelectTrigger>
                     <SelectContent>
                         {accounts.map((acc) => (
@@ -211,7 +211,7 @@ interface FixedFormProps {
     onCancel: () => void;
 }
 
-const FixedTransactionForm = ({ categories, onFixedSubmit, onCancel }: FixedFormProps) => {
+const FixedTransactionForm = ({categories, onFixedSubmit, onCancel}: FixedFormProps) => {
     const type = 'EXPENSE';
     const [category, setCategory] = useState('');
     const [amount, setAmount] = useState('');
@@ -245,7 +245,7 @@ const FixedTransactionForm = ({ categories, onFixedSubmit, onCancel }: FixedForm
                 <Label htmlFor="fixed-category">카테고리</Label>
                 <Select value={category} onValueChange={setCategory}>
                     <SelectTrigger id="fixed-category">
-                        <SelectValue placeholder="카테고리 선택" />
+                        <SelectValue placeholder="카테고리 선택"/>
                     </SelectTrigger>
                     <SelectContent>
                         {expenseCategories.map((cat) => (
@@ -284,10 +284,10 @@ const FixedTransactionForm = ({ categories, onFixedSubmit, onCancel }: FixedForm
                 <Label htmlFor="fixed-day">고정지출일 (매월)</Label>
                 <Select value={fixedDay} onValueChange={setFixedDay}>
                     <SelectTrigger id="fixed-day">
-                        <SelectValue />
+                        <SelectValue/>
                     </SelectTrigger>
                     <SelectContent>
-                        {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                        {Array.from({length: 31}, (_, i) => i + 1).map((day) => (
                             <SelectItem key={day} value={day.toString()}>
                                 {day}일
                             </SelectItem>
@@ -330,20 +330,20 @@ const FixedTransactionForm = ({ categories, onFixedSubmit, onCancel }: FixedForm
 };
 
 // =========================================================
-// 3. 메인 AddLedgerDialog 컴포넌트
+// 3. 메인 AddTransactionDialog 컴포넌트
 // =========================================================
-export function AddLedgerDialog({
-    open,
-    onOpenChange,
-    onAddLedger,
-    onAddFixed
-}: AddLedgerDialogProps) {
-    const { categories, accounts, payments } = useResourceStore(); 
-    
+export function AddTransactionDialog({
+                                         open,
+                                         onOpenChange,
+                                         onAddTransaction,
+                                         onAddFixed
+                                     }: AddTransactionDialogProps) {
+    const {categories, accounts, payments} = useResourceStore();
+
     const [transactionType, setTransactionType] = useState<'general' | 'fixed'>('general');
 
-    const handleLedgerSubmit = (ledger: Partial<Ledger>) => {
-        onAddLedger(ledger);
+    const handleTransactionSubmit = (transaction: Partial<Transaction>) => {
+        onAddTransaction(transaction);
         onOpenChange(false);
     };
 
@@ -359,7 +359,7 @@ export function AddLedgerDialog({
                     <DialogTitle>거래 추가</DialogTitle>
                     <DialogDescription>새로운 거래를 추가하세요.</DialogDescription>
                 </DialogHeader>
-                
+
                 <Tabs value={transactionType} onValueChange={(v) => setTransactionType(v as 'general' | 'fixed')}>
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="general">일반 거래</TabsTrigger>
@@ -367,17 +367,17 @@ export function AddLedgerDialog({
                     </TabsList>
 
                     <TabsContent value="general" className="mt-4">
-                        <GeneralTransactionForm 
+                        <GeneralTransactionForm
                             categories={categories}
                             accounts={accounts}
                             payments={payments}
-                            onLedgerSubmit={handleLedgerSubmit}
+                            onTransactionSubmit={handleTransactionSubmit}
                             onCancel={() => onOpenChange(false)}
                         />
                     </TabsContent>
 
                     <TabsContent value="fixed" className="mt-4">
-                        <FixedTransactionForm 
+                        <FixedTransactionForm
                             categories={categories}
                             onFixedSubmit={handleFixedSubmit}
                             onCancel={() => onOpenChange(false)}

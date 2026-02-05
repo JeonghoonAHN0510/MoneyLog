@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Ledger, Category } from '../types/finance';
+import { Transaction, Category } from '../types/finance';
 import { Trash, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Badge } from './ui/badge';
 import useResourceStore from '../stores/resourceStore';
@@ -14,7 +14,7 @@ interface TransactionListProps {
 // 1. 개별 거래 항목 컴포넌트 (TransactionItem)
 // =========================================================
 interface TransactionItemProps {
-    transaction: Ledger;
+    transaction: Transaction;
     categoryColor: string;
     onDelete: (id: string) => void;
 }
@@ -74,7 +74,7 @@ const TransactionItem = ({ transaction, categoryColor, onDelete }: TransactionIt
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-muted-foreground hover:text-red-600"
-                    onClick={() => onDelete(transaction.ledgerId)}
+                    onClick={() => onDelete(transaction.transactionId)}
                 >
                     <Trash className="size-4" />
                 </Button>
@@ -90,14 +90,14 @@ export function TransactionList({
     selectedDate,
     onDelete,
 }: TransactionListProps) {
-    const { ledgers, categories } = useResourceStore();
+    const { transactions, categories } = useResourceStore();
 
     const filteredTransactions = selectedDate
-        ? ledgers.filter((ledger) => {
-            const datePart = ledger.tradingAt.split('T')[0];
+        ? transactions.filter((transaction) => {
+            const datePart = transaction.tradingAt.split('T')[0];
             return datePart === selectedDate;
         })
-        : ledgers;
+        : transactions;
 
     const sortedTransactions = [...filteredTransactions].sort(
         (a, b) => new Date(b.tradingAt).getTime() - new Date(a.tradingAt).getTime()
@@ -114,7 +114,7 @@ export function TransactionList({
         return `${date.getMonth() + 1}월 ${date.getDate()}일 (${days[date.getDay()]})`;
     };
 
-    const getDailyTotal = (transactions: Ledger[]) => {
+    const getDailyTotal = (transactions: Transaction[]) => {
         return transactions.reduce((acc, curr) => {
             return curr.categoryType === 'INCOME' ? acc + curr.amount : acc - curr.amount;
         }, 0);
@@ -128,7 +128,7 @@ export function TransactionList({
         }
         acc[dateKey].push(transaction);
         return acc;
-    }, {} as Record<string, Ledger[]>);
+    }, {} as Record<string, Transaction[]>);
 
     return (
         <Card className="border-none shadow-none">
@@ -161,7 +161,7 @@ export function TransactionList({
                                     <div className="p-2 space-y-1">
                                         {dateTransactions.map((transaction) => (
                                             <TransactionItem
-                                                key={transaction.ledgerId}
+                                                key={transaction.transactionId}
                                                 transaction={transaction}
                                                 categoryColor={getCategoryColor(transaction.categoryName, transaction.categoryType)}
                                                 onDelete={onDelete}

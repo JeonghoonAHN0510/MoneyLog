@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.moneylog_backend.moneylog.transaction.mapper.TransactionMapper">
+    <select id="getTransactionsByUserId">
+        SELECT T.*,
+               C.TYPE categoryType, C.NAME categoryName,
+               P.NAME paymentName
+        FROM TRANSACTION T
+        JOIN CATEGORY C ON T.CATEGORY_ID = C.CATEGORY_ID
+        LEFT JOIN PAYMENT P ON T.PAYMENT_ID = P.PAYMENT_ID
+        WHERE T.USER_ID = #{userId}
+          AND T.trading_at <![CDATA[ >= ]]> #{startDate}
+          AND T.trading_at <![CDATA[ <= ]]> #{endDate}
+    </select>
+</mapper>

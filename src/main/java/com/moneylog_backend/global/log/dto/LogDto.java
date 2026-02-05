@@ -2,15 +2,16 @@ package com.moneylog_backend.global.log.dto;
 
 import com.moneylog_backend.global.log.entity.LogEntity;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@Builder
+@Getter
+@SuperBuilder
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class LogDto {
     private String trace_id;
     private String service_name;

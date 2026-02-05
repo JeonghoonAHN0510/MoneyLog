@@ -11,18 +11,19 @@ import org.hibernate.annotations.DynamicInsert;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "user")
-@Data
-@Builder
+@Getter
+@SuperBuilder
 @DynamicInsert
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -57,6 +58,35 @@ public class UserEntity extends BaseTime {
     private String providerId;
     @Column(name = "last_login_at", columnDefinition = "DATETIME(6)")
     private LocalDateTime lastLoginAt;
+
+    public void deleteAccountId () {
+        this.accountId = null;
+    }
+
+    public void setCreatedAccountId (Integer accountId) {
+        this.accountId = accountId;
+    }
+
+    public UserDto excludePassword () {
+        return UserDto.builder()
+                      .userId(this.userId)
+                      .accountId(this.accountId)
+                      .name(this.name)
+                      .id(this.loginId)
+                      .password(null)
+                      .email(this.email)
+                      .phone(this.phone)
+                      .gender(this.gender)
+                      .role(this.role)
+                      .profileImageUrl(this.profileImageUrl)
+                      .status(this.status)
+                      .provider(this.provider)
+                      .providerId(this.providerId)
+                      .lastLoginAt(this.lastLoginAt)
+                      .createdAt(this.getCreatedAt())
+                      .updatedAt(this.getUpdatedAt())
+                      .build();
+    }
 
     public UserDto toDto () {
         return UserDto.builder()

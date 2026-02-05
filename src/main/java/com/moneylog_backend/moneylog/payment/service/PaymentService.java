@@ -2,7 +2,6 @@ package com.moneylog_backend.moneylog.payment.service;
 
 import java.util.List;
 
-import com.moneylog_backend.global.type.PaymentEnum;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.payment.dto.PaymentDto;
@@ -26,9 +25,7 @@ public class PaymentService {
 
     @Transactional
     public int savePayment (PaymentDto paymentDto, int userId) {
-        paymentDto.setUserId(userId);
-
-        PaymentEntity paymentEntity = paymentDto.toEntity();
+        PaymentEntity paymentEntity = paymentDto.toEntity(userId);
         paymentRepository.save(paymentEntity);
 
         return paymentEntity.getPaymentId();
@@ -43,30 +40,25 @@ public class PaymentService {
         Integer accountId = paymentDto.getAccountId();
         validateAccountOwnership(accountId, userId);
 
-        PaymentEntity paymentEntity = getPaymentEntityById(paymentDto.getPaymentId(), userId);
-        paymentEntity.setAccountId(accountId);
-
-        String InputName = paymentDto.getName();
-        PaymentEnum InputType = paymentDto.getType();
-        if (InputName != null) {
-            paymentEntity.setName(InputName);
-        }
-        if (InputType != null) {
-            paymentEntity.setType(InputType);
-        }
+        PaymentEntity paymentEntity = getPaymentByIdAndValidateOwnership(paymentDto.getPaymentId(), userId);
+        paymentEntity.updateDetails(
+            accountId,
+            paymentDto.getName(),
+            paymentDto.getType()
+        );
 
         return paymentEntity.toDto();
     }
 
     @Transactional
     public boolean deletePayment (int paymentId, int userId) {
-        PaymentEntity paymentEntity = getPaymentEntityById(paymentId, userId);
+        PaymentEntity paymentEntity = getPaymentByIdAndValidateOwnership(paymentId, userId);
 
         paymentRepository.delete(paymentEntity);
         return true;
     }
 
-    private PaymentEntity getPaymentEntityById (int paymentId, int userId) {
+    private PaymentEntity getPaymentByIdAndValidateOwnership (int paymentId, int userId) {
         PaymentEntity paymentEntity = paymentRepository.findById(paymentId)
                                                        .orElseThrow(
                                                            () -> new IllegalArgumentException("존재하지 않는 결제수단입니다."));

@@ -1,20 +1,24 @@
 package com.moneylog_backend.moneylog.bank.entity;
 
+import org.hibernate.annotations.DynamicInsert;
+
 import com.moneylog_backend.global.common.BaseTime;
 import com.moneylog_backend.moneylog.bank.dto.BankDto;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "bank")
-@Data
-@Builder
+@Getter
+@SuperBuilder
+@DynamicInsert
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BankEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

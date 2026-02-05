@@ -23,18 +23,17 @@ public class BudgetService {
     private final BudgetMapper budgetMapper;
 
     @Transactional
-    public int saveBudget (BudgetDto budgetDto) {
+    public int saveBudget (BudgetDto budgetDto, Integer userId) {
         int categoryId = budgetDto.getCategoryId();
         if (!hasBudget(categoryId)) {
             return -1;
         }
 
-        int userId = budgetDto.getUserId();
         if (checkingCategoryAndUserIsDuplicate(categoryId, userId) > 0) {
             return -1;
         }
 
-        BudgetEntity budgetEntity = budgetDto.toEntity();
+        BudgetEntity budgetEntity = budgetDto.toEntity(userId);
         budgetRepository.save(budgetEntity);
         return budgetEntity.getBudgetId();
     }
@@ -44,28 +43,26 @@ public class BudgetService {
     }
 
     @Transactional
-    public BudgetDto updateBudget (BudgetDto budgetDto) {
+    public BudgetDto updateBudget (BudgetDto budgetDto, Integer userId) {
         int categoryId = budgetDto.getCategoryId();
         if (!hasBudget(categoryId)) {
             return null;
         }
 
-        int userId = budgetDto.getUserId();
         if (checkingCategoryAndUserIsDuplicate(categoryId, userId) > 0) {
             return null;
         }
 
-        BudgetEntity budgetEntity = getBudgetEntityById(budgetDto.getBudgetId(), userId);
+        BudgetEntity budgetEntity = getBudgetByIdAndValidateOwnership(budgetDto.getBudgetId(), userId);
 
-        budgetEntity.setCategoryId(categoryId);
-        budgetEntity.setAmount(budgetDto.getAmount());
+        budgetEntity.updateDetails(categoryId, budgetDto.getAmount());
 
         return budgetEntity.toDto();
     }
 
     @Transactional
     public boolean deleteBudget (BudgetDto budgetDto) {
-        BudgetEntity budgetEntity = getBudgetEntityById(budgetDto.getBudgetId(), budgetDto.getUserId());
+        BudgetEntity budgetEntity = getBudgetByIdAndValidateOwnership(budgetDto.getBudgetId(), budgetDto.getUserId());
 
         budgetRepository.delete(budgetEntity);
         return true;
@@ -79,7 +76,7 @@ public class BudgetService {
         return budgetMapper.checkCategoryAndUserIsDuplicate(categoryId, userId);
     }
 
-    private BudgetEntity getBudgetEntityById (int budgetId, int userId) {
+    private BudgetEntity getBudgetByIdAndValidateOwnership (int budgetId, int userId) {
         BudgetEntity budgetEntity = budgetRepository.findById(budgetId)
                                                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예산입니다."));
 

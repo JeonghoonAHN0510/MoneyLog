@@ -49,13 +49,11 @@ public class UserService {
     public int signup (UserDto userDto) throws IOException {
         checkIdOrEmailValidity(userDto);
 
-        userDto.setPhone(formatUtils.toPhone(userDto.getPhone()));
-
-        userDto.setProfileImageUrl(fileStore.storeFile(userDto.getUploadFile()));
-
-        String encodedPassword = passwordEncoder.encode(userDto.getPassword());
-        userDto.setPassword(encodedPassword);
-        UserEntity userEntity = userDto.toEntity();
+        UserEntity userEntity = userDto.toEntity(
+            formatUtils.toPhone(userDto.getPhone()),
+            fileStore.storeFile(userDto.getUploadFile()),
+            passwordEncoder.encode(userDto.getPassword())
+        );
         userRepository.save(userEntity);
 
         int bankId = userDto.getBankId();
@@ -72,7 +70,7 @@ public class UserService {
                                                    .build();
         accountRepository.save(accountEntity);
 
-        userEntity.setAccountId(accountEntity.getAccountId());
+        userEntity.setCreatedAccountId(accountEntity.getAccountId());
 
         return userEntity.getUserId();
     }
@@ -113,9 +111,7 @@ public class UserService {
     public UserDto getUserInfo (String loginId) {
         UserEntity userEntity = userRepository.findByLoginId(loginId)
                                               .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
-
-        userEntity.setPassword(null);
-        return userEntity.toDto();
+        return userEntity.excludePassword();
     }
 
     private void checkIdOrEmailValidity (UserDto userDto) {

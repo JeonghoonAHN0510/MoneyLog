@@ -3,7 +3,7 @@ package com.moneylog_backend.moneylog.account.controller;
 import com.moneylog_backend.global.auth.annotation.LoginUser;
 import com.moneylog_backend.moneylog.account.dto.AccountDto;
 import com.moneylog_backend.moneylog.account.service.AccountService;
-import com.moneylog_backend.moneylog.ledger.dto.TransferDto;
+import com.moneylog_backend.moneylog.transaction.dto.TransferDto;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

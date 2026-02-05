@@ -1,8 +1,8 @@
-package com.moneylog_backend.moneylog.ledger.controller;
+package com.moneylog_backend.moneylog.transaction.controller;
 
 import com.moneylog_backend.global.auth.annotation.LoginUser;
-import com.moneylog_backend.moneylog.ledger.dto.LedgerDto;
-import com.moneylog_backend.moneylog.ledger.service.LedgerService;
+import com.moneylog_backend.moneylog.transaction.dto.TransactionDto;
+import com.moneylog_backend.moneylog.transaction.service.TransactionService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,22 +18,18 @@ import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/ledger")
+@RequestMapping("/api/transaction")
 @RequiredArgsConstructor
-public class LedgerController {
-    private final LedgerService ledgerService;
-
-    // todo ledger -> transaction 명칭 변경 필요
+public class TransactionController {
+    private final TransactionService transactionService;
 
     @PostMapping
-    public ResponseEntity<?> saveLedger (@RequestBody LedgerDto ledgerDto, @LoginUser Integer userId) {
-        if (ledgerDto == null) {
+    public ResponseEntity<?> saveTransaction (@RequestBody TransactionDto transactionDto, @LoginUser Integer userId) {
+        if (transactionDto == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        ledgerDto.setUserId(userId);
-
-        int resultValue = ledgerService.saveLedger(ledgerDto);
+        int resultValue = transactionService.saveTransaction(transactionDto, userId);
         if (resultValue == -1) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } else {
@@ -42,34 +38,33 @@ public class LedgerController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getLedgersByUserId (@LoginUser Integer userId) {
+    public ResponseEntity<?> getTransactionsByUserId (@LoginUser Integer userId) {
         if (userId == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        return ResponseEntity.ok(ledgerService.getLedgersByUserId(userId));
+        return ResponseEntity.ok(transactionService.getTransactionsByUserId(userId));
     }
 
     // todo 검색 조건에 따른 가계부 조회 API 필요
 
     @PutMapping
-    public ResponseEntity<?> updateLedger(@RequestBody LedgerDto ledgerDto, @LoginUser Integer userId) {
-        if (ledgerDto == null || userId == null) {
+    public ResponseEntity<?> updateTransaction (@RequestBody TransactionDto transactionDto, @LoginUser Integer userId) {
+        if (transactionDto == null || userId == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        ledgerDto.setUserId(userId);
-        return ResponseEntity.ok(ledgerService.updateLedger(ledgerDto));
+        return ResponseEntity.ok(transactionService.updateTransaction(transactionDto, userId));
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deleteLedger (@RequestParam Integer ledgerId, @LoginUser Integer userId) {
-        if (ledgerId == null || userId == null) {
+    public ResponseEntity<?> deleteTransaction (@RequestParam Integer transactionId, @LoginUser Integer userId) {
+        if (transactionId == null || userId == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        LedgerDto ledgerDto = LedgerDto.builder().ledgerId(ledgerId).userId(userId).build();
+        TransactionDto transactionDto = TransactionDto.builder().transactionId(transactionId).userId(userId).build();
 
-        return ResponseEntity.ok(ledgerService.deleteLedger(ledgerDto));
+        return ResponseEntity.ok(transactionService.deleteTransaction(transactionDto));
     }
 }

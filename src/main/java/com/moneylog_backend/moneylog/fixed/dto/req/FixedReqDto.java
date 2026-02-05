@@ -1,20 +1,21 @@
-package com.moneylog_backend.moneylog.ledger.dto;
+package com.moneylog_backend.moneylog.fixed.dto.req;
 
-import com.moneylog_backend.moneylog.ledger.entity.FixedEntity;
+import com.moneylog_backend.moneylog.fixed.entity.FixedEntity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@Builder
+@Getter
+@SuperBuilder
 @AllArgsConstructor
-@NoArgsConstructor
-public class FixedDto {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class FixedReqDto {
     private Integer fixedId;
     private Integer userId;
     private Integer categoryId;

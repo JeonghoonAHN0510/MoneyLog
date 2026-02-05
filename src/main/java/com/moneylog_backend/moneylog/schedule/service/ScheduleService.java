@@ -69,7 +69,7 @@ public class ScheduleService {
             JobMetaEntity meta = scheduleRepository.findById(jobName)
                                                    .orElseThrow(() -> new RuntimeException("Job not found"));
 
-            meta.setCronExpression(newCron);
+            meta.updateCron(newCron);
             scheduleRepository.save(meta);
 
             TriggerKey triggerKey = TriggerKey.triggerKey(jobName + "_trigger", meta.getJobGroup());

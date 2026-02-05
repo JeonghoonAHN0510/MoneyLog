@@ -8,18 +8,19 @@ import com.moneylog_backend.moneylog.account.dto.AccountDto;
 import org.hibernate.annotations.DynamicInsert;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "account")
-@Data
-@Builder
+@Getter
+@SuperBuilder
 @DynamicInsert
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AccountEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -57,6 +58,24 @@ public class AccountEntity extends BaseTime {
             throw new IllegalStateException("잔액이 부족합니다. (현재 잔액: " + this.balance + ")");
         }
         this.balance -= amount;
+    }
+
+    public void updateDetails(String nickname, String accountNumber, Integer balance, ColorEnum color) {
+        if (nickname != null && !nickname.isEmpty()) {
+            this.nickname = nickname;
+        }
+
+        if (accountNumber != null && !accountNumber.isEmpty()) {
+            this.accountNumber = accountNumber;
+        }
+
+        if (balance != null) {
+            this.balance = balance;
+        }
+
+        if (color != null) {
+            this.color = color;
+        }
     }
 
     public AccountDto toDto () {

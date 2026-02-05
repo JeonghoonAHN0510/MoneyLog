@@ -5,30 +5,30 @@ import com.moneylog_backend.moneylog.budget.entity.BudgetEntity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@Builder
+@Getter
+@SuperBuilder
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BudgetDto {
-    private int budgetId;
-    private int userId;
-    private int categoryId;
-    private int amount;
+    private Integer budgetId;
+    private Integer userId;
+    private Integer categoryId;
+    private Integer amount;
     private LocalDate budgetDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     private String categoryName;
 
-    public BudgetEntity toEntity () {
+    public BudgetEntity toEntity (Integer userId) {
         return BudgetEntity.builder()
-                           .budgetId(this.budgetId)
-                           .userId(this.userId)
+                           .userId(userId)
                            .categoryId(this.categoryId)
                            .amount(this.amount)
                            .budgetDate(LocalDate.now())

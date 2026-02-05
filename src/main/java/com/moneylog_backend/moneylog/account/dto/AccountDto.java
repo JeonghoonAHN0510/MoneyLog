@@ -6,15 +6,16 @@ import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 
 import java.time.LocalDateTime;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@Builder
+@Getter
+@SuperBuilder
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AccountDto {
     private Integer accountId;
     private Integer userId;
@@ -29,14 +30,13 @@ public class AccountDto {
 
     private String bankName;
 
-    public AccountEntity toEntity () {
+    public AccountEntity toEntity (int userId, String nickname, String regexAccountNumber) {
         return AccountEntity.builder()
-                            .accountId(this.accountId)
-                            .userId(this.userId)
+                            .userId(userId)
                             .bankId(this.bankId)
-                            .nickname(this.nickname)
+                            .nickname(nickname)
                             .balance(this.balance)
-                            .accountNumber(this.accountNumber)
+                            .accountNumber(regexAccountNumber)
                             .color(this.color)
                             .type(this.type)
                             .build();

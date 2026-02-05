@@ -6,15 +6,16 @@ import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 
 import java.time.LocalDateTime;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@Builder
+@Getter
+@SuperBuilder
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CategoryDto {
     private Integer categoryId;
     private Integer userId;
@@ -24,10 +25,9 @@ public class CategoryDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public CategoryEntity toEntity () {
+    public CategoryEntity toEntity (Integer userId) {
         return CategoryEntity.builder()
-                             .categoryId(this.categoryId)
-                             .userId(this.userId)
+                             .userId(userId)
                              .name(this.name)
                              .type(this.type)
                              .color(this.color)

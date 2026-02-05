@@ -2,8 +2,6 @@ package com.moneylog_backend.moneylog.category.service;
 
 import java.util.List;
 
-import com.moneylog_backend.global.type.CategoryEnum;
-import com.moneylog_backend.global.type.ColorEnum;
 import com.moneylog_backend.moneylog.category.dto.CategoryDto;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
@@ -24,14 +22,12 @@ public class CategoryService {
 
     @Transactional
     public int saveCategory (CategoryDto categoryDto, int userId) {
-        categoryDto.setUserId(userId);
-
         int countSameCategory = categoryMapper.checkCategoryNameTypeUnique(categoryDto);
         if (countSameCategory > 0) {
             return -1;
         }
 
-        CategoryEntity categoryEntity = categoryDto.toEntity();
+        CategoryEntity categoryEntity = categoryDto.toEntity(userId);
         categoryEntity = categoryRepository.save(categoryEntity);
 
         return categoryEntity.getCategoryId();
@@ -46,33 +42,26 @@ public class CategoryService {
 
     @Transactional
     public CategoryDto updateCategory (CategoryDto categoryDto, int userId) {
-        CategoryEntity categoryEntity = getCategoryEntityById(categoryDto.getCategoryId(), userId);
+        CategoryEntity categoryEntity = getCategoryByIdAndValidateOwnership(categoryDto.getCategoryId(), userId);
 
-        String InputName = categoryDto.getName();
-        CategoryEnum InputType = categoryDto.getType();
-        ColorEnum InputColor = categoryDto.getColor();
-        if (InputName != null) {
-            categoryEntity.setName(InputName);
-        }
-        if (InputType != null) {
-            categoryEntity.setType(InputType);
-        }
-        if (InputColor != null) {
-            categoryEntity.setColor(InputColor);
-        }
+        categoryEntity.updateDetails(
+            categoryDto.getName(),
+            categoryDto.getType(),
+            categoryDto.getColor()
+        );
 
         return categoryEntity.toDto();
     }
 
     @Transactional
     public boolean deleteCategory (int categoryId, int userId) {
-        CategoryEntity categoryEntity = getCategoryEntityById(categoryId, userId);
+        CategoryEntity categoryEntity = getCategoryByIdAndValidateOwnership(categoryId, userId);
 
         categoryRepository.delete(categoryEntity);
         return true;
     }
 
-    private CategoryEntity getCategoryEntityById (int categoryId, int userId) {
+    private CategoryEntity getCategoryByIdAndValidateOwnership (int categoryId, int userId) {
         CategoryEntity categoryEntity = categoryRepository.findById(categoryId)
                                                           .orElseThrow(
                                                               () -> new IllegalArgumentException("존재하지 않는 카테고리입니다."));
