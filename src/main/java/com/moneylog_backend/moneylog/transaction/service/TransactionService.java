@@ -32,7 +32,7 @@ public class TransactionService {
 
     @Transactional
     public int saveTransaction (TransactionDto transactionDto, Integer userId) {
-        AccountEntity accountEntity = getAccountByTransactionDto(transactionDto.getAccountId(), userId);
+        AccountEntity accountEntity = getAccountByIdAndValidateOwnership(transactionDto.getAccountId(), userId);
 
         // todo categoryId + userId를 통해서 카테고리 유효성 검사 추가 필요
         CategoryEnum type = transactionDto.getCategoryType();
@@ -71,16 +71,16 @@ public class TransactionService {
 
     @Transactional
     public TransactionDto updateTransaction(TransactionDto transactionDto, Integer userId) {
-        TransactionEntity transactionEntity = getTransactionByTransactionDto(transactionDto);
+        TransactionEntity transactionEntity = getTransactionByDtoAndValidateOwnership(transactionDto);
 
-        AccountEntity oldAccount = getAccountByTransactionDto(transactionEntity.getAccountId(), transactionEntity.getUserId());
+        AccountEntity oldAccount = getAccountByIdAndValidateOwnership(transactionEntity.getAccountId(), transactionEntity.getUserId());
         String oldType = categoryMapper.getCategoryTypeByCategoryId(transactionEntity.getCategoryId());
 
         updateAccountBalance(oldAccount, oldType, transactionEntity.getAmount(), true);
 
         Integer newAccountId = transactionDto.getAccountId();
         Integer newCategoryId = transactionDto.getCategoryId();
-        AccountEntity newAccount = getAccountByTransactionDto(newAccountId, userId);
+        AccountEntity newAccount = getAccountByIdAndValidateOwnership(newAccountId, userId);
         String newType = categoryMapper.getCategoryTypeByCategoryId(newCategoryId);
 
         if (newType == null) {
@@ -136,13 +136,13 @@ public class TransactionService {
 
     @Transactional
     public boolean deleteTransaction (TransactionDto transactionDto) {
-        TransactionEntity transactionEntity = getTransactionByTransactionDto(transactionDto);
+        TransactionEntity transactionEntity = getTransactionByDtoAndValidateOwnership(transactionDto);
 
         transactionRepository.delete(transactionEntity);
         return true;
     }
 
-    private TransactionEntity getTransactionByTransactionDto (TransactionDto transactionDto) {
+    private TransactionEntity getTransactionByDtoAndValidateOwnership (TransactionDto transactionDto) {
         TransactionEntity transactionEntity = transactionRepository.findById(transactionDto.getTransactionId())
                                                                    .orElseThrow(
                                                         () -> new IllegalArgumentException("존재하지 않는 지출 내역입니다."));
@@ -153,7 +153,7 @@ public class TransactionService {
         return transactionEntity;
     }
 
-    private AccountEntity getAccountByTransactionDto (Integer accountId, Integer userId) {
+    private AccountEntity getAccountByIdAndValidateOwnership (Integer accountId, Integer userId) {
         AccountEntity accountEntity = accountRepository.findById(accountId)
                                                        .orElseThrow(
                                                            () -> new IllegalArgumentException("존재하지 않는 계좌입니다."));

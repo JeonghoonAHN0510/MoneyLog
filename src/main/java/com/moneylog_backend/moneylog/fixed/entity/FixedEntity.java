@@ -1,7 +1,7 @@
 package com.moneylog_backend.moneylog.fixed.entity;
 
 import com.moneylog_backend.global.common.BaseTime;
-import com.moneylog_backend.moneylog.fixed.dto.req.FixedReqDto;
+import com.moneylog_backend.moneylog.fixed.dto.res.FixedResDto;
 
 import org.hibernate.annotations.DynamicInsert;
 
@@ -41,8 +41,8 @@ public class FixedEntity extends BaseTime {
     @Column(name = "end_date", columnDefinition = "DATE")
     private LocalDate endDate;
 
-    public FixedReqDto toDto () {
-        return FixedReqDto.builder()
+    public FixedResDto toDto () {
+        return FixedResDto.builder()
                           .fixedId(this.fixedId)
                           .userId(this.userId)
                           .categoryId(this.categoryId)

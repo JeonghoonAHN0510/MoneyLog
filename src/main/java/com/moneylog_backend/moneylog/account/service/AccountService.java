@@ -61,7 +61,7 @@ public class AccountService {
     }
 
     public AccountDto getAccount (int accountId, int userId) {
-        AccountEntity accountEntity = getAccountEntityById(accountId, userId);
+        AccountEntity accountEntity = getAccountByIdAndValidateOwnership(accountId, userId);
 
         return accountEntity.toDto();
     }
@@ -72,7 +72,7 @@ public class AccountService {
 
     @Transactional
     public AccountDto updateAccount(AccountDto accountDto, int userId) {
-        AccountEntity accountEntity = getAccountEntityById(accountDto.getAccountId(), userId);
+        AccountEntity accountEntity = getAccountByIdAndValidateOwnership(accountDto.getAccountId(), userId);
 
         String newAccountNumber = null;
         String accountNumber = accountDto.getAccountNumber();
@@ -94,9 +94,9 @@ public class AccountService {
 
     @Transactional
     public boolean deleteAccount (int accountId, int userId) {
-        AccountEntity accountEntity = getAccountEntityById(accountId, userId);
+        AccountEntity accountEntity = getAccountByIdAndValidateOwnership(accountId, userId);
 
-        UserEntity userEntity = getAccountEntityById(userId);
+        UserEntity userEntity = getUserEntityById(userId);
         Integer userAccountId = userEntity.getAccountId();
         if (userAccountId != null && userAccountId.equals(accountId)) {
             userEntity.deleteAccountId();
@@ -116,8 +116,8 @@ public class AccountService {
         int fromAccountId = transferDto.getFromAccount();
         int toAccountId = transferDto.getToAccount();
 
-        AccountEntity fromAccountEntity = getAccountEntityById(fromAccountId, userId);
-        AccountEntity toAccountEntity = getAccountEntityById(toAccountId, userId);
+        AccountEntity fromAccountEntity = getAccountByIdAndValidateOwnership(fromAccountId, userId);
+        AccountEntity toAccountEntity = getAccountByIdAndValidateOwnership(toAccountId, userId);
 
         fromAccountEntity.withdraw(transferBalance);
         toAccountEntity.deposit(transferBalance);
@@ -134,12 +134,12 @@ public class AccountService {
         return BankAccountNumberFormatter.format(bankName, accountNumber);
     }
 
-    private UserEntity getAccountEntityById (int userId) {
+    private UserEntity getUserEntityById (int userId) {
         return userRepository.findById(userId)
                              .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
     }
 
-    private AccountEntity getAccountEntityById (int accountId, int userId) {
+    private AccountEntity getAccountByIdAndValidateOwnership (int accountId, int userId) {
         AccountEntity accountEntity = accountRepository.findById(accountId)
                                                        .orElseThrow(
                                                            () -> new IllegalArgumentException("존재하지 않는 계좌입니다."));

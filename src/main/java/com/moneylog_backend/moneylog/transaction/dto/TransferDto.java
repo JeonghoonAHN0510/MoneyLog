@@ -26,10 +26,6 @@ public class TransferDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public void setLoginUserId (int userId) {
-        this.userId = userId;
-    }
-
     public TransferEntity toEntity (Integer userId) {
         return TransferEntity.builder()
                              .userId(userId)

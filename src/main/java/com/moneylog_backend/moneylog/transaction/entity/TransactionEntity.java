@@ -51,10 +51,18 @@ public class TransactionEntity extends BaseTime {
         this.amount = amount;
         this.accountId = accountId;
 
-        if (paymentId != null) this.paymentId = paymentId;
-        if (title != null) this.title = title;
-        if (memo != null) this.memo = memo;
-        if (tradingAt != null) this.tradingAt = tradingAt;
+        if (paymentId != null) {
+            this.paymentId = paymentId;
+        }
+        if (title != null) {
+            this.title = title;
+        }
+        if (memo != null) {
+            this.memo = memo;
+        }
+        if (tradingAt != null) {
+            this.tradingAt = tradingAt;
+        }
     }
 
     public TransactionDto toDto () {

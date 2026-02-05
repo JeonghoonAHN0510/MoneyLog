@@ -2,8 +2,6 @@ package com.moneylog_backend.moneylog.category.service;
 
 import java.util.List;
 
-import com.moneylog_backend.global.type.CategoryEnum;
-import com.moneylog_backend.global.type.ColorEnum;
 import com.moneylog_backend.moneylog.category.dto.CategoryDto;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
@@ -44,7 +42,7 @@ public class CategoryService {
 
     @Transactional
     public CategoryDto updateCategory (CategoryDto categoryDto, int userId) {
-        CategoryEntity categoryEntity = getCategoryEntityById(categoryDto.getCategoryId(), userId);
+        CategoryEntity categoryEntity = getCategoryByIdAndValidateOwnership(categoryDto.getCategoryId(), userId);
 
         categoryEntity.updateDetails(
             categoryDto.getName(),
@@ -57,13 +55,13 @@ public class CategoryService {
 
     @Transactional
     public boolean deleteCategory (int categoryId, int userId) {
-        CategoryEntity categoryEntity = getCategoryEntityById(categoryId, userId);
+        CategoryEntity categoryEntity = getCategoryByIdAndValidateOwnership(categoryId, userId);
 
         categoryRepository.delete(categoryEntity);
         return true;
     }
 
-    private CategoryEntity getCategoryEntityById (int categoryId, int userId) {
+    private CategoryEntity getCategoryByIdAndValidateOwnership (int categoryId, int userId) {
         CategoryEntity categoryEntity = categoryRepository.findById(categoryId)
                                                           .orElseThrow(
                                                               () -> new IllegalArgumentException("존재하지 않는 카테고리입니다."));

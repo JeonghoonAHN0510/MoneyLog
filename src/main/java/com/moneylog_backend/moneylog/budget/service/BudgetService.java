@@ -53,7 +53,7 @@ public class BudgetService {
             return null;
         }
 
-        BudgetEntity budgetEntity = getBudgetEntityById(budgetDto.getBudgetId(), userId);
+        BudgetEntity budgetEntity = getBudgetByIdAndValidateOwnership(budgetDto.getBudgetId(), userId);
 
         budgetEntity.updateDetails(categoryId, budgetDto.getAmount());
 
@@ -62,7 +62,7 @@ public class BudgetService {
 
     @Transactional
     public boolean deleteBudget (BudgetDto budgetDto) {
-        BudgetEntity budgetEntity = getBudgetEntityById(budgetDto.getBudgetId(), budgetDto.getUserId());
+        BudgetEntity budgetEntity = getBudgetByIdAndValidateOwnership(budgetDto.getBudgetId(), budgetDto.getUserId());
 
         budgetRepository.delete(budgetEntity);
         return true;
@@ -76,7 +76,7 @@ public class BudgetService {
         return budgetMapper.checkCategoryAndUserIsDuplicate(categoryId, userId);
     }
 
-    private BudgetEntity getBudgetEntityById (int budgetId, int userId) {
+    private BudgetEntity getBudgetByIdAndValidateOwnership (int budgetId, int userId) {
         BudgetEntity budgetEntity = budgetRepository.findById(budgetId)
                                                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예산입니다."));
 

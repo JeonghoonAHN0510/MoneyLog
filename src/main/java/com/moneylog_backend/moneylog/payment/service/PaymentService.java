@@ -2,7 +2,6 @@ package com.moneylog_backend.moneylog.payment.service;
 
 import java.util.List;
 
-import com.moneylog_backend.global.type.PaymentEnum;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.payment.dto.PaymentDto;
@@ -41,7 +40,7 @@ public class PaymentService {
         Integer accountId = paymentDto.getAccountId();
         validateAccountOwnership(accountId, userId);
 
-        PaymentEntity paymentEntity = getPaymentEntityById(paymentDto.getPaymentId(), userId);
+        PaymentEntity paymentEntity = getPaymentByIdAndValidateOwnership(paymentDto.getPaymentId(), userId);
         paymentEntity.updateDetails(
             accountId,
             paymentDto.getName(),
@@ -53,13 +52,13 @@ public class PaymentService {
 
     @Transactional
     public boolean deletePayment (int paymentId, int userId) {
-        PaymentEntity paymentEntity = getPaymentEntityById(paymentId, userId);
+        PaymentEntity paymentEntity = getPaymentByIdAndValidateOwnership(paymentId, userId);
 
         paymentRepository.delete(paymentEntity);
         return true;
     }
 
-    private PaymentEntity getPaymentEntityById (int paymentId, int userId) {
+    private PaymentEntity getPaymentByIdAndValidateOwnership (int paymentId, int userId) {
         PaymentEntity paymentEntity = paymentRepository.findById(paymentId)
                                                        .orElseThrow(
                                                            () -> new IllegalArgumentException("존재하지 않는 결제수단입니다."));

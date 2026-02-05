@@ -58,12 +58,12 @@ public class TransactionController {
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deleteTransaction (@RequestParam Integer TransactionId, @LoginUser Integer userId) {
-        if (TransactionId == null || userId == null) {
+    public ResponseEntity<?> deleteTransaction (@RequestParam Integer transactionId, @LoginUser Integer userId) {
+        if (transactionId == null || userId == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        TransactionDto transactionDto = TransactionDto.builder().transactionId(TransactionId).userId(userId).build();
+        TransactionDto transactionDto = TransactionDto.builder().transactionId(transactionId).userId(userId).build();
 
         return ResponseEntity.ok(transactionService.deleteTransaction(transactionDto));
     }
