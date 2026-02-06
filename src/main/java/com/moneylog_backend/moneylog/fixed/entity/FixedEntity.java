@@ -43,7 +43,7 @@ public class FixedEntity extends BaseTime {
     @Column(name = "end_date", columnDefinition = "DATE")
     private LocalDate endDate;
 
-    public FixedResDto toDto () {
+    public FixedResDto toResDto () {
         return FixedResDto.builder()
                           .fixedId(this.fixedId)
                           .userId(this.userId)

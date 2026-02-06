@@ -11,6 +11,7 @@ import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
 import com.moneylog_backend.moneylog.fixed.dto.req.FixedReqDto;
+import com.moneylog_backend.moneylog.fixed.dto.res.FixedResDto;
 import com.moneylog_backend.moneylog.fixed.entity.FixedEntity;
 import com.moneylog_backend.moneylog.fixed.mapper.FixedMapper;
 import com.moneylog_backend.moneylog.fixed.repository.FixedRepository;
@@ -27,7 +28,7 @@ public class FixedService {
     private final FixedMapper fixedMapper;
 
     @Transactional
-    public int saveFixed(FixedReqDto fixedReqDto, Integer userId) {
+    public FixedResDto saveFixed(FixedReqDto fixedReqDto, Integer userId) {
         validateOwnership(fixedReqDto.getAccountId(), fixedReqDto.getCategoryId(), userId);
 
         LocalDate endDate = fixedReqDto.getEndDate();
@@ -38,7 +39,7 @@ public class FixedService {
         FixedEntity fixedEntity = fixedReqDto.toEntity(userId);
         fixedRepository.save(fixedEntity);
 
-        return fixedEntity.getFixedId();
+        return fixedEntity.toResDto();
     }
 
     private void validateOwnership(Integer accountId, Integer categoryId, Integer userId) {

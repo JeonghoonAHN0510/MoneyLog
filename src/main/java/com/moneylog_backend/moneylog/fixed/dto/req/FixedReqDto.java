@@ -23,8 +23,6 @@ import lombok.experimental.SuperBuilder;
 public class FixedReqDto {
     private Integer fixedId;
 
-    private Integer userId;
-
     private Integer categoryId;
 
     private Integer accountId;

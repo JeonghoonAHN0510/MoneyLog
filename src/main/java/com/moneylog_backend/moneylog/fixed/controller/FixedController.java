@@ -1,6 +1,5 @@
 package com.moneylog_backend.moneylog.fixed.controller;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,10 +21,6 @@ public class FixedController {
 
     @PostMapping
     public ResponseEntity<?> saveFixed(@RequestBody @Valid FixedReqDto fixedReqDto, @LoginUser Integer userId){
-        if (fixedReqDto == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-
         return ResponseEntity.ok(fixedService.saveFixed(fixedReqDto, userId));
     }
 }
