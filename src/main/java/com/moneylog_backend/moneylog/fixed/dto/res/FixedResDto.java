@@ -12,6 +12,7 @@ public class FixedResDto {
     private Integer fixedId;
     private Integer userId;
     private Integer categoryId;
+    private Integer accountId;
     private String title;
     private Integer amount;
     private Integer fixedDay;

@@ -6,7 +6,10 @@ import java.util.List;
 import com.moneylog_backend.global.type.CategoryEnum;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
+import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
+import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
+import com.moneylog_backend.moneylog.payment.entity.PaymentEntity;
 import com.moneylog_backend.moneylog.transaction.dto.TransactionDto;
 import com.moneylog_backend.moneylog.transaction.dto.query.SelectTransactionByUserIdQuery;
 import com.moneylog_backend.moneylog.transaction.entity.TransactionEntity;
@@ -24,31 +27,29 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class TransactionService {
+    private final TransactionRepository transactionRepository;
+    private final CategoryRepository categoryRepository;
     private final PaymentRepository paymentRepository;
     private final AccountRepository accountRepository;
-    private final TransactionRepository transactionRepository;
-    private final CategoryMapper categoryMapper;
     private final TransactionMapper transactionMapper;
+    private final CategoryMapper categoryMapper;
 
     @Transactional
     public int saveTransaction (TransactionDto transactionDto, Integer userId) {
         AccountEntity accountEntity = getAccountByIdAndValidateOwnership(transactionDto.getAccountId(), userId);
 
-        // todo categoryId + userId를 통해서 카테고리 유효성 검사 추가 필요
+        CategoryEntity categoryEntity = getCategoryByIdAndValidateOwnership(transactionDto.getCategoryId(), userId);
         CategoryEnum type = transactionDto.getCategoryType();
-        if (type == null) {
+        if (!categoryEntity.getType().equals(type)) {
             throw new IllegalArgumentException("유효하지 않은 카테고리입니다.");
         }
 
+        Integer amount = transactionDto.getAmount();
         if ("EXPENSE".equals(type.name())) {
-            // todo payment + userId를 통해서 결제수단 유효성 검사 추가 필요
-            Integer paymentId = transactionDto.getPaymentId();
-            if (paymentId != null && !paymentRepository.existsById(paymentId)) {
-                throw new IllegalArgumentException("유효하지 않은 결제 수단입니다.");
-            }
-            accountEntity.withdraw(transactionDto.getAmount());
+            validatePaymentOwnership(transactionDto.getPaymentId(), userId);
+            accountEntity.withdraw(amount);
         } else if ("INCOME".equals(type.name())) {
-            accountEntity.deposit(transactionDto.getAmount());
+            accountEntity.deposit(amount);
         }
 
         TransactionEntity transactionEntity = transactionDto.toEntity(userId);
@@ -162,5 +163,25 @@ public class TransactionService {
         }
 
         return accountEntity;
+    }
+
+    private CategoryEntity getCategoryByIdAndValidateOwnership (Integer categoryId, Integer userId) {
+        CategoryEntity categoryEntity = categoryRepository.findById(categoryId)
+                                                       .orElseThrow(
+                                                           () -> new IllegalArgumentException("존재하지 않는 카테고리입니다."));
+        if (!categoryEntity.getUserId().equals(userId)) {
+            throw new AccessDeniedException("본인의 카테고리가 아닙니다.");
+        }
+
+        return categoryEntity;
+    }
+
+    private void validatePaymentOwnership (Integer paymentId, Integer userId) {
+        PaymentEntity paymentEntity = paymentRepository.findById(paymentId)
+                                                          .orElseThrow(
+                                                              () -> new IllegalArgumentException("존재하지 않는 결제수단입니다."));
+        if (!paymentEntity.getUserId().equals(userId)) {
+            throw new AccessDeniedException("본인의 결제수단가 아닙니다.");
+        }
     }
 }
