@@ -339,18 +339,18 @@ export default function FinancePage() {
     return (
         <div className="min-h-screen bg-background">
             <div className="container mx-auto p-4 md:p-8">
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
                     <div>
-                        <h1 className="flex items-center gap-2 text-2xl font-bold">
-                            <Wallet className="size-8" />
+                        <h1 className="flex items-center gap-2 text-xl md:text-2xl font-bold">
+                            <Wallet className="size-6 md:size-8" />
                             내 가계부
                         </h1>
-                        <p className="text-muted-foreground">사회 초년생을 위한 스마트 재무 관리</p>
+                        <p className="text-sm md:text-base text-muted-foreground">사회 초년생을 위한 스마트 재무 관리</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <Button onClick={() => setIsAddDialogOpen(true)}>
-                            <Plus className="size-4 mr-2" />
-                            거래 추가
+                    <div className="flex items-center gap-2 md:gap-3">
+                        <Button size="sm" className="md:size-default" onClick={() => setIsAddDialogOpen(true)}>
+                            <Plus className="size-4 md:mr-2" />
+                            <span className="hidden md:inline">거래 추가</span>
                         </Button>
 
                         <DropdownMenu>
@@ -384,36 +384,38 @@ export default function FinancePage() {
                     onValueChange={handleTabChange}
                     className="space-y-6"
                 >
-                    <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
-                        <TabsTrigger value="dashboard" className="flex items-center gap-2">
-                            <ChartBar className="size-4" />
-                            <span className="hidden sm:inline">대시보드</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="calendar" className="flex items-center gap-2">
-                            <Calendar className="size-4" />
-                            <span className="hidden sm:inline">캘린더</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="transactions" className="flex items-center gap-2">
-                            <Wallet className="size-4" />
-                            <span className="hidden sm:inline">거래내역</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="accounts" className="flex items-center gap-2">
-                            <Wallet className="size-4" />
-                            <span className="hidden sm:inline">계좌</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="categories" className="flex items-center gap-2">
-                            <List className="size-4" />
-                            <span className="hidden sm:inline">카테고리</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="budget" className="flex items-center gap-2">
-                            <Target className="size-4" />
-                            <span className="hidden sm:inline">예산</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="calculator" className="flex items-center gap-2">
-                            <Calculator className="size-4" />
-                            <span className="hidden sm:inline">계산기</span>
-                        </TabsTrigger>
-                    </TabsList>
+                    <div className="overflow-x-auto -mx-4 px-4 pb-2">
+                        <TabsList className="flex w-max min-w-full md:grid md:w-full md:grid-cols-7 gap-1">
+                            <TabsTrigger value="dashboard" className="flex items-center gap-2">
+                                <ChartBar className="size-4" />
+                                <span className="hidden sm:inline">대시보드</span>
+                            </TabsTrigger>
+                            <TabsTrigger value="calendar" className="flex items-center gap-2">
+                                <Calendar className="size-4" />
+                                <span className="hidden sm:inline">캘린더</span>
+                            </TabsTrigger>
+                            <TabsTrigger value="transactions" className="flex items-center gap-2">
+                                <Wallet className="size-4" />
+                                <span className="hidden sm:inline">거래내역</span>
+                            </TabsTrigger>
+                            <TabsTrigger value="accounts" className="flex items-center gap-2">
+                                <Wallet className="size-4" />
+                                <span className="hidden sm:inline">계좌</span>
+                            </TabsTrigger>
+                            <TabsTrigger value="categories" className="flex items-center gap-2">
+                                <List className="size-4" />
+                                <span className="hidden sm:inline">카테고리</span>
+                            </TabsTrigger>
+                            <TabsTrigger value="budget" className="flex items-center gap-2">
+                                <Target className="size-4" />
+                                <span className="hidden sm:inline">예산</span>
+                            </TabsTrigger>
+                            <TabsTrigger value="calculator" className="flex items-center gap-2">
+                                <Calculator className="size-4" />
+                                <span className="hidden sm:inline">계산기</span>
+                            </TabsTrigger>
+                        </TabsList>
+                    </div>
 
                     <TabsContent value="dashboard" className="space-y-6">
                         <DashboardView

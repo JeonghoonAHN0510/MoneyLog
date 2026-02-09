@@ -73,9 +73,9 @@ const TransactionItem = ({ transaction, categoryColor, onEdit, onDeleteClick }: 
                     </div>
                 </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 md:gap-2">
                 <span
-                    className={`font-semibold ${transaction.categoryType === 'INCOME' ? 'text-green-600' : 'text-red-600'
+                    className={`text-sm md:text-base font-semibold ${transaction.categoryType === 'INCOME' ? 'text-green-600' : 'text-red-600'
                         }`}
                 >
                     {transaction.categoryType === 'INCOME' ? '+' : '-'}
@@ -84,18 +84,18 @@ const TransactionItem = ({ transaction, categoryColor, onEdit, onDeleteClick }: 
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-primary"
+                    className="h-7 w-7 md:h-8 md:w-8 text-muted-foreground hover:text-primary"
                     onClick={() => onEdit(transaction)}
                 >
-                    <Pencil className="size-4" />
+                    <Pencil className="size-3 md:size-4" />
                 </Button>
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                    className="h-7 w-7 md:h-8 md:w-8 text-muted-foreground hover:text-red-600"
                     onClick={() => onDeleteClick(transaction.transactionId)}
                 >
-                    <Trash className="size-4" />
+                    <Trash className="size-3 md:size-4" />
                 </Button>
             </div>
         </div>
