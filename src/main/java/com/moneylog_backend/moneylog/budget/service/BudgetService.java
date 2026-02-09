@@ -2,6 +2,7 @@ package com.moneylog_backend.moneylog.budget.service;
 
 import java.util.List;
 
+import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.moneylog.budget.dto.BudgetDto;
 import com.moneylog_backend.moneylog.budget.entity.BudgetEntity;
 import com.moneylog_backend.moneylog.budget.mapper.BudgetMapper;
@@ -78,7 +79,7 @@ public class BudgetService {
 
     private BudgetEntity getBudgetByIdAndValidateOwnership (int budgetId, int userId) {
         BudgetEntity budgetEntity = budgetRepository.findById(budgetId)
-                                                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예산입니다."));
+                                                    .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 예산입니다."));
 
         if (userId != budgetEntity.getUserId()) {
             throw new AccessDeniedException("본인의 예산이 아닙니다.");

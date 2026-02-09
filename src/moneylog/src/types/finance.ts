@@ -65,9 +65,10 @@ export interface Fixed {
   fixedId: string;
   userId: string;
   categoryId: string;
+  accountId: string;
   title: string;
   amount: number;
-  fixedDay: number;
+  fixedDay: string;
   startDate: string;
   endDate: string;
   createdAt: string;

@@ -2,6 +2,7 @@ package com.moneylog_backend.moneylog.payment.service;
 
 import java.util.List;
 
+import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.payment.dto.PaymentDto;
@@ -41,11 +42,7 @@ public class PaymentService {
         validateAccountOwnership(accountId, userId);
 
         PaymentEntity paymentEntity = getPaymentByIdAndValidateOwnership(paymentDto.getPaymentId(), userId);
-        paymentEntity.updateDetails(
-            accountId,
-            paymentDto.getName(),
-            paymentDto.getType()
-        );
+        paymentEntity.updateDetails(accountId, paymentDto.getName(), paymentDto.getType());
 
         return paymentEntity.toDto();
     }
@@ -61,7 +58,7 @@ public class PaymentService {
     private PaymentEntity getPaymentByIdAndValidateOwnership (int paymentId, int userId) {
         PaymentEntity paymentEntity = paymentRepository.findById(paymentId)
                                                        .orElseThrow(
-                                                           () -> new IllegalArgumentException("존재하지 않는 결제수단입니다."));
+                                                           () -> new ResourceNotFoundException("존재하지 않는 결제수단입니다."));
 
         if (paymentEntity.getUserId() != userId) {
             throw new AccessDeniedException("본인의 결제수단이 아닙니다.");
@@ -70,9 +67,10 @@ public class PaymentService {
         return paymentEntity;
     }
 
-    private void validateAccountOwnership(int accountId, int userId) {
+    private void validateAccountOwnership (int accountId, int userId) {
         AccountEntity accountEntity = accountRepository.findById(accountId)
-                                                       .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
+                                                       .orElseThrow(
+                                                           () -> new ResourceNotFoundException("존재하지 않는 계좌입니다."));
 
         if (!accountEntity.getUserId().equals(userId)) {
             throw new AccessDeniedException("본인의 계좌가 아닙니다.");

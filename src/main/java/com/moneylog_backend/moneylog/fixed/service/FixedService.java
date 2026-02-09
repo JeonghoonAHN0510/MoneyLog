@@ -6,6 +6,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
@@ -28,7 +29,7 @@ public class FixedService {
     private final FixedMapper fixedMapper;
 
     @Transactional
-    public FixedResDto saveFixed(FixedReqDto fixedReqDto, Integer userId) {
+    public FixedResDto saveFixed (FixedReqDto fixedReqDto, Integer userId) {
         validateOwnership(fixedReqDto.getAccountId(), fixedReqDto.getCategoryId(), userId);
 
         LocalDate endDate = fixedReqDto.getEndDate();
@@ -42,16 +43,17 @@ public class FixedService {
         return fixedEntity.toResDto();
     }
 
-    private void validateOwnership(Integer accountId, Integer categoryId, Integer userId) {
+    private void validateOwnership (Integer accountId, Integer categoryId, Integer userId) {
         AccountEntity account = accountRepository.findById(accountId)
-                                                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
+                                                 .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 계좌입니다."));
 
         if (!account.getUserId().equals(userId)) {
             throw new AccessDeniedException("본인의 계좌가 아닙니다.");
         }
 
         CategoryEntity category = categoryRepository.findById(categoryId)
-                                                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리입니다."));
+                                                    .orElseThrow(
+                                                        () -> new ResourceNotFoundException("존재하지 않는 카테고리입니다."));
 
         if (!category.getUserId().equals(userId)) {
             throw new AccessDeniedException("본인의 카테고리가 아닙니다.");

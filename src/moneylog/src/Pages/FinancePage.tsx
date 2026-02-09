@@ -145,17 +145,17 @@ export default function FinancePage() {
             toast.success("거래 내역이 추가되었습니다.");
             fetchUserAssets();
         } catch (e) {
-            toast.error("거래 내역 추가 실패");
+            toast.error("거래 내역 추가에 실패하였습니다.");
         }
     };
 
     const handleAddFixed = async (fixed: Partial<Fixed>) => {
         try {
             await api.post('/fixed', fixed);
-            toast.success("고정 지출이 추가되었습니다.");
+            toast.success("고정 거래 내역이 추가되었습니다.");
             fetchUserAssets();
         } catch (e) {
-            toast.error("고정 지출 추가 실패");
+            toast.error("고정 거래 내역 추가에 실패하였습니다.");
         }
     };
 
@@ -171,12 +171,11 @@ export default function FinancePage() {
 
     const handleDeleteTransaction = async (transactionId: string) => {
         try {
-            // 쿼리 파라미터도 카멜케이스로 변경
             await api.delete(`/transaction?transactionId=${transactionId}`);
-            toast.success("삭제되었습니다.");
+            toast.success("거래 내역이 삭제되었습니다.");
             fetchUserAssets();
         } catch (e) {
-            toast.error("삭제 실패");
+            toast.error("거래 내역 삭제에 실패하였습니다.");
         }
     };
 

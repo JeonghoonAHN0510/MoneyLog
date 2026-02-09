@@ -2,6 +2,7 @@ package com.moneylog_backend.moneylog.account.service;
 
 import java.util.List;
 
+import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.global.util.BankAccountNumberFormatter;
 import com.moneylog_backend.moneylog.account.dto.AccountDto;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
@@ -32,7 +33,7 @@ public class AccountService {
     private final AccountMapper accountMapper;
 
     @Transactional
-    public int saveAccount(AccountDto accountDto, int userId) {
+    public int saveAccount (AccountDto accountDto, int userId) {
 
         String finalNickname = accountDto.getNickname();
         String finalAccountNumber = accountDto.getAccountNumber();
@@ -71,23 +72,19 @@ public class AccountService {
     }
 
     @Transactional
-    public AccountDto updateAccount(AccountDto accountDto, int userId) {
+    public AccountDto updateAccount (AccountDto accountDto, int userId) {
         AccountEntity accountEntity = getAccountByIdAndValidateOwnership(accountDto.getAccountId(), userId);
 
         String newAccountNumber = null;
         String accountNumber = accountDto.getAccountNumber();
         Integer bankId = accountDto.getBankId();
         if (accountNumber != null && !accountNumber.isEmpty()) {
-            int targetBankId = ( bankId != null) ? bankId : accountEntity.getBankId();
+            int targetBankId = ( bankId != null ) ? bankId : accountEntity.getBankId();
             newAccountNumber = getRegexAccountNumber(targetBankId, accountNumber);
         }
 
-        accountEntity.updateDetails(
-            accountDto.getNickname(),
-            newAccountNumber,
-            accountDto.getBalance(),
-            accountDto.getColor()
-        );
+        accountEntity.updateDetails(accountDto.getNickname(), newAccountNumber, accountDto.getBalance(),
+                                    accountDto.getColor());
 
         return accountEntity.toDto();
     }
@@ -135,14 +132,13 @@ public class AccountService {
     }
 
     private UserEntity getUserEntityById (int userId) {
-        return userRepository.findById(userId)
-                             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+        return userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 회원입니다."));
     }
 
     private AccountEntity getAccountByIdAndValidateOwnership (int accountId, int userId) {
         AccountEntity accountEntity = accountRepository.findById(accountId)
                                                        .orElseThrow(
-                                                           () -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
+                                                           () -> new ResourceNotFoundException("존재하지 않는 계좌입니다."));
 
         if (userId != accountEntity.getUserId()) {
             throw new AccessDeniedException("본인의 계좌가 아닙니다.");
@@ -157,7 +153,7 @@ public class AccountService {
 
     private String getBankName (int bankId) {
         BankEntity bankEntity = bankRepository.findById(bankId)
-                                              .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 은행입니다."));
+                                              .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 은행입니다."));
 
         return bankEntity.getName();
     }

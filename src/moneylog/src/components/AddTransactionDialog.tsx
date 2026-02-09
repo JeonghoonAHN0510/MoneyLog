@@ -202,54 +202,82 @@ const GeneralTransactionForm = ({categories, accounts, payments, onTransactionSu
 };
 
 // =========================================================
-// 2. 고정 지출 폼 (FixedTransactionForm)
-// todo BACK API 만들어야함.
+// 2. 고정 거래 폼 (FixedTransactionForm)
 // =========================================================
 interface FixedFormProps {
     categories: Category[];
+    accounts: Account[];
     onFixedSubmit: (data: Partial<Fixed>) => void;
     onCancel: () => void;
 }
 
-const FixedTransactionForm = ({categories, onFixedSubmit, onCancel}: FixedFormProps) => {
-    const type = 'EXPENSE';
-    const [category, setCategory] = useState('');
+const FixedTransactionForm = ({categories, accounts, onFixedSubmit, onCancel}: FixedFormProps) => {
+    const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
+
+    const [categoryId, setCategoryId] = useState('');
+    const [accountId, setAccountId] = useState('');
     const [amount, setAmount] = useState('');
     const [fixedName, setFixedName] = useState('');
     const [fixedDay, setFixedDay] = useState('1');
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
     const [endDate, setEndDate] = useState('');
 
-    const expenseCategories = categories.filter(cat => cat.type === 'EXPENSE');
+    const filteredCategories = categories.filter(cat => cat.type === type);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!fixedName || !startDate || !amount || !category) return;
+        if (!fixedName || !startDate || !amount || !categoryId) return;
 
         onFixedSubmit({
-            type,
-            category,
+            categoryId,
+            accountId,
+            title: fixedName,
             amount: parseFloat(amount),
-            date: startDate,
-            description: fixedName,
-            isFixed: true,
-            fixedDay: parseInt(fixedDay),
+            fixedDay,
             startDate,
-            endDate: endDate || undefined,
+            endDate: endDate || undefined
         });
     };
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
+                <Label>유형</Label>
+                <div className="flex gap-2">
+                    <Button
+                        type="button"
+                        variant={type === 'EXPENSE' ? 'default' : 'outline'}
+                        className="flex-1"
+                        onClick={() => {
+                            setType('EXPENSE');
+                            setCategoryId('');
+                        }}
+                    >
+                        지출
+                    </Button>
+                    <Button
+                        type="button"
+                        variant={type === 'INCOME' ? 'default' : 'outline'}
+                        className="flex-1"
+                        onClick={() => {
+                            setType('INCOME');
+                            setCategoryId('');
+                        }}
+                    >
+                        수입
+                    </Button>
+                </div>
+            </div>
+
+            <div className="space-y-2">
                 <Label htmlFor="fixed-category">카테고리</Label>
-                <Select value={category} onValueChange={setCategory}>
+                <Select value={categoryId} onValueChange={setCategoryId}>
                     <SelectTrigger id="fixed-category">
                         <SelectValue placeholder="카테고리 선택"/>
                     </SelectTrigger>
                     <SelectContent>
-                        {expenseCategories.map((cat) => (
-                            <SelectItem key={cat.categoryId} value={cat.categoryId}>
+                        {filteredCategories.map((cat) => (
+                            <SelectItem key={cat.categoryId} value={String(cat.categoryId)}>
                                 {cat.name}
                             </SelectItem>
                         ))}
@@ -258,10 +286,26 @@ const FixedTransactionForm = ({categories, onFixedSubmit, onCancel}: FixedFormPr
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="fixed-name">고정지출명</Label>
+                <Label htmlFor="account">계좌</Label>
+                <Select value={accountId} onValueChange={setAccountId}>
+                    <SelectTrigger id="account">
+                        <SelectValue placeholder="계좌 선택"/>
+                    </SelectTrigger>
+                    <SelectContent>
+                        {accounts.map((acc) => (
+                            <SelectItem key={acc.accountId} value={String(acc.accountId)}>
+                                {acc.nickname} ({acc.bankName})
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="fixed-name">내용 (예: 월세, 월급)</Label>
                 <Input
                     id="fixed-name"
-                    placeholder="예: 월세, 통신비 등"
+                    placeholder="내용을 입력하세요"
                     value={fixedName}
                     onChange={(e) => setFixedName(e.target.value)}
                     required
@@ -281,7 +325,7 @@ const FixedTransactionForm = ({categories, onFixedSubmit, onCancel}: FixedFormPr
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="fixed-day">고정지출일 (매월)</Label>
+                <Label htmlFor="fixed-day">고정일 (매월)</Label>
                 <Select value={fixedDay} onValueChange={setFixedDay}>
                     <SelectTrigger id="fixed-day">
                         <SelectValue/>
@@ -363,7 +407,7 @@ export function AddTransactionDialog({
                 <Tabs value={transactionType} onValueChange={(v) => setTransactionType(v as 'general' | 'fixed')}>
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="general">일반 거래</TabsTrigger>
-                        <TabsTrigger value="fixed">고정 지출</TabsTrigger>
+                        <TabsTrigger value="fixed">고정 내역</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="general" className="mt-4">
@@ -379,6 +423,7 @@ export function AddTransactionDialog({
                     <TabsContent value="fixed" className="mt-4">
                         <FixedTransactionForm
                             categories={categories}
+                            accounts={accounts}
                             onFixedSubmit={handleFixedSubmit}
                             onCancel={() => onOpenChange(false)}
                         />
