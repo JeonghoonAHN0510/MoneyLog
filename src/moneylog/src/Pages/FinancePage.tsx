@@ -14,6 +14,7 @@ import { CalendarView } from '../components/CalendarView';
 import { DashboardView } from '../components/DashboardView';
 import { TransactionList } from '../components/TransactionList';
 import { AddTransactionDialog } from '../components/AddTransactionDialog';
+import { EditTransactionDialog } from '../components/EditTransactionDialog';
 import { TransferDialog } from '../components/TransferDialog';
 import { TakeHomeCalculator } from '../components/TakeHomeCalculator';
 import { BudgetManager } from '../components/BudgetManager';
@@ -47,6 +48,8 @@ export default function FinancePage() {
     const [loading, setLoading] = useState(true);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
+    const [isEditTransactionDialogOpen, setIsEditTransactionDialogOpen] = useState(false);
+    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
 
     const [searchParams, setSearchParams] = useSearchParams();
@@ -97,9 +100,9 @@ export default function FinancePage() {
     const fetchUserAssets = useCallback(async () => {
         try {
             const [accRes, transactionRes, budgetRes] = await Promise.allSettled([
-                api.get('/account/list'), 
+                api.get('/account/list'),
                 api.get('/transaction'),
-                api.get('/budget')         
+                api.get('/budget')
             ]);
 
             if (accRes.status === 'fulfilled') setAccounts(accRes.value.data);
@@ -177,6 +180,11 @@ export default function FinancePage() {
         } catch (e) {
             toast.error("거래 내역 삭제에 실패하였습니다.");
         }
+    };
+
+    const handleEditTransaction = (transaction: Transaction) => {
+        setEditingTransaction(transaction);
+        setIsEditTransactionDialogOpen(true);
     };
 
     // --- [Budget CRUD] ---
@@ -334,21 +342,21 @@ export default function FinancePage() {
                 <div className="flex items-center justify-between mb-8">
                     <div>
                         <h1 className="flex items-center gap-2 text-2xl font-bold">
-                            <Wallet className="size-8"/>
+                            <Wallet className="size-8" />
                             내 가계부
                         </h1>
                         <p className="text-muted-foreground">사회 초년생을 위한 스마트 재무 관리</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <Button onClick={() => setIsAddDialogOpen(true)}>
-                            <Plus className="size-4 mr-2"/>
+                            <Plus className="size-4 mr-2" />
                             거래 추가
                         </Button>
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="gap-2">
-                                    <User className="size-4"/>
+                                    <User className="size-4" />
                                     <span className="hidden sm:inline">{userInfo?.name}</span>
                                 </Button>
                             </DropdownMenuTrigger>
@@ -361,9 +369,9 @@ export default function FinancePage() {
                                         </p>
                                     </div>
                                 </DropdownMenuLabel>
-                                <DropdownMenuSeparator/>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
-                                    <LogOut className="size-4 mr-2"/>
+                                    <LogOut className="size-4 mr-2" />
                                     로그아웃
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -371,38 +379,38 @@ export default function FinancePage() {
                     </div>
                 </div>
 
-                <Tabs 
-                    value={currentTab} 
-                    onValueChange={handleTabChange} 
+                <Tabs
+                    value={currentTab}
+                    onValueChange={handleTabChange}
                     className="space-y-6"
                 >
                     <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
                         <TabsTrigger value="dashboard" className="flex items-center gap-2">
-                            <ChartBar className="size-4"/>
+                            <ChartBar className="size-4" />
                             <span className="hidden sm:inline">대시보드</span>
                         </TabsTrigger>
                         <TabsTrigger value="calendar" className="flex items-center gap-2">
-                            <Calendar className="size-4"/>
+                            <Calendar className="size-4" />
                             <span className="hidden sm:inline">캘린더</span>
                         </TabsTrigger>
                         <TabsTrigger value="transactions" className="flex items-center gap-2">
-                            <Wallet className="size-4"/>
+                            <Wallet className="size-4" />
                             <span className="hidden sm:inline">거래내역</span>
                         </TabsTrigger>
                         <TabsTrigger value="accounts" className="flex items-center gap-2">
-                            <Wallet className="size-4"/>
+                            <Wallet className="size-4" />
                             <span className="hidden sm:inline">계좌</span>
                         </TabsTrigger>
                         <TabsTrigger value="categories" className="flex items-center gap-2">
-                            <List className="size-4"/>
+                            <List className="size-4" />
                             <span className="hidden sm:inline">카테고리</span>
                         </TabsTrigger>
                         <TabsTrigger value="budget" className="flex items-center gap-2">
-                            <Target className="size-4"/>
+                            <Target className="size-4" />
                             <span className="hidden sm:inline">예산</span>
                         </TabsTrigger>
                         <TabsTrigger value="calculator" className="flex items-center gap-2">
-                            <Calculator className="size-4"/>
+                            <Calculator className="size-4" />
                             <span className="hidden sm:inline">계산기</span>
                         </TabsTrigger>
                     </TabsList>
@@ -416,10 +424,11 @@ export default function FinancePage() {
                     </TabsContent>
 
                     <TabsContent value="calendar" className="space-y-6">
-                        <CalendarView transactions={transactions} onDateClick={handleDateClick}/>
+                        <CalendarView transactions={transactions} onDateClick={handleDateClick} />
                         {selectedDate && (
                             <TransactionList
                                 selectedDate={selectedDate}
+                                onEdit={handleEditTransaction}
                                 onDelete={handleDeleteTransaction}
                             />
                         )}
@@ -427,6 +436,7 @@ export default function FinancePage() {
 
                     <TabsContent value="transactions" className="space-y-6">
                         <TransactionList
+                            onEdit={handleEditTransaction}
                             onDelete={handleDeleteTransaction}
                         />
                     </TabsContent>
@@ -460,7 +470,7 @@ export default function FinancePage() {
                     </TabsContent>
 
                     <TabsContent value="calculator" className="space-y-6">
-                        <TakeHomeCalculator/>
+                        <TakeHomeCalculator />
                     </TabsContent>
                 </Tabs>
             </div>
@@ -476,6 +486,13 @@ export default function FinancePage() {
                 open={isTransferDialogOpen}
                 onOpenChange={setIsTransferDialogOpen}
                 onAdd={handleAddTransfer}
+            />
+
+            <EditTransactionDialog
+                open={isEditTransactionDialogOpen}
+                onOpenChange={setIsEditTransactionDialogOpen}
+                transaction={editingTransaction}
+                onUpdate={handleUpdateTransaction}
             />
         </div>
     );
