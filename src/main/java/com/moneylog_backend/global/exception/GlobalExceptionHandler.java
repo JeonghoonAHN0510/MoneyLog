@@ -16,11 +16,15 @@ public class GlobalExceptionHandler {
     // 1. @Valid 유효성 검사 실패 (@NotNull, @Range, @NotBlank 등 모두 여기서 처리)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        String errorMessage = ex.getBindingResult()
-                                .getFieldError()
-                                .getDefaultMessage();
+        StringBuilder errorMessage = new StringBuilder();
+        ex.getBindingResult().getFieldErrors().forEach(error -> {
+            if (errorMessage.length() > 0) {
+                errorMessage.append(", ");
+            }
+            errorMessage.append(error.getField()).append(": ").append(error.getDefaultMessage());
+        });
 
-        ErrorResponse response = new ErrorResponse("INVALID_INPUT", errorMessage);
+        ErrorResponse response = new ErrorResponse("INVALID_INPUT", errorMessage.toString());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 

@@ -3,7 +3,8 @@ package com.moneylog_backend.moneylog.budget.service;
 import java.util.List;
 
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
-import com.moneylog_backend.moneylog.budget.dto.BudgetDto;
+import com.moneylog_backend.moneylog.budget.dto.req.BudgetReqDto;
+import com.moneylog_backend.moneylog.budget.dto.res.BudgetResDto;
 import com.moneylog_backend.moneylog.budget.entity.BudgetEntity;
 import com.moneylog_backend.moneylog.budget.mapper.BudgetMapper;
 import com.moneylog_backend.moneylog.budget.repository.BudgetRepository;
@@ -24,8 +25,8 @@ public class BudgetService {
     private final BudgetMapper budgetMapper;
 
     @Transactional
-    public int saveBudget (BudgetDto budgetDto, Integer userId) {
-        int categoryId = budgetDto.getCategoryId();
+    public int saveBudget(BudgetReqDto budgetReqDto, Integer userId) {
+        int categoryId = budgetReqDto.getCategoryId();
         if (!hasBudget(categoryId)) {
             return -1;
         }
@@ -34,18 +35,18 @@ public class BudgetService {
             return -1;
         }
 
-        BudgetEntity budgetEntity = budgetDto.toEntity(userId);
+        BudgetEntity budgetEntity = budgetReqDto.toEntity(userId);
         budgetRepository.save(budgetEntity);
         return budgetEntity.getBudgetId();
     }
 
-    public List<BudgetDto> getBudgets (int userId) {
+    public List<BudgetResDto> getBudgets(int userId) {
         return budgetMapper.getBudgets(userId);
     }
 
     @Transactional
-    public BudgetDto updateBudget (BudgetDto budgetDto, Integer userId) {
-        int categoryId = budgetDto.getCategoryId();
+    public BudgetResDto updateBudget(BudgetReqDto budgetReqDto, Integer userId) {
+        int categoryId = budgetReqDto.getCategoryId();
         if (!hasBudget(categoryId)) {
             return null;
         }
@@ -54,16 +55,16 @@ public class BudgetService {
             return null;
         }
 
-        BudgetEntity budgetEntity = getBudgetByIdAndValidateOwnership(budgetDto.getBudgetId(), userId);
+        BudgetEntity budgetEntity = getBudgetByIdAndValidateOwnership(budgetReqDto.getBudgetId(), userId);
 
-        budgetEntity.updateDetails(categoryId, budgetDto.getAmount());
+        budgetEntity.updateDetails(categoryId, budgetReqDto.getAmount());
 
         return budgetEntity.toDto();
     }
 
     @Transactional
-    public boolean deleteBudget (BudgetDto budgetDto) {
-        BudgetEntity budgetEntity = getBudgetByIdAndValidateOwnership(budgetDto.getBudgetId(), budgetDto.getUserId());
+    public boolean deleteBudget(int budgetId, int userId) {
+        BudgetEntity budgetEntity = getBudgetByIdAndValidateOwnership(budgetId, userId);
 
         budgetRepository.delete(budgetEntity);
         return true;

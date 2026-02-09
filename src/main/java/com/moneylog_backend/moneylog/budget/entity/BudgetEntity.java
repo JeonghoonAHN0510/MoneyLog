@@ -1,7 +1,7 @@
 package com.moneylog_backend.moneylog.budget.entity;
 
 import com.moneylog_backend.global.common.BaseTime;
-import com.moneylog_backend.moneylog.budget.dto.BudgetDto;
+import com.moneylog_backend.moneylog.budget.dto.res.BudgetResDto;
 
 import org.hibernate.annotations.DynamicInsert;
 
@@ -35,8 +35,8 @@ public class BudgetEntity extends BaseTime {
     @Column(name = "budget_date", columnDefinition = "DATE NOT NULL")
     private LocalDate budgetDate;
 
-    public BudgetDto toDto () {
-        return BudgetDto.builder()
+    public BudgetResDto toDto() {
+        return BudgetResDto.builder()
                         .budgetId(this.budgetId)
                         .amount(this.amount)
                         .budgetDate(this.budgetDate)

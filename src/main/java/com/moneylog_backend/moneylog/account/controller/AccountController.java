@@ -1,7 +1,7 @@
 package com.moneylog_backend.moneylog.account.controller;
 
 import com.moneylog_backend.global.auth.annotation.LoginUser;
-import com.moneylog_backend.moneylog.account.dto.AccountDto;
+import com.moneylog_backend.moneylog.account.dto.req.AccountReqDto;
 import com.moneylog_backend.moneylog.account.service.AccountService;
 import com.moneylog_backend.moneylog.transaction.dto.TransferDto;
 
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -25,12 +26,8 @@ public class AccountController {
     private final AccountService accountService;
 
     @PostMapping
-    public ResponseEntity<?> saveAccount (@RequestBody AccountDto accountDto, @LoginUser Integer userId) {
-        if (accountDto == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-
-        int resultValue = accountService.saveAccount(accountDto, userId);
+    public ResponseEntity<?> saveAccount(@RequestBody @Valid AccountReqDto accountReqDto, @LoginUser Integer userId) {
+        int resultValue = accountService.saveAccount(accountReqDto, userId);
         if (resultValue == -1) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } else {
@@ -39,7 +36,7 @@ public class AccountController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAccount (@RequestParam int accountId, @LoginUser Integer userId) {
+    public ResponseEntity<?> getAccount(@RequestParam int accountId, @LoginUser Integer userId) {
         // todo 추후 계좌 늘어나면 생각해보기
         if (accountId < 30000 || accountId > 40000) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
@@ -49,26 +46,22 @@ public class AccountController {
     }
 
     @GetMapping("/list")
-    public ResponseEntity<?> getAccounts (@LoginUser Integer userId) {
+    public ResponseEntity<?> getAccounts(@LoginUser Integer userId) {
         return ResponseEntity.ok(accountService.getAccounts(userId));
     }
 
     @PutMapping
-    public ResponseEntity<?> updateAccount (@RequestBody AccountDto accountDto, @LoginUser Integer userId) {
-        if (accountDto == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-
-        return ResponseEntity.ok(accountService.updateAccount(accountDto, userId));
+    public ResponseEntity<?> updateAccount(@RequestBody @Valid AccountReqDto accountReqDto, @LoginUser Integer userId) {
+        return ResponseEntity.ok(accountService.updateAccount(accountReqDto, userId));
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deleteAccount (@RequestParam int accountId, @LoginUser Integer userId) {
+    public ResponseEntity<?> deleteAccount(@RequestParam int accountId, @LoginUser Integer userId) {
         return ResponseEntity.ok(accountService.deleteAccount(accountId, userId));
     }
 
     @PutMapping("/transfer")
-    public ResponseEntity<?> transferAccountBalance (@RequestBody TransferDto transferDto, @LoginUser Integer userId) {
+    public ResponseEntity<?> transferAccountBalance(@RequestBody @Valid TransferDto transferDto, @LoginUser Integer userId) {
         return ResponseEntity.ok(accountService.transferAccountBalance(transferDto, userId));
     }
 }

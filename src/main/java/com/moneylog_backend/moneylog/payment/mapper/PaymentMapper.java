@@ -4,9 +4,9 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 
-import com.moneylog_backend.moneylog.payment.dto.PaymentDto;
+import com.moneylog_backend.moneylog.payment.dto.res.PaymentResDto;
 
 @Mapper
 public interface PaymentMapper {
-    List<PaymentDto> getPaymentsByUserId(int userId);
+    List<PaymentResDto> getPaymentsByUserId(int userId);
 }

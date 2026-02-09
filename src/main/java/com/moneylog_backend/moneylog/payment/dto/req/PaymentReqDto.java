@@ -1,9 +1,7 @@
-package com.moneylog_backend.moneylog.payment.dto;
+package com.moneylog_backend.moneylog.payment.dto.req;
 
 import com.moneylog_backend.global.type.PaymentEnum;
 import com.moneylog_backend.moneylog.payment.entity.PaymentEntity;
-
-import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -18,9 +16,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PaymentDto {
+public class PaymentReqDto {
     private Integer paymentId;
-    private Integer userId;
     private Integer accountId;
 
     @NotBlank(message = "결제수단명은 필수입니다")
@@ -30,10 +27,7 @@ public class PaymentDto {
     @NotNull(message = "결제수단 유형은 필수입니다")
     private PaymentEnum type;
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-
-    public PaymentEntity toEntity (Integer userId) {
+    public PaymentEntity toEntity(Integer userId) {
         return PaymentEntity.builder()
                             .userId(userId)
                             .accountId(this.accountId)

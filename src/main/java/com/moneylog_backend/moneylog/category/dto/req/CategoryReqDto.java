@@ -1,10 +1,8 @@
-package com.moneylog_backend.moneylog.category.dto;
+package com.moneylog_backend.moneylog.category.dto.req;
 
 import com.moneylog_backend.global.type.CategoryEnum;
 import com.moneylog_backend.global.type.ColorEnum;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
-
-import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,9 +17,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CategoryDto {
+public class CategoryReqDto {
     private Integer categoryId;
-    private Integer userId;
 
     @NotBlank(message = "카테고리명은 필수입니다")
     @Size(max = 20, message = "카테고리명은 20자 이내여야 합니다")
@@ -31,10 +28,8 @@ public class CategoryDto {
     private CategoryEnum type;
 
     private ColorEnum color;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
-    public CategoryEntity toEntity (Integer userId) {
+    public CategoryEntity toEntity(Integer userId) {
         return CategoryEntity.builder()
                              .userId(userId)
                              .name(this.name)

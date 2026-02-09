@@ -1,7 +1,7 @@
 package com.moneylog_backend.moneylog.category.controller;
 
 import com.moneylog_backend.global.auth.annotation.LoginUser;
-import com.moneylog_backend.moneylog.category.dto.CategoryDto;
+import com.moneylog_backend.moneylog.category.dto.req.CategoryReqDto;
 import com.moneylog_backend.moneylog.category.service.CategoryService;
 
 import org.springframework.http.HttpStatus;
@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -24,8 +25,8 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @PostMapping
-    public ResponseEntity<?> saveCategory (@RequestBody CategoryDto categoryDto, @LoginUser Integer userId) {
-        int resultValue = categoryService.saveCategory(categoryDto, userId);
+    public ResponseEntity<?> saveCategory(@RequestBody @Valid CategoryReqDto categoryReqDto, @LoginUser Integer userId) {
+        int resultValue = categoryService.saveCategory(categoryReqDto, userId);
         if (resultValue == -1) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } else {
@@ -34,17 +35,17 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getCategoryByUserId (@LoginUser Integer userId) {
+    public ResponseEntity<?> getCategoryByUserId(@LoginUser Integer userId) {
         return ResponseEntity.ok(categoryService.getCategoryByUserId(userId));
     }
 
     @PutMapping
-    public ResponseEntity<?> updateCategory (@RequestBody CategoryDto categoryDto, @LoginUser Integer userId) {
-        return ResponseEntity.ok(categoryService.updateCategory(categoryDto, userId));
+    public ResponseEntity<?> updateCategory(@RequestBody @Valid CategoryReqDto categoryReqDto, @LoginUser Integer userId) {
+        return ResponseEntity.ok(categoryService.updateCategory(categoryReqDto, userId));
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deleteCategory (@RequestParam int categoryId, @LoginUser Integer userId) {
+    public ResponseEntity<?> deleteCategory(@RequestParam int categoryId, @LoginUser Integer userId) {
         return ResponseEntity.ok(categoryService.deleteCategory(categoryId, userId));
     }
 }

@@ -2,7 +2,7 @@ package com.moneylog_backend.moneylog.payment.entity;
 
 import com.moneylog_backend.global.common.BaseTime;
 import com.moneylog_backend.global.type.PaymentEnum;
-import com.moneylog_backend.moneylog.payment.dto.PaymentDto;
+import com.moneylog_backend.moneylog.payment.dto.res.PaymentResDto;
 
 import org.hibernate.annotations.DynamicInsert;
 
@@ -37,8 +37,8 @@ public class PaymentEntity extends BaseTime {
 
     // todo 신용카드, 체크카드, 계좌이체면, Account_id 컬럼 추가해서 계좌 연결하기
 
-    public PaymentDto toDto () {
-        return PaymentDto.builder()
+    public PaymentResDto toDto() {
+        return PaymentResDto.builder()
                          .paymentId(this.paymentId)
                          .userId(this.userId)
                          .accountId(this.accountId)

@@ -3,7 +3,7 @@ package com.moneylog_backend.moneylog.account.entity;
 import com.moneylog_backend.global.common.BaseTime;
 import com.moneylog_backend.global.type.ColorEnum;
 import com.moneylog_backend.global.type.AccountTypeEnum;
-import com.moneylog_backend.moneylog.account.dto.AccountDto;
+import com.moneylog_backend.moneylog.account.dto.res.AccountResDto;
 
 import org.hibernate.annotations.DynamicInsert;
 
@@ -78,8 +78,8 @@ public class AccountEntity extends BaseTime {
         }
     }
 
-    public AccountDto toDto () {
-        return AccountDto.builder()
+    public AccountResDto toDto() {
+        return AccountResDto.builder()
                          .accountId(this.accountId)
                          .userId(this.userId)
                          .bankId(this.bankId)

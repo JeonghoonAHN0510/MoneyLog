@@ -1,10 +1,8 @@
-package com.moneylog_backend.moneylog.transaction.dto;
+package com.moneylog_backend.moneylog.transaction.dto.req;
 
-import com.moneylog_backend.global.type.CategoryEnum;
 import com.moneylog_backend.moneylog.transaction.entity.TransactionEntity;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -19,9 +17,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class TransactionDto {
+public class TransactionReqDto {
     private Integer transactionId;
-    private Integer userId;
 
     @NotNull(message = "카테고리 ID는 필수입니다")
     private Integer categoryId;
@@ -43,14 +40,7 @@ public class TransactionDto {
     @NotNull(message = "거래일은 필수입니다")
     private LocalDate tradingAt;
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-
-    private CategoryEnum categoryType;
-    private String categoryName;
-    private String paymentName;
-
-    public TransactionEntity toEntity (Integer userId) {
+    public TransactionEntity toEntity(Integer userId) {
         return TransactionEntity.builder()
                                 .userId(userId)
                                 .categoryId(this.categoryId)

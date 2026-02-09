@@ -4,6 +4,7 @@ import com.moneylog_backend.global.common.BaseTime;
 import com.moneylog_backend.global.type.CategoryEnum;
 import com.moneylog_backend.global.type.ColorEnum;
 import com.moneylog_backend.moneylog.category.dto.CategoryDto;
+import com.moneylog_backend.moneylog.category.dto.res.CategoryResDto;
 
 import org.hibernate.annotations.DynamicInsert;
 
@@ -61,5 +62,17 @@ public class CategoryEntity extends BaseTime {
         if (color != null) {
             this.color = color;
         }
+    }
+
+    public CategoryResDto toResDto() {
+        return CategoryResDto.builder()
+                          .categoryId(this.categoryId)
+                          .userId(this.userId)
+                          .name(this.name)
+                          .type(this.type)
+                          .color(this.color)
+                          .createdAt(this.getCreatedAt())
+                          .updatedAt(this.getUpdatedAt())
+                          .build();
     }
 }

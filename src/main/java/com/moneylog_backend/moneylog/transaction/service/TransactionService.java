@@ -11,7 +11,8 @@ import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
 import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
 import com.moneylog_backend.moneylog.payment.entity.PaymentEntity;
-import com.moneylog_backend.moneylog.transaction.dto.TransactionDto;
+import com.moneylog_backend.moneylog.transaction.dto.req.TransactionReqDto;
+import com.moneylog_backend.moneylog.transaction.dto.res.TransactionResDto;
 import com.moneylog_backend.moneylog.transaction.dto.query.SelectTransactionByUserIdQuery;
 import com.moneylog_backend.moneylog.transaction.entity.TransactionEntity;
 import com.moneylog_backend.moneylog.transaction.mapper.TransactionMapper;
@@ -36,30 +37,27 @@ public class TransactionService {
     private final CategoryMapper categoryMapper;
 
     @Transactional
-    public int saveTransaction (TransactionDto transactionDto, Integer userId) {
-        AccountEntity accountEntity = getAccountByIdAndValidateOwnership(transactionDto.getAccountId(), userId);
+    public int saveTransaction(TransactionReqDto transactionReqDto, Integer userId) {
+        AccountEntity accountEntity = getAccountByIdAndValidateOwnership(transactionReqDto.getAccountId(), userId);
 
-        CategoryEntity categoryEntity = getCategoryByIdAndValidateOwnership(transactionDto.getCategoryId(), userId);
-        CategoryEnum type = transactionDto.getCategoryType();
-        if (!categoryEntity.getType().equals(type)) {
-            throw new IllegalArgumentException("유효하지 않은 카테고리입니다.");
-        }
+        CategoryEntity categoryEntity = getCategoryByIdAndValidateOwnership(transactionReqDto.getCategoryId(), userId);
+        CategoryEnum type = categoryEntity.getType();
 
-        Integer amount = transactionDto.getAmount();
+        Integer amount = transactionReqDto.getAmount();
         if ("EXPENSE".equals(type.name())) {
-            validatePaymentOwnership(transactionDto.getPaymentId(), userId);
+            validatePaymentOwnership(transactionReqDto.getPaymentId(), userId);
             accountEntity.withdraw(amount);
         } else if ("INCOME".equals(type.name())) {
             accountEntity.deposit(amount);
         }
 
-        TransactionEntity transactionEntity = transactionDto.toEntity(userId);
+        TransactionEntity transactionEntity = transactionReqDto.toEntity(userId);
         transactionRepository.save(transactionEntity);
 
         return transactionEntity.getTransactionId();
     }
 
-    public List<TransactionDto> getTransactionsByUserId (int userId) {
+    public List<TransactionResDto> getTransactionsByUserId(int userId) {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.withDayOfMonth(1);
 
@@ -72,8 +70,8 @@ public class TransactionService {
     }
 
     @Transactional
-    public TransactionDto updateTransaction (TransactionDto transactionDto, Integer userId) {
-        TransactionEntity transactionEntity = getTransactionByDtoAndValidateOwnership(transactionDto);
+    public TransactionResDto updateTransaction(TransactionReqDto transactionReqDto, Integer userId) {
+        TransactionEntity transactionEntity = getTransactionByIdAndValidateOwnership(transactionReqDto.getTransactionId(), userId);
 
         AccountEntity oldAccount = getAccountByIdAndValidateOwnership(transactionEntity.getAccountId(),
                                                                       transactionEntity.getUserId());
@@ -81,8 +79,8 @@ public class TransactionService {
 
         updateAccountBalance(oldAccount, oldType, transactionEntity.getAmount(), true);
 
-        Integer newAccountId = transactionDto.getAccountId();
-        Integer newCategoryId = transactionDto.getCategoryId();
+        Integer newAccountId = transactionReqDto.getAccountId();
+        Integer newCategoryId = transactionReqDto.getCategoryId();
         AccountEntity newAccount = getAccountByIdAndValidateOwnership(newAccountId, userId);
         String newType = categoryMapper.getCategoryTypeByCategoryId(newCategoryId);
 
@@ -90,16 +88,16 @@ public class TransactionService {
             throw new IllegalArgumentException("유효하지 않은 카테고리입니다.");
         }
 
-        Integer newPaymentId = transactionDto.getPaymentId();
+        Integer newPaymentId = transactionReqDto.getPaymentId();
         if (newPaymentId != null && !paymentRepository.existsById(newPaymentId)) {
             throw new IllegalArgumentException("유효하지 않은 결제 수단입니다.");
         }
 
-        Integer newAmount = transactionDto.getAmount();
+        Integer newAmount = transactionReqDto.getAmount();
         updateAccountBalance(newAccount, newType, newAmount, false);
 
-        transactionEntity.update(newCategoryId, newPaymentId, newAccountId, transactionDto.getTitle(), newAmount,
-                                 transactionDto.getMemo(), transactionDto.getTradingAt());
+        transactionEntity.update(newCategoryId, newPaymentId, newAccountId, transactionReqDto.getTitle(), newAmount,
+                                 transactionReqDto.getMemo(), transactionReqDto.getTradingAt());
 
         return transactionEntity.toDto();
     }
@@ -132,18 +130,18 @@ public class TransactionService {
     }
 
     @Transactional
-    public boolean deleteTransaction (TransactionDto transactionDto) {
-        TransactionEntity transactionEntity = getTransactionByDtoAndValidateOwnership(transactionDto);
+    public boolean deleteTransaction(Integer transactionId, Integer userId) {
+        TransactionEntity transactionEntity = getTransactionByIdAndValidateOwnership(transactionId, userId);
 
         transactionRepository.delete(transactionEntity);
         return true;
     }
 
-    private TransactionEntity getTransactionByDtoAndValidateOwnership (TransactionDto transactionDto) {
-        TransactionEntity transactionEntity = transactionRepository.findById(transactionDto.getTransactionId())
+    private TransactionEntity getTransactionByIdAndValidateOwnership(Integer transactionId, Integer userId) {
+        TransactionEntity transactionEntity = transactionRepository.findById(transactionId)
                                                                    .orElseThrow(() -> new ResourceNotFoundException(
                                                                        "존재하지 않는 지출 내역입니다."));
-        if (!transactionDto.getUserId().equals(transactionEntity.getUserId())) {
+        if (!userId.equals(transactionEntity.getUserId())) {
             throw new AccessDeniedException("본인의 지출 내역이 아닙니다.");
         }
 
