@@ -2,6 +2,7 @@ package com.moneylog_backend.moneylog.category.service;
 
 import java.util.List;
 
+import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.moneylog.category.dto.CategoryDto;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
@@ -44,11 +45,7 @@ public class CategoryService {
     public CategoryDto updateCategory (CategoryDto categoryDto, int userId) {
         CategoryEntity categoryEntity = getCategoryByIdAndValidateOwnership(categoryDto.getCategoryId(), userId);
 
-        categoryEntity.updateDetails(
-            categoryDto.getName(),
-            categoryDto.getType(),
-            categoryDto.getColor()
-        );
+        categoryEntity.updateDetails(categoryDto.getName(), categoryDto.getType(), categoryDto.getColor());
 
         return categoryEntity.toDto();
     }
@@ -64,7 +61,7 @@ public class CategoryService {
     private CategoryEntity getCategoryByIdAndValidateOwnership (int categoryId, int userId) {
         CategoryEntity categoryEntity = categoryRepository.findById(categoryId)
                                                           .orElseThrow(
-                                                              () -> new IllegalArgumentException("존재하지 않는 카테고리입니다."));
+                                                              () -> new ResourceNotFoundException("존재하지 않는 카테고리입니다."));
 
         if (categoryEntity.getUserId() != userId) {
             throw new AccessDeniedException("본인의 카테고리가 아닙니다.");

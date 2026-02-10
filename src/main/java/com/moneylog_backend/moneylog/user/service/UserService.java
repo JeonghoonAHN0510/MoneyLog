@@ -1,6 +1,7 @@
 package com.moneylog_backend.moneylog.user.service;
 
 import com.moneylog_backend.global.auth.jwt.JwtProvider;
+import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.global.file.FileStore;
 import com.moneylog_backend.global.type.AccountTypeEnum;
 import com.moneylog_backend.global.util.BankAccountNumberFormatter;
@@ -49,11 +50,9 @@ public class UserService {
     public int signup (UserDto userDto) throws IOException {
         checkIdOrEmailValidity(userDto);
 
-        UserEntity userEntity = userDto.toEntity(
-            formatUtils.toPhone(userDto.getPhone()),
-            fileStore.storeFile(userDto.getUploadFile()),
-            passwordEncoder.encode(userDto.getPassword())
-        );
+        UserEntity userEntity = userDto.toEntity(formatUtils.toPhone(userDto.getPhone()),
+                                                 fileStore.storeFile(userDto.getUploadFile()),
+                                                 passwordEncoder.encode(userDto.getPassword()));
         userRepository.save(userEntity);
 
         int bankId = userDto.getBankId();
@@ -110,7 +109,7 @@ public class UserService {
 
     public UserDto getUserInfo (String loginId) {
         UserEntity userEntity = userRepository.findByLoginId(loginId)
-                                              .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+                                              .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 회원입니다."));
         return userEntity.excludePassword();
     }
 
@@ -125,7 +124,7 @@ public class UserService {
 
     private String getBankName (int bankId) {
         BankEntity bankEntity = bankRepository.findById(bankId)
-                                              .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 은행입니다."));
+                                              .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 은행입니다."));
 
         return bankEntity.getName();
     }

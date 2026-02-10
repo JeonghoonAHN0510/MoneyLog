@@ -3,6 +3,7 @@ package com.moneylog_backend.moneylog.transaction.service;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.global.type.CategoryEnum;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
@@ -71,10 +72,11 @@ public class TransactionService {
     }
 
     @Transactional
-    public TransactionDto updateTransaction(TransactionDto transactionDto, Integer userId) {
+    public TransactionDto updateTransaction (TransactionDto transactionDto, Integer userId) {
         TransactionEntity transactionEntity = getTransactionByDtoAndValidateOwnership(transactionDto);
 
-        AccountEntity oldAccount = getAccountByIdAndValidateOwnership(transactionEntity.getAccountId(), transactionEntity.getUserId());
+        AccountEntity oldAccount = getAccountByIdAndValidateOwnership(transactionEntity.getAccountId(),
+                                                                      transactionEntity.getUserId());
         String oldType = categoryMapper.getCategoryTypeByCategoryId(transactionEntity.getCategoryId());
 
         updateAccountBalance(oldAccount, oldType, transactionEntity.getAmount(), true);
@@ -96,27 +98,21 @@ public class TransactionService {
         Integer newAmount = transactionDto.getAmount();
         updateAccountBalance(newAccount, newType, newAmount, false);
 
-        transactionEntity.update(
-            newCategoryId,
-            newPaymentId,
-            newAccountId,
-            transactionDto.getTitle(),
-            newAmount,
-            transactionDto.getMemo(),
-            transactionDto.getTradingAt()
-        );
+        transactionEntity.update(newCategoryId, newPaymentId, newAccountId, transactionDto.getTitle(), newAmount,
+                                 transactionDto.getMemo(), transactionDto.getTradingAt());
 
         return transactionEntity.toDto();
     }
 
     /**
      * 계좌 잔액 업데이트 헬퍼 메서드
-     * @param account 계좌 엔티티
-     * @param type 수입/지출 타입 ("INCOME" or "EXPENSE")
-     * @param amount 금액
+     *
+     * @param account  계좌 엔티티
+     * @param type     수입/지출 타입 ("INCOME" or "EXPENSE")
+     * @param amount   금액
      * @param isRevert true면 기존 내역 취소(원복), false면 신규 반영
      */
-    private void updateAccountBalance(AccountEntity account, String type, int amount, boolean isRevert) {
+    private void updateAccountBalance (AccountEntity account, String type, int amount, boolean isRevert) {
         boolean isExpense = "EXPENSE".equals(type);
         boolean isIncome = "INCOME".equals(type);
 
@@ -145,8 +141,8 @@ public class TransactionService {
 
     private TransactionEntity getTransactionByDtoAndValidateOwnership (TransactionDto transactionDto) {
         TransactionEntity transactionEntity = transactionRepository.findById(transactionDto.getTransactionId())
-                                                                   .orElseThrow(
-                                                        () -> new IllegalArgumentException("존재하지 않는 지출 내역입니다."));
+                                                                   .orElseThrow(() -> new ResourceNotFoundException(
+                                                                       "존재하지 않는 지출 내역입니다."));
         if (!transactionDto.getUserId().equals(transactionEntity.getUserId())) {
             throw new AccessDeniedException("본인의 지출 내역이 아닙니다.");
         }
@@ -157,7 +153,7 @@ public class TransactionService {
     private AccountEntity getAccountByIdAndValidateOwnership (Integer accountId, Integer userId) {
         AccountEntity accountEntity = accountRepository.findById(accountId)
                                                        .orElseThrow(
-                                                           () -> new IllegalArgumentException("존재하지 않는 계좌입니다."));
+                                                           () -> new ResourceNotFoundException("존재하지 않는 계좌입니다."));
         if (!accountEntity.getUserId().equals(userId)) {
             throw new AccessDeniedException("본인의 계좌가 아닙니다.");
         }
@@ -167,8 +163,8 @@ public class TransactionService {
 
     private CategoryEntity getCategoryByIdAndValidateOwnership (Integer categoryId, Integer userId) {
         CategoryEntity categoryEntity = categoryRepository.findById(categoryId)
-                                                       .orElseThrow(
-                                                           () -> new IllegalArgumentException("존재하지 않는 카테고리입니다."));
+                                                          .orElseThrow(
+                                                              () -> new ResourceNotFoundException("존재하지 않는 카테고리입니다."));
         if (!categoryEntity.getUserId().equals(userId)) {
             throw new AccessDeniedException("본인의 카테고리가 아닙니다.");
         }
@@ -178,8 +174,8 @@ public class TransactionService {
 
     private void validatePaymentOwnership (Integer paymentId, Integer userId) {
         PaymentEntity paymentEntity = paymentRepository.findById(paymentId)
-                                                          .orElseThrow(
-                                                              () -> new IllegalArgumentException("존재하지 않는 결제수단입니다."));
+                                                       .orElseThrow(
+                                                           () -> new ResourceNotFoundException("존재하지 않는 결제수단입니다."));
         if (!paymentEntity.getUserId().equals(userId)) {
             throw new AccessDeniedException("본인의 결제수단가 아닙니다.");
         }
