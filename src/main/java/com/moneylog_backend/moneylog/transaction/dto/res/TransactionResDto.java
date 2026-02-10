@@ -5,11 +5,16 @@ import com.moneylog_backend.global.type.CategoryEnum;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Getter
 @SuperBuilder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class TransactionResDto {
     private Integer transactionId;
     private Integer userId;

@@ -8,6 +8,7 @@ import com.moneylog_backend.moneylog.category.dto.res.CategoryResDto;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
 import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
+import com.moneylog_backend.moneylog.fixed.dto.query.CheckCategoryNameTypeUniqueQuery;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,8 @@ public class CategoryService {
 
     @Transactional
     public int saveCategory(CategoryReqDto categoryReqDto, int userId) {
-        int countSameCategory = categoryMapper.checkCategoryNameTypeUnique(categoryReqDto);
+        CheckCategoryNameTypeUniqueQuery selectQuery = categoryReqDto.toSelectQuery(categoryReqDto, userId);
+        int countSameCategory = categoryMapper.checkCategoryNameTypeUnique(selectQuery);
         if (countSameCategory > 0) {
             return -1;
         }

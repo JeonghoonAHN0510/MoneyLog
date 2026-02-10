@@ -38,18 +38,6 @@ public class CategoryEntity extends BaseTime {
     @Enumerated(EnumType.STRING)
     private ColorEnum color;
 
-    public CategoryDto toDto () {
-        return CategoryDto.builder()
-                          .categoryId(this.categoryId)
-                          .userId(this.userId)
-                          .name(this.name)
-                          .type(this.type)
-                          .color(this.color)
-                          .createdAt(this.getCreatedAt())
-                          .updatedAt(this.getUpdatedAt())
-                          .build();
-    }
-
     public void updateDetails(String name, CategoryEnum type, ColorEnum color) {
         if (name != null && !name.isEmpty()) {
             this.name = name;

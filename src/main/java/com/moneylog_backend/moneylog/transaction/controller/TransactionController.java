@@ -2,6 +2,7 @@ package com.moneylog_backend.moneylog.transaction.controller;
 
 import com.moneylog_backend.global.auth.annotation.LoginUser;
 import com.moneylog_backend.moneylog.transaction.dto.TransactionDto;
+import com.moneylog_backend.moneylog.transaction.dto.req.TransactionReqDto;
 import com.moneylog_backend.moneylog.transaction.service.TransactionService;
 
 import org.springframework.http.HttpStatus;
@@ -24,12 +25,12 @@ public class TransactionController {
     private final TransactionService transactionService;
 
     @PostMapping
-    public ResponseEntity<?> saveTransaction (@RequestBody TransactionDto transactionDto, @LoginUser Integer userId) {
-        if (transactionDto == null) {
+    public ResponseEntity<?> saveTransaction (@RequestBody TransactionReqDto transactionReqDto, @LoginUser Integer userId) {
+        if (transactionReqDto == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        int resultValue = transactionService.saveTransaction(transactionDto, userId);
+        int resultValue = transactionService.saveTransaction(transactionReqDto, userId);
         if (resultValue == -1) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } else {
@@ -49,12 +50,12 @@ public class TransactionController {
     // todo 검색 조건에 따른 가계부 조회 API 필요
 
     @PutMapping
-    public ResponseEntity<?> updateTransaction (@RequestBody TransactionDto transactionDto, @LoginUser Integer userId) {
-        if (transactionDto == null || userId == null) {
+    public ResponseEntity<?> updateTransaction (@RequestBody TransactionReqDto transactionReqDto, @LoginUser Integer userId) {
+        if (transactionReqDto == null || userId == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        return ResponseEntity.ok(transactionService.updateTransaction(transactionDto, userId));
+        return ResponseEntity.ok(transactionService.updateTransaction(transactionReqDto, userId));
     }
 
     @DeleteMapping

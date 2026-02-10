@@ -10,21 +10,19 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.moneylog_backend.global.error.ErrorResponse;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     // 1. @Valid 유효성 검사 실패 (@NotNull, @Range, @NotBlank 등 모두 여기서 처리)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        StringBuilder errorMessage = new StringBuilder();
-        ex.getBindingResult().getFieldErrors().forEach(error -> {
-            if (errorMessage.length() > 0) {
-                errorMessage.append(", ");
-            }
-            errorMessage.append(error.getField()).append(": ").append(error.getDefaultMessage());
-        });
-
-        ErrorResponse response = new ErrorResponse("INVALID_INPUT", errorMessage.toString());
+        String errorMessage = ex.getBindingResult().getFieldErrors().stream()
+                                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                                .collect(java.util.stream.Collectors.joining(", "));
+        ErrorResponse response = new ErrorResponse("INVALID_INPUT", errorMessage);
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
@@ -52,13 +50,14 @@ public class GlobalExceptionHandler {
     // 5. 리소스 없음 처리 -> 404 Not Found
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
-        ErrorResponse response = new ErrorResponse("NOT_FOUND", ex.getMessage());
+            ErrorResponse response = new ErrorResponse("NOT_FOUND", ex.getMessage());
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
     // 6. 그 외 예상치 못한 모든 에러 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAllExceptions(Exception ex) {
+        log.error("Internal server error", ex);
         ErrorResponse response = new ErrorResponse("INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다.");
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }

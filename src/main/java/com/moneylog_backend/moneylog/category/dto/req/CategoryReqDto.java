@@ -3,6 +3,7 @@ package com.moneylog_backend.moneylog.category.dto.req;
 import com.moneylog_backend.global.type.CategoryEnum;
 import com.moneylog_backend.global.type.ColorEnum;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
+import com.moneylog_backend.moneylog.fixed.dto.query.CheckCategoryNameTypeUniqueQuery;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -29,12 +30,17 @@ public class CategoryReqDto {
 
     private ColorEnum color;
 
-    public CategoryEntity toEntity(Integer userId) {
-        return CategoryEntity.builder()
-                             .userId(userId)
-                             .name(this.name)
-                             .type(this.type)
-                             .color(this.color)
-                             .build();
+    private Integer userId;
+
+    public CategoryEntity toEntity (Integer userId) {
+        return CategoryEntity.builder().userId(userId).name(this.name).type(this.type).color(this.color).build();
+    }
+
+    public CheckCategoryNameTypeUniqueQuery toSelectQuery (CategoryReqDto categoryReqDto, Integer userId) {
+        return CheckCategoryNameTypeUniqueQuery.builder()
+                                               .userId(userId)
+                                               .name(categoryReqDto.getName())
+                                               .type(categoryReqDto.getType())
+                                               .build();
     }
 }

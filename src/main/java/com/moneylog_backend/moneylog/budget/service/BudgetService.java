@@ -51,10 +51,6 @@ public class BudgetService {
             return null;
         }
 
-        if (checkingCategoryAndUserIsDuplicate(categoryId, userId) > 0) {
-            return null;
-        }
-
         BudgetEntity budgetEntity = getBudgetByIdAndValidateOwnership(budgetReqDto.getBudgetId(), userId);
 
         budgetEntity.updateDetails(categoryId, budgetReqDto.getAmount());

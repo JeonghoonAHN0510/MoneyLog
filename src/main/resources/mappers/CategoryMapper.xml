@@ -4,7 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.moneylog_backend.moneylog.category.mapper.CategoryMapper">
-    <select id="checkCategoryNameTypeUnique">
+    <select id="checkCategoryNameTypeUnique" parameterType="com.moneylog_backend.moneylog.category.dto.req.CategoryReqDto">
         SELECT COUNT(*)
         FROM CATEGORY
         WHERE user_id = #{userId}

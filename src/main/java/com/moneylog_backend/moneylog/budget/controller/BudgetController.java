@@ -2,6 +2,7 @@ package com.moneylog_backend.moneylog.budget.controller;
 
 import com.moneylog_backend.global.auth.annotation.LoginUser;
 import com.moneylog_backend.moneylog.budget.dto.req.BudgetReqDto;
+import com.moneylog_backend.moneylog.budget.dto.res.BudgetResDto;
 import com.moneylog_backend.moneylog.budget.service.BudgetService;
 
 import org.springframework.http.HttpStatus;
@@ -41,7 +42,7 @@ public class BudgetController {
 
     @PutMapping
     public ResponseEntity<?> updateBudget(@RequestBody @Valid BudgetReqDto budgetReqDto, @LoginUser Integer userId) {
-        Object result = budgetService.updateBudget(budgetReqDto, userId);
+        BudgetResDto result = budgetService.updateBudget(budgetReqDto, userId);
         if (result == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } else {
