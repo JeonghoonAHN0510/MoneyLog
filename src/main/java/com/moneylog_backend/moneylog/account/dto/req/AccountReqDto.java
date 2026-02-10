@@ -1,10 +1,8 @@
-package com.moneylog_backend.moneylog.account.dto;
+package com.moneylog_backend.moneylog.account.dto.req;
 
-import com.moneylog_backend.global.type.ColorEnum;
 import com.moneylog_backend.global.type.AccountTypeEnum;
+import com.moneylog_backend.global.type.ColorEnum;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
-
-import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -20,9 +18,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class AccountDto {
+public class AccountReqDto {
     private Integer accountId;
-    private Integer userId;
     private Integer bankId;
 
     @NotBlank(message = "계좌 별명은 필수입니다")
@@ -38,12 +35,8 @@ public class AccountDto {
     private AccountTypeEnum type;
 
     private ColorEnum color;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
-    private String bankName;
-
-    public AccountEntity toEntity (int userId, String nickname, String regexAccountNumber) {
+    public AccountEntity toEntity(int userId, String nickname, String regexAccountNumber) {
         return AccountEntity.builder()
                             .userId(userId)
                             .bankId(this.bankId)

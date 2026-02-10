@@ -1,6 +1,8 @@
-package com.moneylog_backend.moneylog.fixed.dto.res;
+package com.moneylog_backend.moneylog.category.dto.res;
 
-import java.time.LocalDate;
+import com.moneylog_backend.global.type.CategoryEnum;
+import com.moneylog_backend.global.type.ColorEnum;
+
 import java.time.LocalDateTime;
 
 import lombok.AccessLevel;
@@ -13,16 +15,12 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class FixedResDto {
-    private Integer fixedId;
-    private Integer userId;
+public class CategoryResDto {
     private Integer categoryId;
-    private Integer accountId;
-    private String title;
-    private Integer amount;
-    private Integer fixedDay;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private Integer userId;
+    private String name;
+    private CategoryEnum type;
+    private ColorEnum color;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

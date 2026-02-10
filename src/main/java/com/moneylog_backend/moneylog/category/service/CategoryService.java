@@ -3,10 +3,12 @@ package com.moneylog_backend.moneylog.category.service;
 import java.util.List;
 
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
-import com.moneylog_backend.moneylog.category.dto.CategoryDto;
+import com.moneylog_backend.moneylog.category.dto.req.CategoryReqDto;
+import com.moneylog_backend.moneylog.category.dto.res.CategoryResDto;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
 import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
+import com.moneylog_backend.moneylog.fixed.dto.query.CheckCategoryNameTypeUniqueQuery;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -22,32 +24,33 @@ public class CategoryService {
     private final CategoryMapper categoryMapper;
 
     @Transactional
-    public int saveCategory (CategoryDto categoryDto, int userId) {
-        int countSameCategory = categoryMapper.checkCategoryNameTypeUnique(categoryDto);
+    public int saveCategory(CategoryReqDto categoryReqDto, int userId) {
+        CheckCategoryNameTypeUniqueQuery selectQuery = categoryReqDto.toSelectQuery(categoryReqDto, userId);
+        int countSameCategory = categoryMapper.checkCategoryNameTypeUnique(selectQuery);
         if (countSameCategory > 0) {
             return -1;
         }
 
-        CategoryEntity categoryEntity = categoryDto.toEntity(userId);
+        CategoryEntity categoryEntity = categoryReqDto.toEntity(userId);
         categoryEntity = categoryRepository.save(categoryEntity);
 
         return categoryEntity.getCategoryId();
     }
 
-    public List<CategoryDto> getCategoryByUserId (int userId) {
+    public List<CategoryResDto> getCategoryByUserId(int userId) {
 
         List<CategoryEntity> categoryEntities = categoryRepository.findByUserId(userId);
 
-        return categoryEntities.stream().map(CategoryEntity::toDto).toList();
+        return categoryEntities.stream().map(CategoryEntity::toResDto).toList();
     }
 
     @Transactional
-    public CategoryDto updateCategory (CategoryDto categoryDto, int userId) {
-        CategoryEntity categoryEntity = getCategoryByIdAndValidateOwnership(categoryDto.getCategoryId(), userId);
+    public CategoryResDto updateCategory(CategoryReqDto categoryReqDto, int userId) {
+        CategoryEntity categoryEntity = getCategoryByIdAndValidateOwnership(categoryReqDto.getCategoryId(), userId);
 
-        categoryEntity.updateDetails(categoryDto.getName(), categoryDto.getType(), categoryDto.getColor());
+        categoryEntity.updateDetails(categoryReqDto.getName(), categoryReqDto.getType(), categoryReqDto.getColor());
 
-        return categoryEntity.toDto();
+        return categoryEntity.toResDto();
     }
 
     @Transactional

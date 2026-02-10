@@ -68,7 +68,7 @@ export interface Fixed {
   accountId: string;
   title: string;
   amount: number;
-  fixedDay: string;
+  fixedDay: number;
   startDate: string;
   endDate: string;
   createdAt: string;

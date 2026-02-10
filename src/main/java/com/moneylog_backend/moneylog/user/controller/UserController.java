@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -19,12 +20,12 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup (@ModelAttribute UserDto userDto) throws IOException {
+    public ResponseEntity<?> signup(@Valid @ModelAttribute UserDto userDto) throws IOException {
         return ResponseEntity.ok(userService.signup(userDto));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login (@RequestBody UserDto userDto) {
+    public ResponseEntity<?> login(@RequestBody UserDto userDto) {
         return ResponseEntity.ok(userService.login(userDto));
     }
 

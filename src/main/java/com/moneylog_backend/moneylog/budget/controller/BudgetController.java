@@ -1,7 +1,8 @@
 package com.moneylog_backend.moneylog.budget.controller;
 
 import com.moneylog_backend.global.auth.annotation.LoginUser;
-import com.moneylog_backend.moneylog.budget.dto.BudgetDto;
+import com.moneylog_backend.moneylog.budget.dto.req.BudgetReqDto;
+import com.moneylog_backend.moneylog.budget.dto.res.BudgetResDto;
 import com.moneylog_backend.moneylog.budget.service.BudgetService;
 
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -24,12 +26,8 @@ public class BudgetController {
     private final BudgetService budgetService;
 
     @PostMapping
-    public ResponseEntity<?> saveBudget (@RequestBody BudgetDto budgetDto, @LoginUser Integer userId) {
-        if (budgetDto == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-
-        int resultValue = budgetService.saveBudget(budgetDto, userId);
+    public ResponseEntity<?> saveBudget(@RequestBody @Valid BudgetReqDto budgetReqDto, @LoginUser Integer userId) {
+        int resultValue = budgetService.saveBudget(budgetReqDto, userId);
         if (resultValue == -1) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } else {
@@ -38,28 +36,22 @@ public class BudgetController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getBudgets (@LoginUser Integer userId) {
+    public ResponseEntity<?> getBudgets(@LoginUser Integer userId) {
         return ResponseEntity.ok(budgetService.getBudgets(userId));
     }
 
     @PutMapping
-    public ResponseEntity<?> updateBudget (@RequestBody BudgetDto budgetDto, @LoginUser Integer userId) {
-        if (budgetDto == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-
-        BudgetDto resultBudgetDto = budgetService.updateBudget(budgetDto, userId);
-        if (resultBudgetDto == null) {
+    public ResponseEntity<?> updateBudget(@RequestBody @Valid BudgetReqDto budgetReqDto, @LoginUser Integer userId) {
+        BudgetResDto result = budgetService.updateBudget(budgetReqDto, userId);
+        if (result == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } else {
-            return ResponseEntity.ok(resultBudgetDto);
+            return ResponseEntity.ok(result);
         }
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deleteBudget (@RequestParam int budgetId, @LoginUser Integer userId) {
-        BudgetDto budgetDto = BudgetDto.builder().budgetId(budgetId).userId(userId).build();
-
-        return ResponseEntity.ok(budgetService.deleteBudget(budgetDto));
+    public ResponseEntity<?> deleteBudget(@RequestParam int budgetId, @LoginUser Integer userId) {
+        return ResponseEntity.ok(budgetService.deleteBudget(budgetId, userId));
     }
 }

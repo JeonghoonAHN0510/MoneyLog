@@ -226,14 +226,14 @@ const FixedTransactionForm = ({categories, accounts, onFixedSubmit, onCancel}: F
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!fixedName || !startDate || !amount || !categoryId) return;
+        if (!fixedName || !startDate || !amount || !categoryId || !accountId) return;
 
         onFixedSubmit({
             categoryId,
             accountId,
             title: fixedName,
             amount: parseFloat(amount),
-            fixedDay,
+            fixedDay: parseInt(fixedDay, 10),
             startDate,
             endDate: endDate || undefined
         });

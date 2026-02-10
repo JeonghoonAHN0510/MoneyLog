@@ -1,4 +1,6 @@
-package com.moneylog_backend.moneylog.fixed.dto.res;
+package com.moneylog_backend.moneylog.transaction.dto.res;
+
+import com.moneylog_backend.global.type.CategoryEnum;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -13,16 +15,21 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class FixedResDto {
-    private Integer fixedId;
+public class TransactionResDto {
+    private Integer transactionId;
     private Integer userId;
     private Integer categoryId;
+    private Integer paymentId;
     private Integer accountId;
+    private Integer fixedId;
     private String title;
     private Integer amount;
-    private Integer fixedDay;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private String memo;
+    private LocalDate tradingAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    private CategoryEnum categoryType;
+    private String categoryName;
+    private String paymentName;
 }

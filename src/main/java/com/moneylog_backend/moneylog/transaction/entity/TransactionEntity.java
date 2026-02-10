@@ -1,7 +1,7 @@
 package com.moneylog_backend.moneylog.transaction.entity;
 
 import com.moneylog_backend.global.common.BaseTime;
-import com.moneylog_backend.moneylog.transaction.dto.TransactionDto;
+import com.moneylog_backend.moneylog.transaction.dto.res.TransactionResDto;
 
 import org.hibernate.annotations.DynamicInsert;
 
@@ -65,8 +65,8 @@ public class TransactionEntity extends BaseTime {
         }
     }
 
-    public TransactionDto toDto () {
-        return TransactionDto.builder()
+    public TransactionResDto toDto() {
+        return TransactionResDto.builder()
                              .transactionId(this.transactionId)
                              .userId(this.userId)
                              .categoryId(this.categoryId)

@@ -1,9 +1,8 @@
-package com.moneylog_backend.moneylog.budget.dto;
+package com.moneylog_backend.moneylog.budget.dto.req;
 
 import com.moneylog_backend.moneylog.budget.entity.BudgetEntity;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -17,9 +16,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BudgetDto {
+public class BudgetReqDto {
     private Integer budgetId;
-    private Integer userId;
 
     @NotNull(message = "카테고리 ID는 필수입니다")
     private Integer categoryId;
@@ -28,13 +26,7 @@ public class BudgetDto {
     @Min(value = 1, message = "예산은 1원 이상이어야 합니다")
     private Integer amount;
 
-    private LocalDate budgetDate;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-
-    private String categoryName;
-
-    public BudgetEntity toEntity (Integer userId) {
+    public BudgetEntity toEntity(Integer userId) {
         return BudgetEntity.builder()
                            .userId(userId)
                            .categoryId(this.categoryId)

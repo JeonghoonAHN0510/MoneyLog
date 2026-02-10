@@ -4,7 +4,8 @@ import java.util.List;
 
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.global.util.BankAccountNumberFormatter;
-import com.moneylog_backend.moneylog.account.dto.AccountDto;
+import com.moneylog_backend.moneylog.account.dto.req.AccountReqDto;
+import com.moneylog_backend.moneylog.account.dto.res.AccountResDto;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.mapper.AccountMapper;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
@@ -33,19 +34,19 @@ public class AccountService {
     private final AccountMapper accountMapper;
 
     @Transactional
-    public int saveAccount (AccountDto accountDto, int userId) {
+    public int saveAccount(AccountReqDto accountReqDto, int userId) {
 
-        String finalNickname = accountDto.getNickname();
-        String finalAccountNumber = accountDto.getAccountNumber();
+        String finalNickname = accountReqDto.getNickname();
+        String finalAccountNumber = accountReqDto.getAccountNumber();
 
-        if (accountDto.getBankId() != null) {
-            int bankId = accountDto.getBankId();
+        if (accountReqDto.getBankId() != null) {
+            int bankId = accountReqDto.getBankId();
 
             if (!isBankValid(bankId)) {
                 throw new IllegalArgumentException("유효하지 않은 은행 ID입니다.");
             }
 
-            finalAccountNumber = getRegexAccountNumber(bankId, accountDto.getAccountNumber());
+            finalAccountNumber = getRegexAccountNumber(bankId, accountReqDto.getAccountNumber());
             if (accountMapper.checkAccountNumber(finalAccountNumber) > 0) {
                 throw new IllegalArgumentException("이미 등록된 계좌번호입니다.");
             }
@@ -55,36 +56,36 @@ public class AccountService {
             }
         }
 
-        AccountEntity accountEntity = accountDto.toEntity(userId, finalNickname, finalAccountNumber);
+        AccountEntity accountEntity = accountReqDto.toEntity(userId, finalNickname, finalAccountNumber);
         accountRepository.save(accountEntity);
 
         return accountEntity.getAccountId();
     }
 
-    public AccountDto getAccount (int accountId, int userId) {
+    public AccountResDto getAccount(int accountId, int userId) {
         AccountEntity accountEntity = getAccountByIdAndValidateOwnership(accountId, userId);
 
         return accountEntity.toDto();
     }
 
-    public List<AccountDto> getAccounts (int userId) {
+    public List<AccountResDto> getAccounts(int userId) {
         return accountMapper.getAccountsByUserId(userId);
     }
 
     @Transactional
-    public AccountDto updateAccount (AccountDto accountDto, int userId) {
-        AccountEntity accountEntity = getAccountByIdAndValidateOwnership(accountDto.getAccountId(), userId);
+    public AccountResDto updateAccount(AccountReqDto accountReqDto, int userId) {
+        AccountEntity accountEntity = getAccountByIdAndValidateOwnership(accountReqDto.getAccountId(), userId);
 
         String newAccountNumber = null;
-        String accountNumber = accountDto.getAccountNumber();
-        Integer bankId = accountDto.getBankId();
+        String accountNumber = accountReqDto.getAccountNumber();
+        Integer bankId = accountReqDto.getBankId();
         if (accountNumber != null && !accountNumber.isEmpty()) {
             int targetBankId = ( bankId != null ) ? bankId : accountEntity.getBankId();
             newAccountNumber = getRegexAccountNumber(targetBankId, accountNumber);
         }
 
-        accountEntity.updateDetails(accountDto.getNickname(), newAccountNumber, accountDto.getBalance(),
-                                    accountDto.getColor());
+        accountEntity.updateDetails(accountReqDto.getNickname(), newAccountNumber, accountReqDto.getBalance(),
+                                    accountReqDto.getColor());
 
         return accountEntity.toDto();
     }

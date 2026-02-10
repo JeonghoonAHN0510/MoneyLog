@@ -110,7 +110,7 @@ export default function SignUpPage() {
       if (profileImage) {
         formData.append('uploadFile', profileImage);
       }
-      
+
       const response = await api.post('/user/signup', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -182,7 +182,7 @@ export default function SignUpPage() {
                 </Label>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="id">아이디</Label>
                   <Input
@@ -252,8 +252,8 @@ export default function SignUpPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-5 gap-4">
-                <div className="col-span-2 space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+                <div className="sm:col-span-2 space-y-2">
                   <Label htmlFor="bank">주거래 은행</Label>
                   <Select value={bankId} onValueChange={handleBankChange}>
                     <SelectTrigger id="bank" className="w-full">
@@ -269,7 +269,7 @@ export default function SignUpPage() {
                   </Select>
                 </div>
 
-                <div className="col-span-3 space-y-2">
+                <div className="sm:col-span-3 space-y-2">
                   <Label htmlFor="accountNumber">계좌번호</Label>
                   <Input
                     id="accountNumber"
