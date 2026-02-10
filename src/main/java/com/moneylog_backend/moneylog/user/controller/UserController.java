@@ -1,5 +1,6 @@
 package com.moneylog_backend.moneylog.user.controller;
 
+import com.moneylog_backend.moneylog.user.dto.LoginReqDto;
 import com.moneylog_backend.moneylog.user.dto.UserDto;
 import com.moneylog_backend.moneylog.user.service.UserService;
 
@@ -25,8 +26,8 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody UserDto userDto) {
-        return ResponseEntity.ok(userService.login(userDto));
+    public ResponseEntity<?> login(@RequestBody @Valid LoginReqDto loginReqDto) {
+        return ResponseEntity.ok(userService.login(loginReqDto));
     }
 
     @PostMapping("/logout")

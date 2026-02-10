@@ -11,6 +11,7 @@ import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.bank.entity.BankEntity;
 import com.moneylog_backend.moneylog.bank.repository.BankRepository;
+import com.moneylog_backend.moneylog.user.dto.LoginReqDto;
 import com.moneylog_backend.moneylog.user.dto.TokenResponse;
 import com.moneylog_backend.moneylog.user.dto.UserDto;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
@@ -47,7 +48,7 @@ public class UserService {
     private final FileStore fileStore;
 
     @Transactional
-    public int signup (UserDto userDto) throws IOException {
+    public int signup(UserDto userDto) throws IOException {
         checkIdOrEmailValidity(userDto);
 
         UserEntity userEntity = userDto.toEntity(formatUtils.toPhone(userDto.getPhone()),
@@ -74,10 +75,10 @@ public class UserService {
         return userEntity.getUserId();
     }
 
-    public TokenResponse login (UserDto userDto) {
+    public TokenResponse login(LoginReqDto loginReqDto) {
         // 1. 인증 객체 생성
         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
-            userDto.getId(), userDto.getPassword());
+            loginReqDto.getId(), loginReqDto.getPassword());
         // 2. 비밀번호 체크
         Authentication authentication = authenticationManagerBuilder.getObject()
                                                                     .authenticate(usernamePasswordAuthenticationToken);

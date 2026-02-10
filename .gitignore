@@ -38,3 +38,4 @@ out/
 /src/main/resources/application.yml
 /src/moneylog/.env
 /project_flow.md
+/.geminiignore

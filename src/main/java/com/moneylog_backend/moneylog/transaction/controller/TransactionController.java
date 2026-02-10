@@ -1,7 +1,6 @@
 package com.moneylog_backend.moneylog.transaction.controller;
 
 import com.moneylog_backend.global.auth.annotation.LoginUser;
-import com.moneylog_backend.moneylog.transaction.dto.TransactionDto;
 import com.moneylog_backend.moneylog.transaction.dto.req.TransactionReqDto;
 import com.moneylog_backend.moneylog.transaction.service.TransactionService;
 
@@ -16,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -25,11 +25,8 @@ public class TransactionController {
     private final TransactionService transactionService;
 
     @PostMapping
-    public ResponseEntity<?> saveTransaction (@RequestBody TransactionReqDto transactionReqDto, @LoginUser Integer userId) {
-        if (transactionReqDto == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-
+    public ResponseEntity<?> saveTransaction (@RequestBody @Valid TransactionReqDto transactionReqDto,
+                                              @LoginUser Integer userId) {
         int resultValue = transactionService.saveTransaction(transactionReqDto, userId);
         if (resultValue == -1) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
@@ -50,8 +47,9 @@ public class TransactionController {
     // todo 검색 조건에 따른 가계부 조회 API 필요
 
     @PutMapping
-    public ResponseEntity<?> updateTransaction (@RequestBody TransactionReqDto transactionReqDto, @LoginUser Integer userId) {
-        if (transactionReqDto == null || userId == null) {
+    public ResponseEntity<?> updateTransaction (@RequestBody @Valid TransactionReqDto transactionReqDto,
+                                                @LoginUser Integer userId) {
+        if (userId == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
@@ -64,8 +62,6 @@ public class TransactionController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        TransactionDto transactionDto = TransactionDto.builder().transactionId(transactionId).userId(userId).build();
-
-        return ResponseEntity.ok(transactionService.deleteTransaction(transactionDto));
+        return ResponseEntity.ok(transactionService.deleteTransaction(transactionId, userId));
     }
 }

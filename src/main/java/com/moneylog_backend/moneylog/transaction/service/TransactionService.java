@@ -11,7 +11,7 @@ import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
 import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
 import com.moneylog_backend.moneylog.payment.entity.PaymentEntity;
-import com.moneylog_backend.moneylog.transaction.dto.TransactionDto;
+
 import com.moneylog_backend.moneylog.transaction.dto.req.TransactionReqDto;
 import com.moneylog_backend.moneylog.transaction.dto.res.TransactionResDto;
 import com.moneylog_backend.moneylog.transaction.dto.query.SelectTransactionByUserIdQuery;
@@ -131,9 +131,7 @@ public class TransactionService {
     }
 
     @Transactional
-    public boolean deleteTransaction(TransactionDto transactionDto) {
-        Integer transactionId = transactionDto.getTransactionId();
-        Integer userId = transactionDto.getUserId();
+    public boolean deleteTransaction(Integer transactionId, Integer userId) {
         TransactionEntity transactionEntity = getTransactionByIdAndValidateOwnership(transactionId, userId);
 
         AccountEntity accountEntity = getAccountByIdAndValidateOwnership(transactionEntity.getAccountId(), userId);
