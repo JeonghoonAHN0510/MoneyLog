@@ -39,12 +39,11 @@ export default function HomePage() {
             <span className="text-xl md:text-2xl font-bold text-gray-900">내 가계부</span>
           </div>
           <div className="flex gap-2 md:gap-3">
-            <Button variant="outline" size="sm" className="md:size-default" onClick={() => navigate('/login')}>
+            <Button variant="outline" size="sm" className="md:size-default px-2 md:px-4" onClick={() => navigate('/login')}>
               로그인
             </Button>
-            <Button size="sm" className="md:size-default" onClick={() => navigate('/signup')}>
-              <span className="hidden sm:inline">시작하기</span>
-              <span className="sm:hidden">시작</span>
+            <Button size="sm" className="md:size-default px-3 md:px-4" onClick={() => navigate('/signup')}>
+              시작하기
             </Button>
           </div>
         </div>

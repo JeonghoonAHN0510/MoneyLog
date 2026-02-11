@@ -30,6 +30,7 @@ export default function SignUpPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchBanks = async () => {
@@ -71,22 +72,23 @@ export default function SignUpPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
     // 클라이언트 검증
     if (!name || !id || !email || !password || !confirmPassword || !phone || !bankId || !accountNumber) {
-      toast.error('모든 필드를 입력해주세요');
+      setError('모든 필드를 입력해주세요');
       setIsLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
-      toast.error('비밀번호가 일치하지 않습니다');
+      setError('비밀번호가 일치하지 않습니다');
       setIsLoading(false);
       return;
     }
 
     if (password.length < 6) {
-      toast.error('비밀번호는 최소 6자 이상이어야 합니다');
+      setError('비밀번호는 최소 6자 이상이어야 합니다');
       setIsLoading(false);
       return;
     }
@@ -127,18 +129,19 @@ export default function SignUpPage() {
       }
 
     } catch (error: any) {
-      if (error.status === 409) {
-        toast.error('중복된 아이디 또는 이메일이 존재합니다');
+      if (error.response && error.response.status === 409) {
+        setError('이미 사용 중인 아이디 또는 이메일입니다.');
       } else {
-        toast.error('회원가입 중 알 수 없는 오류가 발생했습니다');
+        setError('회원가입 중 오류가 발생했습니다. 입력을 확인해주세요.');
       }
+      toast.error('회원가입에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4 py-10">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-2 sm:p-4 py-10">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-8">
           <Wallet className="size-10 text-blue-600" />
@@ -153,7 +156,13 @@ export default function SignUpPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSignUp} className="space-y-4">
+            <form onSubmit={handleSignUp} className="space-y-4" noValidate>
+              {error && (
+                <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-alert-circle"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
+                  {error}
+                </div>
+              )}
               <div className="flex flex-col items-center gap-4 mb-6">
                 <div className="relative group cursor-pointer">
                   <div className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors">

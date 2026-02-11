@@ -47,10 +47,25 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
+    // 4-1.비밀번호 불일치 (BadCredentialsException) -> 401 Unauthorized
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentials(org.springframework.security.authentication.BadCredentialsException ex) {
+        ErrorResponse response = new ErrorResponse("LOGIN_FAILED", "아이디 또는 비밀번호가 일치하지 않습니다.");
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    // 4-2. 내부 인증 에러 (InternalAuthenticationServiceException) -> 401 Unauthorized
+    // BadCredentialsException이 이 예외로 감싸져서 나올 수 있음
+    @ExceptionHandler(org.springframework.security.authentication.InternalAuthenticationServiceException.class)
+    public ResponseEntity<ErrorResponse> handleInternalAuthException(org.springframework.security.authentication.InternalAuthenticationServiceException ex) {
+        ErrorResponse response = new ErrorResponse("LOGIN_FAILED", "아이디 또는 비밀번호가 일치하지 않습니다.");
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
     // 5. 리소스 없음 처리 -> 404 Not Found
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
-            ErrorResponse response = new ErrorResponse("NOT_FOUND", ex.getMessage());
+        ErrorResponse response = new ErrorResponse("NOT_FOUND", ex.getMessage());
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 

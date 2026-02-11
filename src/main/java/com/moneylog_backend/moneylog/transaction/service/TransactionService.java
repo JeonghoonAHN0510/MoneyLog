@@ -1,7 +1,9 @@
 package com.moneylog_backend.moneylog.transaction.service;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.global.type.CategoryEnum;
@@ -11,14 +13,16 @@ import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
 import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
 import com.moneylog_backend.moneylog.payment.entity.PaymentEntity;
-
-import com.moneylog_backend.moneylog.transaction.dto.req.TransactionReqDto;
-import com.moneylog_backend.moneylog.transaction.dto.res.TransactionResDto;
+import com.moneylog_backend.moneylog.payment.repository.PaymentRepository;
 import com.moneylog_backend.moneylog.transaction.dto.query.SelectTransactionByUserIdQuery;
+import com.moneylog_backend.moneylog.transaction.dto.req.TransactionReqDto;
+import com.moneylog_backend.moneylog.transaction.dto.res.CategoryStatsResDto;
+import com.moneylog_backend.moneylog.transaction.dto.res.DailySummaryResDto;
+import com.moneylog_backend.moneylog.transaction.dto.res.DashboardResDto;
+import com.moneylog_backend.moneylog.transaction.dto.res.TransactionResDto;
 import com.moneylog_backend.moneylog.transaction.entity.TransactionEntity;
 import com.moneylog_backend.moneylog.transaction.mapper.TransactionMapper;
 import com.moneylog_backend.moneylog.transaction.repository.TransactionRepository;
-import com.moneylog_backend.moneylog.payment.repository.PaymentRepository;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -140,6 +144,69 @@ public class TransactionService {
 
         transactionRepository.delete(transactionEntity);
         return true;
+    }
+
+    public List<DailySummaryResDto> getCalendarData(Integer userId, int year, int month) {
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+
+        SelectTransactionByUserIdQuery query = SelectTransactionByUserIdQuery.builder()
+                .userId(userId)
+                .startDate(startDate)
+                .endDate(endDate)
+                .build();
+
+        return transactionMapper.getDailySummaries(query);
+    }
+
+    public DashboardResDto getDashboardData(Integer userId, int year, int month) {
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+
+        SelectTransactionByUserIdQuery query = SelectTransactionByUserIdQuery.builder()
+                .userId(userId)
+                .startDate(startDate)
+                .endDate(endDate)
+                .build();
+
+        // 1. 일별 합계 조회하여 전체 수입/지출 계산
+        List<DailySummaryResDto> dailySummaries = transactionMapper.getDailySummaries(query);
+        long totalIncome = dailySummaries.stream().mapToLong(DailySummaryResDto::getTotalIncome).sum();
+        long totalExpense = dailySummaries.stream().mapToLong(DailySummaryResDto::getTotalExpense).sum();
+        long totalBalance = totalIncome - totalExpense;
+
+        // 2. 카테고리별 지출 통계 조회
+        List<CategoryStatsResDto> categoryStats = transactionMapper.getCategoryStats(query);
+
+        // 3. 비율 계산 (지출이 0이면 비율 계산 안 함)
+        List<CategoryStatsResDto> calculatedCategoryStats;
+        if (totalExpense > 0) {
+            calculatedCategoryStats = categoryStats.stream()
+                    .map(stat -> CategoryStatsResDto.builder()
+                            .categoryName(stat.getCategoryName())
+                            .totalAmount(stat.getTotalAmount())
+                            .ratio((double) stat.getTotalAmount() / totalExpense * 100)
+                            .build())
+                    .collect(Collectors.toList());
+        } else {
+            // totalExpense가 0이면 비율 0으로 설정
+            calculatedCategoryStats = categoryStats.stream()
+                    .map(stat -> CategoryStatsResDto.builder()
+                            .categoryName(stat.getCategoryName())
+                            .totalAmount(stat.getTotalAmount())
+                            .ratio(0.0)
+                            .build())
+                    .collect(Collectors.toList());
+        }
+
+        return DashboardResDto.builder()
+                .totalIncome(totalIncome)
+                .totalExpense(totalExpense)
+                .totalBalance(totalBalance)
+                .categoryStats(calculatedCategoryStats)
+                .build();
     }
 
     private TransactionEntity getTransactionByIdAndValidateOwnership(Integer transactionId, Integer userId) {
