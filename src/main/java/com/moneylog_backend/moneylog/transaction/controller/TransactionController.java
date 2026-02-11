@@ -50,7 +50,7 @@ public class TransactionController {
     public ResponseEntity<?> updateTransaction (@RequestBody @Valid TransactionReqDto transactionReqDto,
                                                 @LoginUser Integer userId) {
         if (userId == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         return ResponseEntity.ok(transactionService.updateTransaction(transactionReqDto, userId));
