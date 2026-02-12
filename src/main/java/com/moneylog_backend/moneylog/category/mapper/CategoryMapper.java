@@ -2,7 +2,6 @@ package com.moneylog_backend.moneylog.category.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 
-import com.moneylog_backend.moneylog.category.dto.req.CategoryReqDto;
 import com.moneylog_backend.moneylog.fixed.dto.query.CheckCategoryNameTypeUniqueQuery;
 
 @Mapper
