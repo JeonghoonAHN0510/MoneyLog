@@ -93,6 +93,7 @@ export function TakeHomeCalculator() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calculator className="size-5" />
+          {/* todo User 테이블이나 따로 테이블 만들어서 로그인한 회원의 연봉을 입력받고, 해당 연봉으로 값을 바로 넣어주기 */}
           실수령액 계산기 (연봉 기준)
         </CardTitle>
       </CardHeader>

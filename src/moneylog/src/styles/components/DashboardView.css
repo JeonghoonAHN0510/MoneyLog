@@ -1,0 +1,84 @@
+@reference "../../tailwind.css";
+
+.dashboard-container {
+    @apply space-y-6;
+}
+
+.dashboard-summary-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4;
+}
+
+.dashboard-summary-header {
+    @apply flex flex-row items-center justify-between pb-2;
+}
+
+.dashboard-summary-title {
+    @apply text-sm;
+}
+
+.dashboard-summary-icon-up {
+    @apply size-4 text-green-600;
+}
+
+.dashboard-summary-icon-down {
+    @apply size-4 text-red-600;
+}
+
+.dashboard-summary-icon-wallet {
+    @apply size-4 text-blue-600;
+}
+
+.dashboard-summary-icon-target {
+    @apply size-4 text-purple-600;
+}
+
+.dashboard-summary-value {
+    @apply text-2xl font-bold;
+}
+
+.dashboard-text-green {
+    @apply text-green-600;
+}
+
+.dashboard-text-red {
+    @apply text-red-600;
+}
+
+.dashboard-text-blue {
+    @apply text-blue-600;
+}
+
+.dashboard-text-purple {
+    @apply text-purple-600;
+}
+
+.dashboard-charts-grid {
+    @apply grid grid-cols-1 lg:grid-cols-2 gap-6;
+}
+
+.dashboard-empty-chart {
+    @apply flex items-center justify-center h-[300px];
+    color: var(--muted-foreground);
+}
+
+.dashboard-budget-list {
+    @apply space-y-2;
+}
+
+.dashboard-budget-item {
+    @apply space-y-2;
+}
+
+.dashboard-budget-header {
+    @apply flex justify-between text-sm;
+}
+
+.dashboard-budget-meta {
+    @apply flex justify-between text-xs;
+    color: var(--muted-foreground);
+}
+
+.dashboard-loading {
+    @apply flex items-center justify-center h-64 gap-2;
+    color: var(--muted-foreground);
+}

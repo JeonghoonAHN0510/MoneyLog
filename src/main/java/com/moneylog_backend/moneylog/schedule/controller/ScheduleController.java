@@ -1,6 +1,11 @@
 package com.moneylog_backend.moneylog.schedule.controller;
 
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,10 +20,14 @@ import lombok.RequiredArgsConstructor;
 public class ScheduleController {
     private final ScheduleService scheduleService;
 
-    // todo cron으로 받지말고, RequestVO를 만들어서, Service에서 cron식 생성
+    @GetMapping("/list")
+    public ResponseEntity<List<com.moneylog_backend.moneylog.schedule.dto.ScheduleResDto>> getSchedules() {
+        return ResponseEntity.ok(scheduleService.getAllSchedules());
+    }
+
     @PostMapping("/update")
-    public String updateSchedule (@RequestParam String jobName, @RequestParam String cron) {
-        scheduleService.updateSchedule(jobName, cron);
-        return "스케줄이 [" + cron + "] 으로 변경되었습니다.";
+    public String updateSchedule (@RequestBody com.moneylog_backend.moneylog.schedule.dto.ScheduleReqDto reqDto) {
+        scheduleService.updateSchedule(reqDto);
+        return "스케줄이 변경되었습니다.";
     }
 }

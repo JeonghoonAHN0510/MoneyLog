@@ -2,15 +2,16 @@ package com.moneylog_backend.moneylog.transaction.controller;
 
 import com.moneylog_backend.global.auth.annotation.LoginUser;
 import com.moneylog_backend.moneylog.transaction.dto.req.TransactionReqDto;
+import com.moneylog_backend.moneylog.transaction.dto.req.TransactionSearchReqDto;
 import com.moneylog_backend.moneylog.transaction.service.TransactionService;
 
 import java.time.LocalDate;
-import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,7 +48,14 @@ public class TransactionController {
         return ResponseEntity.ok(transactionService.getTransactionsByUserId(userId));
     }
 
-    // todo 검색 조건에 따른 가계부 조회 API 필요
+    @GetMapping("/search")
+    public ResponseEntity<?> searchTransactions (@LoginUser Integer userId,
+                                                 @ModelAttribute TransactionSearchReqDto searchDto) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(transactionService.searchTransactions(userId, searchDto));
+    }
 
     @PutMapping
     public ResponseEntity<?> updateTransaction (@RequestBody @Valid TransactionReqDto transactionReqDto,

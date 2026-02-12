@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Button } from '../components/ui/button';
@@ -16,6 +16,7 @@ import { TransactionList } from '../components/TransactionList';
 import { AddTransactionDialog } from '../components/AddTransactionDialog';
 import { EditTransactionDialog } from '../components/EditTransactionDialog';
 import { TransferDialog } from '../components/TransferDialog';
+import { ScheduleDialog } from '../components/ScheduleDialog';
 import { TakeHomeCalculator } from '../components/TakeHomeCalculator';
 import { BudgetManager } from '../components/BudgetManager';
 import { AccountManager } from '../components/AccountManager';
@@ -25,30 +26,37 @@ import { Plus, Wallet, Calendar, ChartBar, Calculator, Target, List, User, LogOu
 import { toast } from 'sonner';
 import useUserStore from '../stores/authStore';
 import api from '../api/axiosConfig';
-import useResourceStore from '../stores/resourceStore';
+import {
+    useUserInfo,
+    useAddTransaction,
+    useUpdateTransaction,
+    useDeleteTransaction,
+    useAddFixed,
+    useAddAccount,
+    useUpdateAccount,
+    useDeleteAccount,
+    useTransfer,
+    useAddBudget,
+    useUpdateBudget,
+    useDeleteBudget,
+    useAddCategory,
+    useUpdateCategory,
+    useDeleteCategory,
+    useAddPayment,
+    useUpdatePayment,
+    useDeletePayment,
+} from '../api/queries';
+import '../styles/pages/FinancePage.css';
 
 export default function FinancePage() {
     const navigate = useNavigate();
-    const { isAuthenticated, userInfo, setUserInfo, logout } = useUserStore();
-    const {
-        banks,
-        budgets,
-        categories,
-        accounts,
-        transactions,
-        payments,
-        setBanks,
-        setBudgets,
-        setCategories,
-        setAccounts,
-        setTransactions,
-        setPayments
-    } = useResourceStore();
+    const { isAuthenticated, logout } = useUserStore();
 
-    const [loading, setLoading] = useState(true);
+    // UI 상태
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
     const [isEditTransactionDialogOpen, setIsEditTransactionDialogOpen] = useState(false);
+    const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
 
@@ -59,81 +67,31 @@ export default function FinancePage() {
         setSearchParams({ tab: value });
     };
 
-    // 1. 사용자 정보 및 초기 데이터 로드
-    useEffect(() => {
-        if (isAuthenticated) {
-            fetchUserInfo();
-            fetchReferenceData();
-            fetchUserAssets();
-        }
-    }, [isAuthenticated]);
+    // --- [TanStack Query] 서버 데이터 ---
+    const { data: userInfo, isLoading: userInfoLoading, isError: userInfoError } = useUserInfo();
 
-    const fetchUserInfo = async () => {
-        try {
-            const response = await api.get('/user/info');
-            setUserInfo(response.data);
-        } catch (error) {
+    // 로그인 체크
+    useEffect(() => {
+        if (!isAuthenticated) {
+            toast.error('로그인이 필요합니다');
+            navigate('/login');
+        }
+    }, [isAuthenticated, navigate]);
+
+    // 사용자 정보 로드 실패 시 로그아웃
+    useEffect(() => {
+        if (userInfoError) {
             toast.error('사용자 정보를 불러오는데 실패했습니다.');
             logout();
             navigate('/login');
         }
-    };
-
-    // 1. [정적 데이터] 앱 켤 때 한 번만 불러오면 되는 것들
-    const fetchReferenceData = useCallback(async () => {
-        try {
-            const [catRes, paymentRes, bankRes] = await Promise.allSettled([
-                api.get('/category'),
-                api.get('/payment'),
-                api.get('/bank')
-            ]);
-
-            if (catRes.status === 'fulfilled') setCategories(catRes.value.data);
-            if (paymentRes.status === 'fulfilled') setPayments(paymentRes.value.data);
-            if (bankRes.status === 'fulfilled') setBanks(bankRes.value.data);
-        } catch (e) {
-            console.error("기준 정보 로드 실패", e);
-        }
-    }, [setCategories, setPayments, setBanks]);
-
-    // 2. [동적 데이터] 거래 내역 추가 시 갱신해야 할 것들
-    const fetchUserAssets = useCallback(async () => {
-        try {
-            const [accRes, transactionRes, budgetRes] = await Promise.allSettled([
-                api.get('/account/list'),
-                api.get('/transaction'),
-                api.get('/budget')
-            ]);
-
-            if (accRes.status === 'fulfilled') setAccounts(accRes.value.data);
-            if (transactionRes.status === 'fulfilled') setTransactions(transactionRes.value.data);
-            if (budgetRes.status === 'fulfilled') setBudgets(budgetRes.value.data);
-        } catch (e) {
-            console.error("자산 정보 로드 실패", e);
-        } finally {
-            setLoading(false);
-        }
-    }, [setAccounts, setTransactions, setBudgets]);
-
-    // 3. useEffect에서 최초 1회는 둘 다 실행
-    useEffect(() => {
-        fetchReferenceData();
-        fetchUserAssets();
-    }, [fetchReferenceData, fetchUserAssets]);
-
-    // 로그인 체크
-    useEffect(() => {
-        if (!isAuthenticated && !loading) {
-            toast.error('로그인이 필요합니다');
-            navigate('/login');
-        }
-    }, [isAuthenticated, loading, navigate]);
+    }, [userInfoError, logout, navigate]);
 
     const handleLogout = async () => {
         try {
             await api.post('/user/logout');
             logout();
-            toast.success('로그아웃 되었습니다');
+            toast.success('로그아웃 되었습니다.');
             navigate('/');
         } catch (error) {
             logout();
@@ -141,12 +99,30 @@ export default function FinancePage() {
         }
     };
 
+    // --- [TanStack Query Mutations] ---
+    const addTransactionMut = useAddTransaction();
+    const updateTransactionMut = useUpdateTransaction();
+    const deleteTransactionMut = useDeleteTransaction();
+    const addFixedMut = useAddFixed();
+    const addAccountMut = useAddAccount();
+    const updateAccountMut = useUpdateAccount();
+    const deleteAccountMut = useDeleteAccount();
+    const transferMut = useTransfer();
+    const addBudgetMut = useAddBudget();
+    const updateBudgetMut = useUpdateBudget();
+    const deleteBudgetMut = useDeleteBudget();
+    const addCategoryMut = useAddCategory();
+    const updateCategoryMut = useUpdateCategory();
+    const deleteCategoryMut = useDeleteCategory();
+    const addPaymentMut = useAddPayment();
+    const updatePaymentMut = useUpdatePayment();
+    const deletePaymentMut = useDeletePayment();
+
     // --- [Transaction CRUD] ---
     const handleAddTransaction = async (transaction: Partial<Transaction>) => {
         try {
-            await api.post('/transaction', transaction);
+            await addTransactionMut.mutateAsync(transaction);
             toast.success("거래 내역이 추가되었습니다.");
-            fetchUserAssets();
         } catch (e) {
             toast.error("거래 내역 추가에 실패하였습니다.");
         }
@@ -154,9 +130,8 @@ export default function FinancePage() {
 
     const handleAddFixed = async (fixed: Partial<Fixed>) => {
         try {
-            await api.post('/fixed', fixed);
+            await addFixedMut.mutateAsync(fixed);
             toast.success("고정 거래 내역이 추가되었습니다.");
-            fetchUserAssets();
         } catch (e) {
             toast.error("고정 거래 내역 추가에 실패하였습니다.");
         }
@@ -164,9 +139,8 @@ export default function FinancePage() {
 
     const handleUpdateTransaction = async (transaction: Partial<Transaction>) => {
         try {
-            await api.put('/transaction', transaction);
+            await updateTransactionMut.mutateAsync(transaction);
             toast.success("거래 내역이 수정되었습니다.");
-            fetchUserAssets();
         } catch (e) {
             toast.error("거래 내역 수정 실패");
         }
@@ -174,9 +148,8 @@ export default function FinancePage() {
 
     const handleDeleteTransaction = async (transactionId: string) => {
         try {
-            await api.delete(`/transaction?transactionId=${transactionId}`);
+            await deleteTransactionMut.mutateAsync(transactionId);
             toast.success("거래 내역이 삭제되었습니다.");
-            fetchUserAssets();
         } catch (e) {
             toast.error("거래 내역 삭제에 실패하였습니다.");
         }
@@ -190,9 +163,8 @@ export default function FinancePage() {
     // --- [Budget CRUD] ---
     const handleAddBudget = async (budget: Omit<Budget, 'budgetId' | "userId" | "budgetDate" | "createdAt" | "updatedAt" | "categoryName">) => {
         try {
-            await api.post('/budget', budget);
+            await addBudgetMut.mutateAsync(budget);
             toast.success("예산이 설정되었습니다.");
-            fetchUserAssets();
         } catch (e) {
             toast.error("예산 설정에 실패하였습니다.");
         }
@@ -200,9 +172,8 @@ export default function FinancePage() {
 
     const handleUpdateBudget = async (budget: Partial<Budget>) => {
         try {
-            await api.put(`/budget`, budget);
+            await updateBudgetMut.mutateAsync(budget);
             toast.success("예산이 수정되었습니다.");
-            fetchUserAssets();
         } catch (e) {
             toast.error("예산 수정에 실패하였습니다.");
         }
@@ -210,9 +181,8 @@ export default function FinancePage() {
 
     const handleDeleteBudget = async (budgetId: string) => {
         try {
-            await api.delete(`/budget?budgetId=${budgetId}`);
+            await deleteBudgetMut.mutateAsync(budgetId);
             toast.success("예산이 삭제되었습니다.");
-            fetchUserAssets();
         } catch (e) {
             toast.error("예산 삭제에 실패하였습니다.");
         }
@@ -221,9 +191,8 @@ export default function FinancePage() {
     // --- [Account CRUD] ---
     const handleAddAccount = async (account: Omit<Account, "accountId" | "userId" | "createdAt" | "updatedAt" | "bankName">) => {
         try {
-            await api.post('/account', account);
+            await addAccountMut.mutateAsync(account);
             toast.success("계좌가 추가되었습니다.");
-            fetchUserAssets();
         } catch (e) {
             toast.error("계좌 추가에 실패하였습니다.");
         }
@@ -231,9 +200,8 @@ export default function FinancePage() {
 
     const handleUpdateAccount = async (account: Partial<Account>) => {
         try {
-            await api.put(`/account`, account);
+            await updateAccountMut.mutateAsync(account);
             toast.success("계좌가 수정되었습니다.");
-            fetchUserAssets();
         } catch (e) {
             toast.error("계좌 수정에 실패하였습니다.");
         }
@@ -241,9 +209,8 @@ export default function FinancePage() {
 
     const handleDeleteAccount = async (accountId: string) => {
         try {
-            await api.delete(`/account?accountId=${accountId}`);
+            await deleteAccountMut.mutateAsync(accountId);
             toast.success("계좌가 삭제되었습니다.");
-            fetchUserAssets();
         } catch (e) {
             toast.error("계좌 삭제에 실패하였습니다.");
         }
@@ -252,9 +219,8 @@ export default function FinancePage() {
     // --- [Category CRUD] ---
     const handleAddCategory = async (category: Omit<Category, "categoryId" | "userId" | "createdAt" | "updatedAt">) => {
         try {
-            await api.post('/category', category);
+            await addCategoryMut.mutateAsync(category);
             toast.success("카테고리가 추가되었습니다.");
-            fetchReferenceData();
         } catch (e) {
             toast.error("카테고리 추가에 실패하였습니다.");
         }
@@ -262,9 +228,8 @@ export default function FinancePage() {
 
     const handleUpdateCategory = async (category: Partial<Category>) => {
         try {
-            await api.put(`/category`, category);
+            await updateCategoryMut.mutateAsync(category);
             toast.success("카테고리가 수정되었습니다.");
-            fetchReferenceData();
         } catch (e) {
             toast.error("카테고리 수정에 실패하였습니다.");
         }
@@ -272,9 +237,8 @@ export default function FinancePage() {
 
     const handleDeleteCategory = async (categoryId: string) => {
         try {
-            await api.delete(`/category?categoryId=${categoryId}`);
+            await deleteCategoryMut.mutateAsync(categoryId);
             toast.success("카테고리가 삭제되었습니다.");
-            fetchReferenceData();
         } catch (e) {
             toast.error("카테고리 삭제에 실패하였습니다.");
         }
@@ -283,9 +247,8 @@ export default function FinancePage() {
     // --- [Payment CRUD] ---
     const handleAddPayment = async (payment: Omit<Payment, "paymentId" | "userId" | "createdAt" | "updatedAt">) => {
         try {
-            await api.post('/payment', payment);
+            await addPaymentMut.mutateAsync(payment);
             toast.success("결제수단이 추가되었습니다.");
-            fetchReferenceData();
         } catch (e) {
             toast.error("결제수단 추가에 실패하였습니다.");
         }
@@ -293,9 +256,8 @@ export default function FinancePage() {
 
     const handleUpdatePayment = async (payment: Partial<Payment>) => {
         try {
-            await api.put(`/payment`, payment);
+            await updatePaymentMut.mutateAsync(payment);
             toast.success("결제수단이 수정되었습니다.");
-            fetchReferenceData();
         } catch (e) {
             toast.error("결제수단 수정에 실패하였습니다.");
         }
@@ -303,9 +265,8 @@ export default function FinancePage() {
 
     const handleDeletePayment = async (paymentId: string) => {
         try {
-            await api.delete(`/payment?paymentId=${paymentId}`);
+            await deletePaymentMut.mutateAsync(paymentId);
             toast.success("결제수단이 삭제되었습니다.");
-            fetchReferenceData();
         } catch (e) {
             toast.error("결제수단 삭제에 실패하였습니다.");
         }
@@ -314,9 +275,8 @@ export default function FinancePage() {
     // --- [Transfer Logic] ---
     const handleAddTransfer = async (transfer: Omit<Transfer, "transferId" | "userId" | "createdAt" | "updatedAt">) => {
         try {
-            await api.put('/account/transfer', transfer);
+            await transferMut.mutateAsync(transfer);
             toast.success("이체가 완료되었습니다.");
-            fetchUserAssets();
         } catch (e) {
             toast.error("이체에 실패하였습니다.");
         }
@@ -326,10 +286,10 @@ export default function FinancePage() {
         setSelectedDate(date);
     };
 
-    if (loading || !userInfo) {
+    if (userInfoLoading || !userInfo) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <p className="text-lg text-gray-500">정보를 불러오는 중입니다...</p>
+            <div className="finance-loading">
+                <p className="finance-loading-text">정보를 불러오는 중입니다...</p>
             </div>
         );
     }
@@ -337,41 +297,46 @@ export default function FinancePage() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="min-h-screen bg-background">
-            <div className="container mx-auto p-4 md:p-8">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
+        <div className="finance-page">
+            <div className="finance-container">
+                <div className="finance-header">
                     <div>
-                        <h1 className="flex items-center gap-2 text-xl md:text-2xl font-bold">
-                            <Wallet className="size-6 md:size-8" />
+                        <h1 className="finance-title">
+                            <Wallet className="finance-title-icon" />
                             내 가계부
                         </h1>
-                        <p className="text-sm md:text-base text-muted-foreground">사회 초년생을 위한 스마트 재무 관리</p>
+                        <p className="finance-subtitle">사회 초년생을 위한 스마트 재무 관리</p>
                     </div>
-                    <div className="flex items-center gap-2 md:gap-3">
-                        <Button size="sm" className="md:size-default" onClick={() => setIsAddDialogOpen(true)}>
-                            <Plus className="size-4 md:mr-2" />
-                            <span className="hidden md:inline">거래 추가</span>
+                    <div className="finance-actions">
+                        <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
+                            <Plus className="finance-add-btn-icon" />
+                            <span className="finance-add-btn-text">거래 추가</span>
                         </Button>
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="gap-2">
-                                    <User className="size-4" />
-                                    <span className="hidden sm:inline">{userInfo?.name}</span>
+                                <Button variant="outline" className="finance-user-btn">
+                                    <User className="finance-user-btn-icon" />
+                                    <span className="finance-user-name">{userInfo?.name}</span>
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuContent align="end" className="finance-dropdown-content">
                                 <DropdownMenuLabel>
-                                    <div className="flex flex-col space-y-1">
-                                        <p className="text-sm font-medium leading-none">{userInfo?.name}</p>
-                                        <p className="text-xs leading-none text-muted-foreground">
+                                    <div className="finance-dropdown-label-inner">
+                                        <p className="finance-dropdown-name">{userInfo?.name}</p>
+                                        <p className="finance-dropdown-email">
                                             {userInfo?.email}
                                         </p>
                                     </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
-                                    <LogOut className="size-4 mr-2" />
+                                <DropdownMenuItem onClick={() => setIsScheduleDialogOpen(true)} className="cursor-pointer">
+                                    <Target className="mr-2 h-4 w-4" />
+                                    <span>스케줄 설정</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={handleLogout} className="finance-logout-item">
+                                    <LogOut className="finance-logout-icon" />
                                     로그아웃
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -382,51 +347,47 @@ export default function FinancePage() {
                 <Tabs
                     value={currentTab}
                     onValueChange={handleTabChange}
-                    className="space-y-6"
+                    className="finance-tabs"
                 >
-                    <div className="overflow-x-auto -mx-4 px-4 pb-2">
-                        <TabsList className="flex w-max min-w-full md:grid md:w-full md:grid-cols-7 gap-1">
-                            <TabsTrigger value="dashboard" className="flex items-center gap-2">
-                                <ChartBar className="size-4" />
-                                <span className="hidden sm:inline">대시보드</span>
+                    <div className="finance-tabs-scroll">
+                        <TabsList className="finance-tabs-list">
+                            <TabsTrigger value="dashboard" className="finance-tab-trigger">
+                                <ChartBar className="finance-tab-icon" />
+                                <span className="finance-tab-text">대시보드</span>
                             </TabsTrigger>
-                            <TabsTrigger value="calendar" className="flex items-center gap-2">
-                                <Calendar className="size-4" />
-                                <span className="hidden sm:inline">캘린더</span>
+                            <TabsTrigger value="calendar" className="finance-tab-trigger">
+                                <Calendar className="finance-tab-icon" />
+                                <span className="finance-tab-text">캘린더</span>
                             </TabsTrigger>
-                            <TabsTrigger value="transactions" className="flex items-center gap-2">
-                                <Wallet className="size-4" />
-                                <span className="hidden sm:inline">거래내역</span>
+                            <TabsTrigger value="transactions" className="finance-tab-trigger">
+                                <Wallet className="finance-tab-icon" />
+                                <span className="finance-tab-text">거래내역</span>
                             </TabsTrigger>
-                            <TabsTrigger value="accounts" className="flex items-center gap-2">
-                                <Wallet className="size-4" />
-                                <span className="hidden sm:inline">계좌</span>
+                            <TabsTrigger value="accounts" className="finance-tab-trigger">
+                                <Wallet className="finance-tab-icon" />
+                                <span className="finance-tab-text">계좌</span>
                             </TabsTrigger>
-                            <TabsTrigger value="categories" className="flex items-center gap-2">
-                                <List className="size-4" />
-                                <span className="hidden sm:inline">카테고리</span>
+                            <TabsTrigger value="categories" className="finance-tab-trigger">
+                                <List className="finance-tab-icon" />
+                                <span className="finance-tab-text">카테고리</span>
                             </TabsTrigger>
-                            <TabsTrigger value="budget" className="flex items-center gap-2">
-                                <Target className="size-4" />
-                                <span className="hidden sm:inline">예산</span>
+                            <TabsTrigger value="budget" className="finance-tab-trigger">
+                                <Target className="finance-tab-icon" />
+                                <span className="finance-tab-text">예산</span>
                             </TabsTrigger>
-                            <TabsTrigger value="calculator" className="flex items-center gap-2">
-                                <Calculator className="size-4" />
-                                <span className="hidden sm:inline">계산기</span>
+                            <TabsTrigger value="calculator" className="finance-tab-trigger">
+                                <Calculator className="finance-tab-icon" />
+                                <span className="finance-tab-text">계산기</span>
                             </TabsTrigger>
                         </TabsList>
                     </div>
 
-                    <TabsContent value="dashboard" className="space-y-6">
-                        <DashboardView
-                            transactions={transactions}
-                            budgets={budgets}
-                            categories={categories}
-                        />
+                    <TabsContent value="dashboard" className="finance-tab-content">
+                        <DashboardView />
                     </TabsContent>
 
-                    <TabsContent value="calendar" className="space-y-6">
-                        <CalendarView transactions={transactions} onDateClick={handleDateClick} />
+                    <TabsContent value="calendar" className="finance-tab-content">
+                        <CalendarView onDateClick={handleDateClick} />
                         {selectedDate && (
                             <TransactionList
                                 selectedDate={selectedDate}
@@ -436,14 +397,14 @@ export default function FinancePage() {
                         )}
                     </TabsContent>
 
-                    <TabsContent value="transactions" className="space-y-6">
+                    <TabsContent value="transactions" className="finance-tab-content">
                         <TransactionList
                             onEdit={handleEditTransaction}
                             onDelete={handleDeleteTransaction}
                         />
                     </TabsContent>
 
-                    <TabsContent value="accounts" className="space-y-6">
+                    <TabsContent value="accounts" className="finance-tab-content">
                         <AccountManager
                             onAdd={handleAddAccount}
                             onUpdate={handleUpdateAccount}
@@ -452,7 +413,7 @@ export default function FinancePage() {
                         />
                     </TabsContent>
 
-                    <TabsContent value="categories" className="space-y-6">
+                    <TabsContent value="categories" className="finance-tab-content">
                         <CategoryManager
                             onAdd={handleAddCategory}
                             onUpdate={handleUpdateCategory}
@@ -463,7 +424,7 @@ export default function FinancePage() {
                         />
                     </TabsContent>
 
-                    <TabsContent value="budget" className="space-y-6">
+                    <TabsContent value="budget" className="finance-tab-content">
                         <BudgetManager
                             onAdd={handleAddBudget}
                             onUpdate={handleUpdateBudget}
@@ -471,7 +432,7 @@ export default function FinancePage() {
                         />
                     </TabsContent>
 
-                    <TabsContent value="calculator" className="space-y-6">
+                    <TabsContent value="calculator" className="finance-tab-content">
                         <TakeHomeCalculator />
                     </TabsContent>
                 </Tabs>
@@ -495,6 +456,11 @@ export default function FinancePage() {
                 onOpenChange={setIsEditTransactionDialogOpen}
                 transaction={editingTransaction}
                 onUpdate={handleUpdateTransaction}
+            />
+
+            <ScheduleDialog
+                open={isScheduleDialogOpen}
+                onOpenChange={setIsScheduleDialogOpen}
             />
         </div>
     );

@@ -1,0 +1,140 @@
+@reference "../../tailwind.css";
+
+.transaction-list-card {
+    @apply border-none shadow-none;
+}
+
+.transaction-list-header {
+    @apply px-0 pt-0;
+}
+
+.transaction-list-content {
+    @apply px-0;
+}
+
+.transaction-empty {
+    @apply text-center py-12 border rounded-lg border-dashed;
+    color: var(--muted-foreground);
+}
+
+.transaction-list-groups {
+    @apply space-y-6;
+}
+
+.transaction-group {
+    @apply border rounded-xl bg-card shadow-sm overflow-hidden;
+}
+
+.transaction-group-header {
+    @apply p-3 flex justify-between items-center border-b;
+    background-color: var(--muted);
+    @apply opacity-90;
+    /* Fallback for bg-muted/30 */
+}
+
+/* Override background color slightly lighter if possible, or correct bg-muted/30 usage */
+/* Since Tailwind v4 handles opacity, using explicit rgba or keeping it simple is fine. */
+/* Using gray-100 as safe fallback if var fails */
+.transaction-group-header {
+    @apply bg-gray-100/50;
+}
+
+.transaction-group-date {
+    @apply font-medium text-sm;
+    color: var(--foreground);
+}
+
+.transaction-group-total-income {
+    @apply text-sm font-semibold text-green-600;
+}
+
+.transaction-group-total-expense {
+    @apply text-sm font-semibold text-red-600;
+}
+
+.transaction-group-items {
+    @apply p-2 space-y-1;
+}
+
+.transaction-item {
+    @apply flex items-center justify-between p-2 transition-colors rounded-md;
+    cursor: pointer;
+}
+
+.transaction-item:hover {
+    background-color: var(--accent);
+}
+
+.transaction-item-left {
+    @apply flex items-center gap-3 flex-1;
+}
+
+.transaction-item-icon-wrapper {
+    @apply p-2 rounded-full;
+}
+
+.transaction-icon-green {
+    @apply bg-green-100;
+}
+
+.transaction-icon-red {
+    @apply bg-red-100;
+}
+
+.transaction-item-details {
+    @apply flex-1;
+}
+
+.transaction-item-title-row {
+    @apply flex items-center gap-2;
+}
+
+.transaction-item-title {
+    @apply font-medium;
+}
+
+.transaction-item-badge {
+    @apply text-[10px] px-1 py-0 h-5;
+}
+
+.transaction-item-meta {
+    @apply flex items-center gap-2 text-xs mt-0.5;
+    color: var(--muted-foreground);
+}
+
+.transaction-category-tag {
+    @apply px-1.5 py-0.5 rounded text-[10px];
+}
+
+.transaction-item-right {
+    @apply flex items-center gap-1 md:gap-2;
+}
+
+.transaction-amount-income {
+    @apply text-sm md:text-base font-semibold text-green-600;
+}
+
+.transaction-amount-expense {
+    @apply text-sm md:text-base font-semibold text-red-600;
+}
+
+.transaction-action-btn {
+    @apply h-7 w-7 md:h-8 md:w-8;
+    color: var(--muted-foreground);
+}
+
+.transaction-action-btn:hover {
+    /* Need specific hover colors, usually distinct classes in TSX or handle here */
+}
+
+.transaction-edit-btn:hover {
+    color: var(--primary);
+}
+
+.transaction-delete-btn:hover {
+    @apply text-red-600;
+}
+
+.transaction-alert-delete-action {
+    @apply bg-red-600 hover:bg-red-700 focus:ring-red-600;
+}

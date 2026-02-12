@@ -6,7 +6,7 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
 import { Transaction, Category, Account, Payment } from '../types/finance';
-import useResourceStore from '../stores/resourceStore';
+import { useCategories, useAccounts, usePayments } from '../api/queries';
 
 interface EditTransactionDialogProps {
     open: boolean;
@@ -21,7 +21,9 @@ export function EditTransactionDialog({
     transaction,
     onUpdate
 }: EditTransactionDialogProps) {
-    const { categories, accounts, payments } = useResourceStore();
+    const { data: categories = [] } = useCategories();
+    const { data: accounts = [] } = useAccounts();
+    const { data: payments = [] } = usePayments();
 
     const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
     const [categoryId, setCategoryId] = useState('');

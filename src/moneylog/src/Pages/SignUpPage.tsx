@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Wallet, Eye, EyeOff, User, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../api/axiosConfig';
-import useResourceStore from '../stores/resourceStore';
+import { useBanks } from '../api/queries';
+import '../styles/pages/SignUpPage.css';
 
 export default function SignUpPage() {
   const navigate = useNavigate();
@@ -26,29 +27,18 @@ export default function SignUpPage() {
   const [bankId, setBankId] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
 
-  const { banks, setBanks } = useResourceStore();
+  const { data: banks = [] } = useBanks();
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // 은행 목록 로드 시 첫 번째 은행을 기본값으로
   useEffect(() => {
-    const fetchBanks = async () => {
-      if (banks.length > 0) {
-        if (!bankId) setBankId(String(banks[0].bankId));
-        return;
-      }
-
-      try {
-        const response = await api.get("/bank");
-        setBanks(response.data);
-      } catch (error) {
-        console.error("은행 목록 로드 실패:", error);
-        toast.error("은행 목록을 불러오지 못했습니다.");
-      }
-    };
-    fetchBanks();
-  }, [banks, setBanks, bankId]);
+    if (banks.length > 0 && !bankId) {
+      setBankId(String(banks[0].bankId));
+    }
+  }, [banks, bankId]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -64,7 +54,6 @@ export default function SignUpPage() {
   };
 
   const getBankName = (targetId: string) => {
-    // bank_id -> bankId
     const targetBank = banks.find(bank => String(bank.bankId) === String(targetId));
     return targetBank?.name || "";
   }
@@ -96,7 +85,6 @@ export default function SignUpPage() {
     try {
       const formData = new FormData();
 
-      // FormData 키값들도 카멜케이스로 변경 (백엔드 수용 여부에 따라 확인 필요)
       formData.append('id', id);
       formData.append('name', name);
       formData.append('email', email);
@@ -141,58 +129,58 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-2 sm:p-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <Wallet className="size-10 text-blue-600" />
-          <span className="text-3xl font-bold text-gray-900">내 가계부</span>
+    <div className="signup-page">
+      <div className="signup-wrapper">
+        <div className="signup-logo">
+          <Wallet className="signup-logo-icon" />
+          <span className="signup-logo-text">내 가계부</span>
         </div>
 
-        <Card className="border-2 shadow-lg">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">회원가입</CardTitle>
-            <CardDescription className="text-center">
+        <Card className="signup-card">
+          <CardHeader className="signup-card-header">
+            <CardTitle className="signup-card-title">회원가입</CardTitle>
+            <CardDescription className="signup-card-description">
               계정을 생성하여 내 가계부를 시작하세요
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSignUp} className="space-y-4" noValidate>
+            <form onSubmit={handleSignUp} className="signup-form" noValidate>
               {error && (
-                <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-alert-circle"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
+                <div className="signup-error-alert">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
                   {error}
                 </div>
               )}
-              <div className="flex flex-col items-center gap-4 mb-6">
-                <div className="relative group cursor-pointer">
-                  <div className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors">
+              <div className="signup-profile-section">
+                <div className="signup-profile-wrapper group cursor-pointer">
+                  <div className="signup-profile-circle">
                     {previewUrl ? (
-                      <img src={previewUrl} alt="Profile Preview" className="w-full h-full object-cover" />
+                      <img src={previewUrl} alt="Profile Preview" className="signup-profile-preview" />
                     ) : (
-                      <User className="text-gray-400 size-10" />
+                      <User className="signup-profile-placeholder" />
                     )}
                   </div>
                   <label
                     htmlFor="profile-upload"
-                    className="absolute bottom-0 right-0 bg-blue-600 text-white p-1.5 rounded-full shadow-md cursor-pointer hover:bg-blue-700"
+                    className="signup-profile-upload-btn"
                   >
-                    <Upload className="size-4" />
+                    <Upload className="signup-profile-upload-icon" />
                   </label>
                   <input
                     id="profile-upload"
                     type="file"
                     accept="image/*"
-                    className="hidden"
+                    className="signup-profile-upload-input"
                     onChange={handleImageChange}
                   />
                 </div>
-                <Label htmlFor="profile-upload" className="text-xs text-gray-500 cursor-pointer">
+                <Label htmlFor="profile-upload" className="signup-profile-label">
                   프로필 사진 추가
                 </Label>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
+              <div className="signup-grid-2col">
+                <div className="signup-field-group">
                   <Label htmlFor="id">아이디</Label>
                   <Input
                     id="id"
@@ -203,7 +191,7 @@ export default function SignUpPage() {
                     required
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="signup-field-group">
                   <Label htmlFor="name">이름</Label>
                   <Input
                     id="name"
@@ -216,7 +204,7 @@ export default function SignUpPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="signup-field-group">
                 <Label htmlFor="email">이메일</Label>
                 <Input
                   id="email"
@@ -228,9 +216,9 @@ export default function SignUpPage() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="signup-field-group">
                 <Label htmlFor="password">비밀번호</Label>
-                <div className="relative">
+                <div className="signup-password-wrapper">
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
@@ -242,14 +230,14 @@ export default function SignUpPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="signup-password-toggle"
                   >
-                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    {showPassword ? <EyeOff className="signup-password-toggle-icon" /> : <Eye className="signup-password-toggle-icon" />}
                   </button>
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="signup-field-group">
                 <Label htmlFor="confirmPassword">비밀번호 확인</Label>
                 <Input
                   id="confirmPassword"
@@ -261,11 +249,11 @@ export default function SignUpPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-                <div className="sm:col-span-2 space-y-2">
+              <div className="signup-grid-bank">
+                <div className="signup-bank-select-col">
                   <Label htmlFor="bank">주거래 은행</Label>
                   <Select value={bankId} onValueChange={handleBankChange}>
-                    <SelectTrigger id="bank" className="w-full">
+                    <SelectTrigger id="bank" className="signup-bank-select-trigger">
                       <SelectValue placeholder="은행 선택" />
                     </SelectTrigger>
                     <SelectContent>
@@ -278,7 +266,7 @@ export default function SignUpPage() {
                   </Select>
                 </div>
 
-                <div className="sm:col-span-3 space-y-2">
+                <div className="signup-account-col">
                   <Label htmlFor="accountNumber">계좌번호</Label>
                   <Input
                     id="accountNumber"
@@ -291,8 +279,8 @@ export default function SignUpPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-2">
+              <div className="signup-grid-1col">
+                <div className="signup-field-group">
                   <Label htmlFor="phone">전화번호</Label>
                   <Input
                     id="phone"
@@ -304,24 +292,24 @@ export default function SignUpPage() {
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="signup-field-group">
                   <Label>성별</Label>
-                  <div className="flex gap-4">
-                    <label className={`flex-1 flex items-center justify-center p-3 rounded-lg border cursor-pointer transition-all ${gender === true ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold' : 'border-gray-200 hover:bg-gray-50'}`}>
+                  <div className="signup-gender-group">
+                    <label className={`signup-gender-option ${gender === true ? 'active-male' : 'inactive'}`}>
                       <input
                         type="radio"
                         name="gender"
-                        className="hidden"
+                        className="signup-gender-radio"
                         checked={gender === true}
                         onChange={() => setGender(true)}
                       />
                       <span>남성</span>
                     </label>
-                    <label className={`flex-1 flex items-center justify-center p-3 rounded-lg border cursor-pointer transition-all ${gender === false ? 'border-pink-500 bg-pink-50 text-pink-700 font-semibold' : 'border-gray-200 hover:bg-gray-50'}`}>
+                    <label className={`signup-gender-option ${gender === false ? 'active-female' : 'inactive'}`}>
                       <input
                         type="radio"
                         name="gender"
-                        className="hidden"
+                        className="signup-gender-radio"
                         checked={gender === false}
                         onChange={() => setGender(false)}
                       />
@@ -331,25 +319,25 @@ export default function SignUpPage() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full mt-4" disabled={isLoading}>
+              <Button type="submit" className="signup-submit-btn" disabled={isLoading}>
                 {isLoading ? '가입 처리 중...' : '회원가입'}
               </Button>
             </form>
 
-            <div className="mt-6 text-center text-sm">
-              <span className="text-gray-600">이미 계정이 있으신가요? </span>
+            <div className="signup-login-prompt">
+              <span className="signup-login-prompt-text">이미 계정이 있으신가요? </span>
               <Link
                 to="/login"
-                className="text-blue-600 hover:text-blue-700 hover:underline font-medium"
+                className="signup-login-link"
               >
                 로그인
               </Link>
             </div>
 
-            <div className="mt-4">
+            <div className="signup-home-btn-wrapper">
               <Button
                 variant="ghost"
-                className="w-full text-gray-500"
+                className="signup-home-btn"
                 onClick={() => navigate('/')}
               >
                 홈으로 돌아가기

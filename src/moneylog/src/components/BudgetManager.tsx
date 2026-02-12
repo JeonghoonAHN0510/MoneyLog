@@ -17,7 +17,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "./ui/alert-dialog";
-import useResourceStore from '../stores/resourceStore';
+import { useCategories, useBudgets } from '../api/queries';
 
 interface BudgetManagerProps {
     onAdd: (budget: Omit<Budget, 'budgetId' | "userId" | "budgetDate" | "createdAt" | "updatedAt" | "categoryName">) => void;
@@ -86,7 +86,7 @@ const BudgetList = ({ items, categories, onEdit, onDelete }: {
         ) : (
             items.map((budget) => {
                 const categoryName = categories.find(c => c.categoryId === budget.categoryId)?.name || budget.categoryName || '알 수 없음';
-                
+
                 return (
                     <div
                         key={budget.budgetId}
@@ -120,7 +120,8 @@ const BudgetList = ({ items, categories, onEdit, onDelete }: {
 // 3. 메인 BudgetManager 컴포넌트
 // =========================================================
 export function BudgetManager({ onAdd, onUpdate, onDelete }: BudgetManagerProps) {
-    const { categories, budgets } = useResourceStore();
+    const { data: categories = [] } = useCategories();
+    const { data: budgets = [] } = useBudgets();
 
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -161,7 +162,7 @@ export function BudgetManager({ onAdd, onUpdate, onDelete }: BudgetManagerProps)
 
         onUpdate({
             budgetId: editingBudget.budgetId,
-            categoryId: categoryId, 
+            categoryId: categoryId,
             amount: Number(amount)
         });
 
@@ -196,11 +197,11 @@ export function BudgetManager({ onAdd, onUpdate, onDelete }: BudgetManagerProps)
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <BudgetList 
-                        items={budgets} 
+                    <BudgetList
+                        items={budgets}
                         categories={categories}
-                        onEdit={handleEdit} 
-                        onDelete={handleDeleteClick} 
+                        onEdit={handleEdit}
+                        onDelete={handleDeleteClick}
                     />
                 </CardContent>
             </Card>
@@ -212,8 +213,8 @@ export function BudgetManager({ onAdd, onUpdate, onDelete }: BudgetManagerProps)
                         <DialogTitle>예산 추가</DialogTitle>
                         <DialogDescription>새로운 카테고리 예산을 설정하세요.</DialogDescription>
                     </DialogHeader>
-                    
-                    <BudgetForm 
+
+                    <BudgetForm
                         categoryId={categoryId} setCategoryId={setCategoryId}
                         amount={amount} setAmount={setAmount}
                         categories={expenseCategories}
@@ -238,7 +239,7 @@ export function BudgetManager({ onAdd, onUpdate, onDelete }: BudgetManagerProps)
                         <DialogDescription>설정된 예산을 수정합니다.</DialogDescription>
                     </DialogHeader>
 
-                    <BudgetForm 
+                    <BudgetForm
                         categoryId={categoryId} setCategoryId={setCategoryId}
                         amount={amount} setAmount={setAmount}
                         categories={expenseCategories}

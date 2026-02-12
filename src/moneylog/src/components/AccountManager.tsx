@@ -17,7 +17,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "./ui/alert-dialog";
-import useResourceStore from '../stores/resourceStore';
+import { useAccounts, useBanks } from '../api/queries';
 
 interface AccountManagerProps {
     onAdd: (account: Omit<Account, "accountId" | "userId" | "createdAt" | "updatedAt" | "bankName">) => void;
@@ -65,10 +65,10 @@ interface AccountFormProps {
     setAccountNumber: (val: string) => void;
 }
 
-const AccountForm = ({ 
-    nickname, setNickname, 
-    type, setType, 
-    balance, setBalance, 
+const AccountForm = ({
+    nickname, setNickname,
+    type, setType,
+    balance, setBalance,
     color, setColor,
     banks, bankId, setBankId,
     accountNumber, setAccountNumber
@@ -146,9 +146,8 @@ const AccountForm = ({
                     <button
                         key={c}
                         type="button"
-                        className={`size-8 rounded-full border-2 ${
-                            color === c ? 'border-foreground' : 'border-transparent'
-                        }`}
+                        className={`size-8 rounded-full border-2 ${color === c ? 'border-foreground' : 'border-transparent'
+                            }`}
                         style={{ backgroundColor: c }}
                         onClick={() => setColor(c)}
                     />
@@ -208,7 +207,8 @@ const AccountList = ({ items, onEdit, onDelete }: {
 );
 
 export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: AccountManagerProps) {
-    const { accounts, banks } = useResourceStore();
+    const { data: accounts = [] } = useAccounts();
+    const { data: banks = [] } = useBanks();
 
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -219,7 +219,7 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
     const [nickname, setNickname] = useState('');
     const [balance, setBalance] = useState<number | string>(0);
     const [color, setColor] = useState<string>(defaultColors[0]);
-    const [bankId, setBankId] = useState<string>(''); 
+    const [bankId, setBankId] = useState<string>('');
     const [accountNumber, setAccountNumber] = useState('');
 
     const resetForm = () => {
@@ -233,10 +233,10 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
 
     const handleAdd = () => {
         if (!nickname) return;
-        if (type === 'BANK' && !bankId) return; 
+        if (type === 'BANK' && !bankId) return;
 
         onAdd({
-            bankId: type === 'BANK' ? bankId : undefined, 
+            bankId: type === 'BANK' ? bankId : undefined,
             type,
             nickname,
             balance: Number(balance),
@@ -319,9 +319,9 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
                         <div className="text-primary font-bold text-xl">{formatCurrency(totalBalance)}원</div>
                     </div>
 
-                    <AccountList 
-                        items={accounts} 
-                        onEdit={handleEdit} 
+                    <AccountList
+                        items={accounts}
+                        onEdit={handleEdit}
                         onDelete={handleDeleteClick}
                     />
                 </CardContent>
@@ -333,16 +333,16 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
                         <DialogTitle>계좌 추가</DialogTitle>
                         <DialogDescription>새로운 계좌를 추가하세요.</DialogDescription>
                     </DialogHeader>
-                    
-                    <AccountForm 
+
+                    <AccountForm
                         nickname={nickname} setNickname={setNickname}
                         type={type} setType={setType}
                         balance={balance} setBalance={setBalance}
                         color={color} setColor={setColor}
-                        banks={banks} bankId={bankId} setBankId={setBankId} 
-                        accountNumber={accountNumber} setAccountNumber={setAccountNumber} 
+                        banks={banks} bankId={bankId} setBankId={setBankId}
+                        accountNumber={accountNumber} setAccountNumber={setAccountNumber}
                     />
-                    
+
                     <div className="flex gap-2 pt-4">
                         <Button variant="outline" className="flex-1" onClick={() => setIsAddDialogOpen(false)}>
                             취소
@@ -361,7 +361,7 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
                         <DialogDescription>계좌 정보를 수정합니다.</DialogDescription>
                     </DialogHeader>
 
-                    <AccountForm 
+                    <AccountForm
                         nickname={nickname} setNickname={setNickname}
                         type={type} setType={setType}
                         balance={balance} setBalance={setBalance}
@@ -386,7 +386,7 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
                     <AlertDialogHeader>
                         <AlertDialogTitle>정말 삭제하시겠습니까?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            삭제된 계좌는 복구할 수 없습니다.<br/>관련 내역은 보존되지만 정보는 사라집니다.
+                            삭제된 계좌는 복구할 수 없습니다.<br />관련 내역은 보존되지만 정보는 사라집니다.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

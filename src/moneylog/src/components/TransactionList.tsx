@@ -14,7 +14,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "./ui/alert-dialog";
-import useResourceStore from '../stores/resourceStore';
+import { useTransactions, useCategories } from '../api/queries';
 
 interface TransactionListProps {
     selectedDate?: string;
@@ -110,7 +110,8 @@ export function TransactionList({
     onEdit,
     onDelete,
 }: TransactionListProps) {
-    const { transactions, categories } = useResourceStore();
+    const { data: transactions = [] } = useTransactions();
+    const { data: categories = [] } = useCategories();
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
     const handleDeleteClick = (id: string) => {

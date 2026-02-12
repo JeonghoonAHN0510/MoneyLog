@@ -1,0 +1,83 @@
+@reference "../tailwind.css";
+
+.calendar-wrapper {
+    @apply space-y-4 overflow-x-auto;
+}
+
+.calendar-header {
+    @apply flex items-center justify-between;
+}
+
+.calendar-title {
+    @apply text-lg font-semibold;
+}
+
+.calendar-nav-group {
+    @apply flex items-center gap-2;
+}
+
+.calendar-loading {
+    @apply size-4 animate-spin;
+    color: var(--muted-foreground);
+}
+
+.calendar-nav-btn {
+    /* Button styles are handled by ui/button but if needed: */
+}
+
+.calendar-nav-icon {
+    @apply size-4;
+}
+
+.calendar-grid {
+    @apply grid grid-cols-7 gap-1 md:gap-2;
+    min-width: 320px;
+    /* Ensure minimum width on very small screens to prevent crush */
+}
+
+.calendar-day-header {
+    @apply text-center p-2 font-medium text-sm;
+}
+
+.calendar-day-empty {
+    @apply min-h-16 md:min-h-24;
+}
+
+.calendar-day-card {
+    @apply min-h-16 md:min-h-24 p-1 md:p-2 transition-colors relative flex flex-col justify-between;
+    cursor: pointer;
+}
+
+.calendar-day-card:hover {
+    background-color: var(--accent);
+}
+
+.calendar-day-card-today {
+    @apply border-2;
+    border-color: var(--primary);
+}
+
+.calendar-day-number {
+    color: var(--muted-foreground);
+}
+
+.calendar-day-number-today {
+    @apply font-bold;
+    color: var(--primary);
+}
+
+.calendar-summary-container {
+    @apply mt-1 space-y-0.5 md:space-y-1 text-[10px] md:text-xs;
+}
+
+.calendar-summary-income {
+    @apply flex items-center gap-1 text-green-600;
+}
+
+.calendar-summary-expense {
+    @apply flex items-center gap-1 text-red-600;
+}
+
+.calendar-summary-icon {
+    @apply size-3;
+}

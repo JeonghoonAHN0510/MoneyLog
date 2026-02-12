@@ -1,0 +1,109 @@
+@reference "../tailwind.css";
+
+/* LoginPage.css - 로그인 페이지 스타일 */
+
+.login-page {
+    @apply min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4;
+}
+
+.login-wrapper {
+    @apply w-full max-w-md;
+}
+
+/* 로고 영역 */
+.login-logo {
+    @apply flex items-center justify-center gap-2 mb-8;
+}
+
+.login-logo-icon {
+    @apply size-10 text-blue-600;
+}
+
+.login-logo-text {
+    @apply text-3xl font-bold text-gray-900;
+}
+
+/* 카드 */
+.login-card {
+    @apply border-2;
+}
+
+.login-card-header {
+    @apply space-y-1;
+}
+
+.login-card-title {
+    @apply text-2xl;
+}
+
+/* 폼 */
+.login-form {
+    @apply space-y-4;
+}
+
+.login-error-alert {
+    @apply p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md flex items-center gap-2;
+}
+
+.login-error-alert svg {
+    @apply shrink-0;
+}
+
+.login-field-group {
+    @apply space-y-2;
+}
+
+.login-password-wrapper {
+    @apply relative;
+}
+
+.login-password-toggle {
+    @apply absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700;
+}
+
+.login-password-toggle-icon {
+    @apply size-4;
+}
+
+/* 링크 영역 */
+.login-actions {
+    @apply flex items-center justify-between text-sm;
+}
+
+.login-forgot-link {
+    @apply text-blue-600 hover:text-blue-700 hover:underline;
+}
+
+.login-submit-btn {
+    @apply w-full;
+}
+
+/* 하단 영역 */
+.login-signup-prompt {
+    @apply mt-6 text-center text-sm;
+}
+
+.login-signup-prompt-text {
+    @apply text-gray-600;
+}
+
+.login-signup-link {
+    @apply text-blue-600 hover:text-blue-700 hover:underline font-medium;
+}
+
+.login-home-btn-wrapper {
+    @apply mt-6;
+}
+
+.login-home-btn {
+    @apply w-full;
+}
+
+/* 데모 정보 */
+.login-demo-info {
+    @apply mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg;
+}
+
+.login-demo-info p {
+    @apply text-sm text-blue-800;
+}

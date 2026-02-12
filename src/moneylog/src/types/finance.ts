@@ -95,3 +95,28 @@ export interface Bank {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface UserInfo {
+  userId: number;
+  email: string;
+  name: string;
+}
+
+export interface DailySummary {
+  date: string;
+  totalIncome: number;
+  totalExpense: number;
+}
+
+export interface CategoryStats {
+  categoryName: string;
+  totalAmount: number;
+  ratio: number;
+}
+
+export interface DashboardData {
+  totalIncome: number;
+  totalExpense: number;
+  totalBalance: number;
+  categoryStats: CategoryStats[];
+}

@@ -6,6 +6,7 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Wallet, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import '../styles/pages/ForgotPasswordPage.css';
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
@@ -43,28 +44,28 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="forgot-page">
+      <div className="forgot-wrapper">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <Wallet className="size-10 text-blue-600" />
-          <span className="text-3xl font-bold text-gray-900">내 가계부</span>
+        <div className="forgot-logo">
+          <Wallet className="forgot-logo-icon" />
+          <span className="forgot-logo-text">내 가계부</span>
         </div>
 
         {/* Forgot Password Card */}
-        <Card className="border-2">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl">비밀번호 찾기</CardTitle>
+        <Card className="forgot-card">
+          <CardHeader className="forgot-card-header">
+            <CardTitle className="forgot-card-title">비밀번호 찾기</CardTitle>
             <CardDescription>
-              {emailSent 
-                ? '이메일을 확인해주세요' 
+              {emailSent
+                ? '이메일을 확인해주세요'
                 : '가입하신 이메일을 입력하시면 비밀번호 재설정 링크를 보내드립니다'}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {!emailSent ? (
-              <form onSubmit={handleResetPassword} className="space-y-4">
-                <div className="space-y-2">
+              <form onSubmit={handleResetPassword} className="forgot-form">
+                <div className="forgot-field-group">
                   <Label htmlFor="email">이메일</Label>
                   <Input
                     id="email"
@@ -76,22 +77,22 @@ export default function ForgotPasswordPage() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="forgot-submit-btn" disabled={isLoading}>
                   {isLoading ? '처리 중...' : '비밀번호 재설정 이메일 전송'}
                 </Button>
               </form>
             ) : (
-              <div className="space-y-4">
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm text-green-800">
+              <div className="forgot-success-section">
+                <div className="forgot-success-alert">
+                  <p>
                     <strong>{email}</strong>로 비밀번호 재설정 링크를 전송했습니다.
                     이메일을 확인하고 링크를 클릭하여 비밀번호를 재설정해주세요.
                   </p>
                 </div>
 
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
+                <Button
+                  variant="outline"
+                  className="forgot-success-btn"
                   onClick={() => navigate('/login')}
                 >
                   로그인 페이지로 돌아가기
@@ -99,10 +100,10 @@ export default function ForgotPasswordPage() {
               </div>
             )}
 
-            <div className="mt-6">
+            <div className="forgot-back-wrapper">
               <Link to="/login">
-                <Button variant="ghost" className="w-full gap-2">
-                  <ArrowLeft className="size-4" />
+                <Button variant="ghost" className="forgot-back-btn">
+                  <ArrowLeft className="forgot-back-icon" />
                   로그인 페이지로 돌아가기
                 </Button>
               </Link>
