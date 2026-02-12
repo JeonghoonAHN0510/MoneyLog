@@ -5,6 +5,7 @@ import com.moneylog_backend.moneylog.transaction.dto.req.TransactionReqDto;
 import com.moneylog_backend.moneylog.transaction.service.TransactionService;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -68,21 +69,29 @@ public class TransactionController {
     }
 
     @GetMapping("/calendar")
-    public ResponseEntity<?> getCalendarData(@RequestParam(required = false) Integer year,
-                                             @RequestParam(required = false) Integer month,
-                                             @LoginUser Integer userId) {
-        if (year == null) year = LocalDate.now().getYear();
-        if (month == null) month = LocalDate.now().getMonthValue();
+    public ResponseEntity<?> getCalendarData (@RequestParam(required = false) Integer year,
+                                              @RequestParam(required = false) Integer month,
+                                              @LoginUser Integer userId) {
+        if (year == null) {
+            year = LocalDate.now().getYear();
+        }
+        if (month == null) {
+            month = LocalDate.now().getMonthValue();
+        }
 
         return ResponseEntity.ok(transactionService.getCalendarData(userId, year, month));
     }
 
     @GetMapping("/dashboard")
-    public ResponseEntity<?> getDashboardData(@RequestParam(required = false) Integer year,
-                                              @RequestParam(required = false) Integer month,
-                                              @LoginUser Integer userId) {
-        if (year == null) year = LocalDate.now().getYear();
-        if (month == null) month = LocalDate.now().getMonthValue();
+    public ResponseEntity<?> getDashboardData (@RequestParam(required = false) Integer year,
+                                               @RequestParam(required = false) Integer month,
+                                               @LoginUser Integer userId) {
+        if (year == null) {
+            year = LocalDate.now().getYear();
+        }
+        if (month == null) {
+            month = LocalDate.now().getMonthValue();
+        }
 
         return ResponseEntity.ok(transactionService.getDashboardData(userId, year, month));
     }

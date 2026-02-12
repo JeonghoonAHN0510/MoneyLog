@@ -42,7 +42,7 @@ public class TransactionService {
     private final CategoryMapper categoryMapper;
 
     @Transactional
-    public int saveTransaction(TransactionReqDto transactionReqDto, Integer userId) {
+    public int saveTransaction (TransactionReqDto transactionReqDto, Integer userId) {
         AccountEntity accountEntity = getAccountByIdAndValidateOwnership(transactionReqDto.getAccountId(), userId);
 
         CategoryEntity categoryEntity = getCategoryByIdAndValidateOwnership(transactionReqDto.getCategoryId(), userId);
@@ -62,7 +62,7 @@ public class TransactionService {
         return transactionEntity.getTransactionId();
     }
 
-    public List<TransactionResDto> getTransactionsByUserId(int userId) {
+    public List<TransactionResDto> getTransactionsByUserId (int userId) {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.withDayOfMonth(1);
 
@@ -75,8 +75,9 @@ public class TransactionService {
     }
 
     @Transactional
-    public TransactionResDto updateTransaction(TransactionReqDto transactionReqDto, Integer userId) {
-        TransactionEntity transactionEntity = getTransactionByIdAndValidateOwnership(transactionReqDto.getTransactionId(), userId);
+    public TransactionResDto updateTransaction (TransactionReqDto transactionReqDto, Integer userId) {
+        TransactionEntity transactionEntity = getTransactionByIdAndValidateOwnership(
+            transactionReqDto.getTransactionId(), userId);
 
         AccountEntity oldAccount = getAccountByIdAndValidateOwnership(transactionEntity.getAccountId(),
                                                                       transactionEntity.getUserId());
@@ -135,7 +136,7 @@ public class TransactionService {
     }
 
     @Transactional
-    public boolean deleteTransaction(Integer transactionId, Integer userId) {
+    public boolean deleteTransaction (Integer transactionId, Integer userId) {
         TransactionEntity transactionEntity = getTransactionByIdAndValidateOwnership(transactionId, userId);
 
         AccountEntity accountEntity = getAccountByIdAndValidateOwnership(transactionEntity.getAccountId(), userId);
@@ -146,30 +147,14 @@ public class TransactionService {
         return true;
     }
 
-    public List<DailySummaryResDto> getCalendarData(Integer userId, int year, int month) {
-        YearMonth yearMonth = YearMonth.of(year, month);
-        LocalDate startDate = yearMonth.atDay(1);
-        LocalDate endDate = yearMonth.atEndOfMonth();
-
-        SelectTransactionByUserIdQuery query = SelectTransactionByUserIdQuery.builder()
-                .userId(userId)
-                .startDate(startDate)
-                .endDate(endDate)
-                .build();
+    public List<DailySummaryResDto> getCalendarData (Integer userId, int year, int month) {
+        SelectTransactionByUserIdQuery query = createMonthlyQuery(userId, year, month);
 
         return transactionMapper.getDailySummaries(query);
     }
 
-    public DashboardResDto getDashboardData(Integer userId, int year, int month) {
-        YearMonth yearMonth = YearMonth.of(year, month);
-        LocalDate startDate = yearMonth.atDay(1);
-        LocalDate endDate = yearMonth.atEndOfMonth();
-
-        SelectTransactionByUserIdQuery query = SelectTransactionByUserIdQuery.builder()
-                .userId(userId)
-                .startDate(startDate)
-                .endDate(endDate)
-                .build();
+    public DashboardResDto getDashboardData (Integer userId, int year, int month) {
+        SelectTransactionByUserIdQuery query = createMonthlyQuery(userId, year, month);
 
         // 1. 일별 합계 조회하여 전체 수입/지출 계산
         List<DailySummaryResDto> dailySummaries = transactionMapper.getDailySummaries(query);
@@ -180,36 +165,25 @@ public class TransactionService {
         // 2. 카테고리별 지출 통계 조회
         List<CategoryStatsResDto> categoryStats = transactionMapper.getCategoryStats(query);
 
-        // 3. 비율 계산 (지출이 0이면 비율 계산 안 함)
-        List<CategoryStatsResDto> calculatedCategoryStats;
-        if (totalExpense > 0) {
-            calculatedCategoryStats = categoryStats.stream()
-                    .map(stat -> CategoryStatsResDto.builder()
-                            .categoryName(stat.getCategoryName())
-                            .totalAmount(stat.getTotalAmount())
-                            .ratio((double) stat.getTotalAmount() / totalExpense * 100)
-                            .build())
-                    .collect(Collectors.toList());
-        } else {
-            // totalExpense가 0이면 비율 0으로 설정
-            calculatedCategoryStats = categoryStats.stream()
-                    .map(stat -> CategoryStatsResDto.builder()
-                            .categoryName(stat.getCategoryName())
-                            .totalAmount(stat.getTotalAmount())
-                            .ratio(0.0)
-                            .build())
-                    .collect(Collectors.toList());
-        }
+        // 3. 비율 계산
+        List<CategoryStatsResDto> calculatedCategoryStats = categoryStats.stream().map(stat -> {
+            double ratio = ( totalExpense > 0 ) ? (double) stat.getTotalAmount() / totalExpense * 100 : 0.0;
+            return CategoryStatsResDto.builder()
+                                      .categoryName(stat.getCategoryName())
+                                      .totalAmount(stat.getTotalAmount())
+                                      .ratio(ratio)
+                                      .build();
+        }).collect(Collectors.toList());
 
         return DashboardResDto.builder()
-                .totalIncome(totalIncome)
-                .totalExpense(totalExpense)
-                .totalBalance(totalBalance)
-                .categoryStats(calculatedCategoryStats)
-                .build();
+                              .totalIncome(totalIncome)
+                              .totalExpense(totalExpense)
+                              .totalBalance(totalBalance)
+                              .categoryStats(calculatedCategoryStats)
+                              .build();
     }
 
-    private TransactionEntity getTransactionByIdAndValidateOwnership(Integer transactionId, Integer userId) {
+    private TransactionEntity getTransactionByIdAndValidateOwnership (Integer transactionId, Integer userId) {
         TransactionEntity transactionEntity = transactionRepository.findById(transactionId)
                                                                    .orElseThrow(() -> new ResourceNotFoundException(
                                                                        "존재하지 않는 지출 내역입니다."));
@@ -249,5 +223,13 @@ public class TransactionService {
         if (!paymentEntity.getUserId().equals(userId)) {
             throw new AccessDeniedException("본인의 결제수단가 아닙니다.");
         }
+    }
+
+    private SelectTransactionByUserIdQuery createMonthlyQuery (Integer userId, Integer year, Integer month) {
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+
+        return SelectTransactionByUserIdQuery.builder().userId(userId).startDate(startDate).endDate(endDate).build();
     }
 }
