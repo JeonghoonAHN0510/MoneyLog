@@ -16,14 +16,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
     // 간단한 클라이언트 검증
     if (!id || !password) {
-      toast.error('이메일과 비밀번호를 입력해주세요');
+      setError('아이디와 비밀번호를 입력해주세요');
       setIsLoading(false);
       return;
     }
@@ -37,8 +39,13 @@ export default function LoginPage() {
         toast.success('로그인 성공!');
         navigate('/finance');
       }
-    } catch (error) {
-      toast.error('로그인 중 오류가 발생했습니다');
+    } catch (error: any) {
+      if (error.response && error.response.status === 401) {
+        setError('아이디 또는 비밀번호가 일치하지 않습니다.');
+      } else {
+        setError('로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      }
+      toast.error('로그인에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -58,13 +65,19 @@ export default function LoginPage() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl">로그인</CardTitle>
             <CardDescription>
-              아이디과 비밀번호를 입력하여 로그인하세요
+              아이디와 비밀번호를 입력하여 로그인하세요
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4" noValidate>
+              {error && (
+                <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-alert-circle"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
+                  {error}
+                </div>
+              )}
               <div className="space-y-2">
-                <Label htmlFor="email">아이디</Label>
+                <Label htmlFor="id">아이디</Label>
                 <Input
                   id="id"
                   type="text"

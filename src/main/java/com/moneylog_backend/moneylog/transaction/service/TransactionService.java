@@ -1,7 +1,9 @@
 package com.moneylog_backend.moneylog.transaction.service;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.global.type.CategoryEnum;
@@ -11,14 +13,16 @@ import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
 import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
 import com.moneylog_backend.moneylog.payment.entity.PaymentEntity;
-
-import com.moneylog_backend.moneylog.transaction.dto.req.TransactionReqDto;
-import com.moneylog_backend.moneylog.transaction.dto.res.TransactionResDto;
+import com.moneylog_backend.moneylog.payment.repository.PaymentRepository;
 import com.moneylog_backend.moneylog.transaction.dto.query.SelectTransactionByUserIdQuery;
+import com.moneylog_backend.moneylog.transaction.dto.req.TransactionReqDto;
+import com.moneylog_backend.moneylog.transaction.dto.res.CategoryStatsResDto;
+import com.moneylog_backend.moneylog.transaction.dto.res.DailySummaryResDto;
+import com.moneylog_backend.moneylog.transaction.dto.res.DashboardResDto;
+import com.moneylog_backend.moneylog.transaction.dto.res.TransactionResDto;
 import com.moneylog_backend.moneylog.transaction.entity.TransactionEntity;
 import com.moneylog_backend.moneylog.transaction.mapper.TransactionMapper;
 import com.moneylog_backend.moneylog.transaction.repository.TransactionRepository;
-import com.moneylog_backend.moneylog.payment.repository.PaymentRepository;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -38,7 +42,7 @@ public class TransactionService {
     private final CategoryMapper categoryMapper;
 
     @Transactional
-    public int saveTransaction(TransactionReqDto transactionReqDto, Integer userId) {
+    public int saveTransaction (TransactionReqDto transactionReqDto, Integer userId) {
         AccountEntity accountEntity = getAccountByIdAndValidateOwnership(transactionReqDto.getAccountId(), userId);
 
         CategoryEntity categoryEntity = getCategoryByIdAndValidateOwnership(transactionReqDto.getCategoryId(), userId);
@@ -58,7 +62,7 @@ public class TransactionService {
         return transactionEntity.getTransactionId();
     }
 
-    public List<TransactionResDto> getTransactionsByUserId(int userId) {
+    public List<TransactionResDto> getTransactionsByUserId (int userId) {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.withDayOfMonth(1);
 
@@ -71,8 +75,9 @@ public class TransactionService {
     }
 
     @Transactional
-    public TransactionResDto updateTransaction(TransactionReqDto transactionReqDto, Integer userId) {
-        TransactionEntity transactionEntity = getTransactionByIdAndValidateOwnership(transactionReqDto.getTransactionId(), userId);
+    public TransactionResDto updateTransaction (TransactionReqDto transactionReqDto, Integer userId) {
+        TransactionEntity transactionEntity = getTransactionByIdAndValidateOwnership(
+            transactionReqDto.getTransactionId(), userId);
 
         AccountEntity oldAccount = getAccountByIdAndValidateOwnership(transactionEntity.getAccountId(),
                                                                       transactionEntity.getUserId());
@@ -131,7 +136,7 @@ public class TransactionService {
     }
 
     @Transactional
-    public boolean deleteTransaction(Integer transactionId, Integer userId) {
+    public boolean deleteTransaction (Integer transactionId, Integer userId) {
         TransactionEntity transactionEntity = getTransactionByIdAndValidateOwnership(transactionId, userId);
 
         AccountEntity accountEntity = getAccountByIdAndValidateOwnership(transactionEntity.getAccountId(), userId);
@@ -142,7 +147,43 @@ public class TransactionService {
         return true;
     }
 
-    private TransactionEntity getTransactionByIdAndValidateOwnership(Integer transactionId, Integer userId) {
+    public List<DailySummaryResDto> getCalendarData (Integer userId, int year, int month) {
+        SelectTransactionByUserIdQuery query = createMonthlyQuery(userId, year, month);
+
+        return transactionMapper.getDailySummaries(query);
+    }
+
+    public DashboardResDto getDashboardData (Integer userId, int year, int month) {
+        SelectTransactionByUserIdQuery query = createMonthlyQuery(userId, year, month);
+
+        // 1. 일별 합계 조회하여 전체 수입/지출 계산
+        List<DailySummaryResDto> dailySummaries = transactionMapper.getDailySummaries(query);
+        long totalIncome = dailySummaries.stream().mapToLong(DailySummaryResDto::getTotalIncome).sum();
+        long totalExpense = dailySummaries.stream().mapToLong(DailySummaryResDto::getTotalExpense).sum();
+        long totalBalance = totalIncome - totalExpense;
+
+        // 2. 카테고리별 지출 통계 조회
+        List<CategoryStatsResDto> categoryStats = transactionMapper.getCategoryStats(query);
+
+        // 3. 비율 계산
+        List<CategoryStatsResDto> calculatedCategoryStats = categoryStats.stream().map(stat -> {
+            double ratio = ( totalExpense > 0 ) ? (double) stat.getTotalAmount() / totalExpense * 100 : 0.0;
+            return CategoryStatsResDto.builder()
+                                      .categoryName(stat.getCategoryName())
+                                      .totalAmount(stat.getTotalAmount())
+                                      .ratio(ratio)
+                                      .build();
+        }).collect(Collectors.toList());
+
+        return DashboardResDto.builder()
+                              .totalIncome(totalIncome)
+                              .totalExpense(totalExpense)
+                              .totalBalance(totalBalance)
+                              .categoryStats(calculatedCategoryStats)
+                              .build();
+    }
+
+    private TransactionEntity getTransactionByIdAndValidateOwnership (Integer transactionId, Integer userId) {
         TransactionEntity transactionEntity = transactionRepository.findById(transactionId)
                                                                    .orElseThrow(() -> new ResourceNotFoundException(
                                                                        "존재하지 않는 지출 내역입니다."));
@@ -182,5 +223,13 @@ public class TransactionService {
         if (!paymentEntity.getUserId().equals(userId)) {
             throw new AccessDeniedException("본인의 결제수단가 아닙니다.");
         }
+    }
+
+    private SelectTransactionByUserIdQuery createMonthlyQuery (Integer userId, Integer year, Integer month) {
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+
+        return SelectTransactionByUserIdQuery.builder().userId(userId).startDate(startDate).endDate(endDate).build();
     }
 }
