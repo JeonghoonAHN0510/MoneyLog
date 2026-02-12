@@ -3,7 +3,6 @@ package com.moneylog_backend.moneylog.category.entity;
 import com.moneylog_backend.global.common.BaseTime;
 import com.moneylog_backend.global.type.CategoryEnum;
 import com.moneylog_backend.global.type.ColorEnum;
-import com.moneylog_backend.moneylog.category.dto.CategoryDto;
 import com.moneylog_backend.moneylog.category.dto.res.CategoryResDto;
 
 import org.hibernate.annotations.DynamicInsert;

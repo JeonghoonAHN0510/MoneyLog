@@ -1,13 +1,13 @@
-import {useState} from 'react';
-import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription} from './ui/dialog';
-import {Button} from './ui/button';
-import {Input} from './ui/input';
-import {Label} from './ui/label';
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from './ui/select';
-import {Textarea} from './ui/textarea';
-import {Tabs, TabsContent, TabsList, TabsTrigger} from './ui/tabs';
-import {Transaction, Category, Account, Payment, Fixed} from '../types/finance';
-import useResourceStore from '../stores/resourceStore';
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Textarea } from './ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Transaction, Category, Account, Payment, Fixed } from '../types/finance';
+import { useCategories, useAccounts, usePayments } from '../api/queries';
 
 interface AddTransactionDialogProps {
     open: boolean;
@@ -27,7 +27,7 @@ interface GeneralFormProps {
     onCancel: () => void;
 }
 
-const GeneralTransactionForm = ({categories, accounts, payments, onTransactionSubmit, onCancel}: GeneralFormProps) => {
+const GeneralTransactionForm = ({ categories, accounts, payments, onTransactionSubmit, onCancel }: GeneralFormProps) => {
     const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
     const [categoryId, setCategoryId] = useState('');
     const [amount, setAmount] = useState('');
@@ -99,7 +99,7 @@ const GeneralTransactionForm = ({categories, accounts, payments, onTransactionSu
                 <Label htmlFor="category">카테고리</Label>
                 <Select value={categoryId} onValueChange={setCategoryId}>
                     <SelectTrigger id="category">
-                        <SelectValue placeholder="카테고리 선택"/>
+                        <SelectValue placeholder="카테고리 선택" />
                     </SelectTrigger>
                     <SelectContent>
                         {filteredCategories.map((cat) => (
@@ -116,7 +116,7 @@ const GeneralTransactionForm = ({categories, accounts, payments, onTransactionSu
                     <Label htmlFor="payment-method">결제수단</Label>
                     <Select value={paymentId} onValueChange={handlePaymentMethodChange}>
                         <SelectTrigger id="payment-method">
-                            <SelectValue placeholder="결제수단 선택"/>
+                            <SelectValue placeholder="결제수단 선택" />
                         </SelectTrigger>
                         <SelectContent>
                             {payments.map((payment) => (
@@ -133,7 +133,7 @@ const GeneralTransactionForm = ({categories, accounts, payments, onTransactionSu
                 <Label htmlFor="account">계좌</Label>
                 <Select value={accountId} onValueChange={setAccountId}>
                     <SelectTrigger id="account">
-                        <SelectValue placeholder="계좌 선택"/>
+                        <SelectValue placeholder="계좌 선택" />
                     </SelectTrigger>
                     <SelectContent>
                         {accounts.map((acc) => (
@@ -211,7 +211,7 @@ interface FixedFormProps {
     onCancel: () => void;
 }
 
-const FixedTransactionForm = ({categories, accounts, onFixedSubmit, onCancel}: FixedFormProps) => {
+const FixedTransactionForm = ({ categories, accounts, onFixedSubmit, onCancel }: FixedFormProps) => {
     const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
 
     const [categoryId, setCategoryId] = useState('');
@@ -273,7 +273,7 @@ const FixedTransactionForm = ({categories, accounts, onFixedSubmit, onCancel}: F
                 <Label htmlFor="fixed-category">카테고리</Label>
                 <Select value={categoryId} onValueChange={setCategoryId}>
                     <SelectTrigger id="fixed-category">
-                        <SelectValue placeholder="카테고리 선택"/>
+                        <SelectValue placeholder="카테고리 선택" />
                     </SelectTrigger>
                     <SelectContent>
                         {filteredCategories.map((cat) => (
@@ -289,7 +289,7 @@ const FixedTransactionForm = ({categories, accounts, onFixedSubmit, onCancel}: F
                 <Label htmlFor="account">계좌</Label>
                 <Select value={accountId} onValueChange={setAccountId}>
                     <SelectTrigger id="account">
-                        <SelectValue placeholder="계좌 선택"/>
+                        <SelectValue placeholder="계좌 선택" />
                     </SelectTrigger>
                     <SelectContent>
                         {accounts.map((acc) => (
@@ -328,10 +328,10 @@ const FixedTransactionForm = ({categories, accounts, onFixedSubmit, onCancel}: F
                 <Label htmlFor="fixed-day">고정일 (매월)</Label>
                 <Select value={fixedDay} onValueChange={setFixedDay}>
                     <SelectTrigger id="fixed-day">
-                        <SelectValue/>
+                        <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        {Array.from({length: 31}, (_, i) => i + 1).map((day) => (
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
                             <SelectItem key={day} value={day.toString()}>
                                 {day}일
                             </SelectItem>
@@ -377,12 +377,14 @@ const FixedTransactionForm = ({categories, accounts, onFixedSubmit, onCancel}: F
 // 3. 메인 AddTransactionDialog 컴포넌트
 // =========================================================
 export function AddTransactionDialog({
-                                         open,
-                                         onOpenChange,
-                                         onAddTransaction,
-                                         onAddFixed
-                                     }: AddTransactionDialogProps) {
-    const {categories, accounts, payments} = useResourceStore();
+    open,
+    onOpenChange,
+    onAddTransaction,
+    onAddFixed
+}: AddTransactionDialogProps) {
+    const { data: categories = [] } = useCategories();
+    const { data: accounts = [] } = useAccounts();
+    const { data: payments = [] } = usePayments();
 
     const [transactionType, setTransactionType] = useState<'general' | 'fixed'>('general');
 

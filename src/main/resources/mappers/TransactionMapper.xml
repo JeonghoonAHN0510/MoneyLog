@@ -16,6 +16,67 @@
           AND T.trading_at <![CDATA[ <= ]]> #{endDate}
     </select>
 
+    <select id="selectDailySummary" parameterType="com.moneylog_backend.moneylog.transaction.dto.query.SelectTransactionByUserIdQuery" resultType="com.moneylog_backend.moneylog.transaction.dto.res.DailySummaryResDto">
+        SELECT
+            DATE(trading_at) as date,
+            SUM(CASE WHEN category_type = 'INCOME' THEN amount ELSE 0 END) as totalIncome,
+            SUM(CASE WHEN category_type = 'EXPENSE' THEN amount ELSE 0 END) as totalExpense
+        FROM transaction
+        WHERE user_id = #{userId}
+        AND trading_at BETWEEN #{startDate} AND #{endDate}
+        GROUP BY DATE(trading_at)
+    </select>
+
+    <select id="searchTransactions" parameterType="com.moneylog_backend.moneylog.transaction.dto.req.TransactionSearchReqDto" resultType="com.moneylog_backend.moneylog.transaction.dto.res.TransactionResDto">
+        SELECT
+            t.transaction_id AS transactionId,
+            t.user_id AS userId,
+            t.category_id AS categoryId,
+            t.account_id AS accountId,
+            t.payment_id AS paymentId,
+            t.fixed_id AS fixedId,
+            t.title,
+            t.amount,
+            t.memo,
+            t.category_type AS categoryType,
+            c.category_name AS categoryName,
+            p.name AS paymentName,
+            t.trading_at AS tradingAt,
+            t.created_at AS createdAt,
+            t.updated_at AS updatedAt
+        FROM transaction t
+        LEFT JOIN category c ON t.category_id = c.category_id
+        LEFT JOIN payment p ON t.payment_id = p.payment_id
+        <where>
+            t.user_id = #{userId}
+            <if test="startDate != null and startDate != ''">
+                AND t.trading_at &gt;= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND t.trading_at &lt;= #{endDate}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (t.title LIKE CONCAT('%', #{keyword}, '%') OR t.memo LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="categoryType != null and categoryType != ''">
+                AND t.category_type = #{categoryType}
+            </if>
+            <if test="categoryId != null and categoryId != ''">
+                AND t.category_id = #{categoryId}
+            </if>
+            <if test="paymentId != null and paymentId != ''">
+                AND t.payment_id = #{paymentId}
+            </if>
+            <if test="minAmount != null">
+                AND t.amount &gt;= #{minAmount}
+            </if>
+            <if test="maxAmount != null">
+                AND t.amount &lt;= #{maxAmount}
+            </if>
+        </where>
+        ORDER BY t.trading_at DESC, t.created_at DESC
+    </select>
+
     <select id="getDailySummaries" resultType="com.moneylog_backend.moneylog.transaction.dto.res.DailySummaryResDto">
         SELECT
             T.TRADING_AT AS date,

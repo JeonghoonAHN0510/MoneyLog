@@ -1,0 +1,205 @@
+@reference "../tailwind.css";
+
+/* HomePage.css - 홈페이지(랜딩) 스타일 */
+
+.home-page {
+    @apply min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50;
+}
+
+/* ===== Header ===== */
+.home-header {
+    @apply border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50;
+}
+
+.home-header-inner {
+    @apply container mx-auto px-4 py-3 md:py-4 flex justify-between items-center;
+}
+
+.home-header-logo {
+    @apply flex items-center gap-2;
+}
+
+.home-header-logo-icon {
+    @apply size-6 md:size-8 text-blue-600;
+}
+
+.home-header-logo-text {
+    @apply text-xl md:text-2xl font-bold text-gray-900;
+}
+
+.home-header-actions {
+    @apply flex gap-2 md:gap-3;
+}
+
+.home-header-login-btn {
+    @apply px-2 md:px-4;
+}
+
+.home-header-signup-btn {
+    @apply px-3 md:px-4;
+}
+
+/* ===== Hero Section ===== */
+.home-hero {
+    @apply container mx-auto px-4 py-20 md:py-32;
+}
+
+.home-hero-inner {
+    @apply max-w-4xl mx-auto text-center space-y-6;
+}
+
+.home-hero-title {
+    @apply text-4xl md:text-6xl font-bold text-gray-900 leading-tight;
+}
+
+.home-hero-highlight {
+    @apply text-blue-600;
+}
+
+.home-hero-subtitle {
+    @apply text-xl text-gray-600 max-w-2xl mx-auto;
+}
+
+.home-hero-actions {
+    @apply flex gap-4 justify-center pt-6;
+}
+
+.home-hero-cta-btn {
+    @apply gap-2;
+}
+
+.home-hero-cta-icon {
+    @apply size-4;
+}
+
+/* ===== Features Section ===== */
+.home-features {
+    @apply container mx-auto px-4 py-20;
+}
+
+.home-features-header {
+    @apply text-center mb-12;
+}
+
+.home-features-title {
+    @apply text-3xl md:text-4xl font-bold text-gray-900 mb-4;
+}
+
+.home-features-subtitle {
+    @apply text-lg text-gray-600;
+}
+
+.home-features-grid {
+    @apply grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto;
+}
+
+.home-feature-card {
+    @apply border-2 hover:border-blue-200 transition-colors;
+}
+
+.home-feature-icon-wrapper {
+    @apply size-12 rounded-lg bg-blue-100 flex items-center justify-center mb-4;
+}
+
+.home-feature-icon {
+    @apply size-6 text-blue-600;
+}
+
+.home-feature-title {
+    @apply text-xl;
+}
+
+.home-feature-description {
+    @apply text-base;
+}
+
+/* ===== Benefits Section ===== */
+.home-benefits {
+    @apply bg-gradient-to-br from-blue-600 to-purple-600 text-white py-20;
+}
+
+.home-benefits-container {
+    @apply container mx-auto px-4;
+}
+
+.home-benefits-inner {
+    @apply max-w-4xl mx-auto space-y-12;
+}
+
+.home-benefits-header {
+    @apply text-center space-y-4;
+}
+
+.home-benefits-title {
+    @apply text-3xl md:text-4xl font-bold;
+}
+
+.home-benefits-grid {
+    @apply grid md:grid-cols-3 gap-8;
+}
+
+.home-benefit-item {
+    @apply space-y-3;
+}
+
+.home-benefit-icon {
+    @apply size-12 rounded-full bg-white/20 flex items-center justify-center;
+}
+
+.home-benefit-emoji {
+    @apply text-2xl;
+}
+
+.home-benefit-title {
+    @apply text-xl font-semibold;
+}
+
+.home-benefit-description {
+    @apply text-blue-100;
+}
+
+/* ===== CTA Section ===== */
+.home-cta {
+    @apply container mx-auto px-4 py-20;
+}
+
+.home-cta-inner {
+    @apply max-w-3xl mx-auto text-center space-y-6 bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-12 border-2 border-blue-200;
+}
+
+.home-cta-title {
+    @apply text-3xl md:text-4xl font-bold text-gray-900;
+}
+
+.home-cta-subtitle {
+    @apply text-lg text-gray-600;
+}
+
+.home-cta-btn {
+    @apply gap-2;
+}
+
+.home-cta-btn-icon {
+    @apply size-4;
+}
+
+/* ===== Footer ===== */
+.home-footer {
+    @apply border-t bg-gray-50 py-12;
+}
+
+.home-footer-inner {
+    @apply container mx-auto px-4 text-center text-gray-600;
+}
+
+.home-footer-logo {
+    @apply flex items-center justify-center gap-2 mb-4;
+}
+
+.home-footer-logo-icon {
+    @apply size-6 text-blue-600;
+}
+
+.home-footer-logo-text {
+    @apply text-xl font-bold text-gray-900;
+}

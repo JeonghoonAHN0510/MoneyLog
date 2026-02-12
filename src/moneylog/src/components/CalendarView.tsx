@@ -1,24 +1,33 @@
 import { useState } from 'react';
+import '../styles/components/CalendarView.css';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
-import { ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { Transaction } from '../types/finance';
+import { ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react';
+import { useCalendar } from '../api/queries';
 
 interface CalendarViewProps {
-  transactions: Transaction[];
   onDateClick: (date: string) => void;
 }
 
-export function CalendarView({ transactions, onDateClick }: CalendarViewProps) {
+export function CalendarView({ onDateClick }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
+  const month = currentDate.getMonth(); // 0-indexed
 
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const daysInMonth = lastDay.getDate();
   const startingDayOfWeek = firstDay.getDay();
+
+  // TanStack Query로 캘린더 데이터 조회
+  const { data: dailySummaries = [], isLoading } = useCalendar(year, month + 1);
+
+  // 날짜별 요약 Map 생성
+  const summaryMap = new Map<string, { totalIncome: number; totalExpense: number }>();
+  dailySummaries.forEach((s) => {
+    summaryMap.set(s.date, s);
+  });
 
   const prevMonth = () => {
     setCurrentDate(new Date(year, month - 1, 1));
@@ -28,60 +37,42 @@ export function CalendarView({ transactions, onDateClick }: CalendarViewProps) {
     setCurrentDate(new Date(year, month + 1, 1));
   };
 
-  const getDayTransactions = (day: number) => {
-    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return transactions.filter((t) => t.date === dateStr);
-  };
-
-  const getDaySummary = (day: number) => {
-    const dayTransactions = getDayTransactions(day);
-    const income = dayTransactions
-      .filter((t) => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
-    const expense = dayTransactions
-      .filter((t) => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
-    return { income, expense, net: income - expense };
-  };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ko-KR').format(amount);
   };
 
   const days = [];
   for (let i = 0; i < startingDayOfWeek; i++) {
-    days.push(<div key={`empty-${i}`} className="min-h-24" />);
+    days.push(<div key={`empty-${i}`} className="calendar-day-empty" />);
   }
 
   for (let day = 1; day <= daysInMonth; day++) {
-    const summary = getDaySummary(day);
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const summary = summaryMap.get(dateStr);
     const isToday = dateStr === new Date().toISOString().split('T')[0];
-    const hasTransactions = summary.income > 0 || summary.expense > 0;
+    const hasData = summary && (summary.totalIncome > 0 || summary.totalExpense > 0);
 
     days.push(
       <Card
         key={day}
-        className={`min-h-24 p-2 cursor-pointer hover:bg-accent transition-colors ${
-          isToday ? 'border-primary border-2' : ''
-        }`}
+        className={`calendar-day-card ${isToday ? 'calendar-day-card-today' : ''}`}
         onClick={() => onDateClick(dateStr)}
       >
-        <div className={isToday ? 'text-primary' : 'text-muted-foreground'}>
+        <div className={isToday ? 'calendar-day-number-today' : 'calendar-day-number'}>
           {day}
         </div>
-        {hasTransactions && (
-          <div className="mt-1 space-y-1 text-xs">
-            {summary.income > 0 && (
-              <div className="flex items-center gap-1 text-green-600">
-                <ArrowUpRight className="size-3" />
-                <span>{formatCurrency(summary.income)}</span>
+        {hasData && (
+          <div className="calendar-summary-container">
+            {summary!.totalIncome > 0 && (
+              <div className="calendar-summary-income">
+                <ArrowUpRight className="calendar-summary-icon" />
+                <span>{formatCurrency(summary!.totalIncome)}</span>
               </div>
             )}
-            {summary.expense > 0 && (
-              <div className="flex items-center gap-1 text-red-600">
-                <ArrowDownRight className="size-3" />
-                <span>{formatCurrency(summary.expense)}</span>
+            {summary!.totalExpense > 0 && (
+              <div className="calendar-summary-expense">
+                <ArrowDownRight className="calendar-summary-icon" />
+                <span>{formatCurrency(summary!.totalExpense)}</span>
               </div>
             )}
           </div>
@@ -92,27 +83,30 @@ export function CalendarView({ transactions, onDateClick }: CalendarViewProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2>
+      <div className="calendar-header">
+        <h2 className="calendar-title">
           {year}년 {month + 1}월
         </h2>
-        <div className="flex gap-2">
+        <div className="calendar-nav-group">
+          {isLoading && <Loader2 className="calendar-loading" />}
           <Button variant="outline" size="icon" onClick={prevMonth}>
-            <ChevronLeft className="size-4" />
+            <ChevronLeft className="calendar-nav-icon" />
           </Button>
           <Button variant="outline" size="icon" onClick={nextMonth}>
-            <ChevronRight className="size-4" />
+            <ChevronRight className="calendar-nav-icon" />
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-2">
-        {['일', '월', '화', '수', '목', '금', '토'].map((day) => (
-          <div key={day} className="text-center p-2">
-            {day}
-          </div>
-        ))}
-        {days}
+      <div className="calendar-wrapper">
+        <div className="calendar-grid">
+          {['일', '월', '화', '수', '목', '금', '토'].map((day) => (
+            <div key={day} className="calendar-day-header">
+              {day}
+            </div>
+          ))}
+          {days}
+        </div>
       </div>
     </div>
   );

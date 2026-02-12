@@ -16,6 +16,7 @@ import com.moneylog_backend.moneylog.payment.entity.PaymentEntity;
 import com.moneylog_backend.moneylog.payment.repository.PaymentRepository;
 import com.moneylog_backend.moneylog.transaction.dto.query.SelectTransactionByUserIdQuery;
 import com.moneylog_backend.moneylog.transaction.dto.req.TransactionReqDto;
+import com.moneylog_backend.moneylog.transaction.dto.req.TransactionSearchReqDto;
 import com.moneylog_backend.moneylog.transaction.dto.res.CategoryStatsResDto;
 import com.moneylog_backend.moneylog.transaction.dto.res.DailySummaryResDto;
 import com.moneylog_backend.moneylog.transaction.dto.res.DashboardResDto;
@@ -72,6 +73,12 @@ public class TransactionService {
                                                                                    .endDate(endDate)
                                                                                    .build();
         return transactionMapper.getTransactionsByUserId(selectQuery);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TransactionResDto> searchTransactions (Integer userId, TransactionSearchReqDto searchDto) {
+        searchDto.setUserId(userId);
+        return transactionMapper.searchTransactions(searchDto);
     }
 
     @Transactional

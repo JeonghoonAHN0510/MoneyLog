@@ -1,0 +1,184 @@
+@reference "../tailwind.css";
+
+/* SignUpPage.css - 회원가입 페이지 스타일 */
+
+.signup-page {
+    @apply min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-2 sm:p-4 py-10;
+}
+
+.signup-wrapper {
+    @apply w-full max-w-md;
+}
+
+/* 로고 영역 */
+.signup-logo {
+    @apply flex items-center justify-center gap-2 mb-8;
+}
+
+.signup-logo-icon {
+    @apply size-10 text-blue-600;
+}
+
+.signup-logo-text {
+    @apply text-3xl font-bold text-gray-900;
+}
+
+/* 카드 */
+.signup-card {
+    @apply border-2 shadow-lg;
+}
+
+.signup-card-header {
+    @apply space-y-1;
+}
+
+.signup-card-title {
+    @apply text-2xl text-center;
+}
+
+.signup-card-description {
+    @apply text-center;
+}
+
+/* 폼 */
+.signup-form {
+    @apply space-y-4;
+}
+
+.signup-error-alert {
+    @apply p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md flex items-center gap-2;
+}
+
+.signup-error-alert svg {
+    @apply shrink-0;
+}
+
+/* 프로필 이미지 */
+.signup-profile-section {
+    @apply flex flex-col items-center gap-4 mb-6;
+}
+
+.signup-profile-wrapper {
+    @apply relative;
+}
+
+.signup-profile-circle {
+    @apply w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors;
+}
+
+.signup-profile-preview {
+    @apply w-full h-full object-cover;
+}
+
+.signup-profile-placeholder {
+    @apply text-gray-400 size-10;
+}
+
+.signup-profile-upload-btn {
+    @apply absolute bottom-0 right-0 bg-blue-600 text-white p-1.5 rounded-full shadow-md cursor-pointer hover:bg-blue-700;
+}
+
+.signup-profile-upload-icon {
+    @apply size-4;
+}
+
+.signup-profile-upload-input {
+    @apply hidden;
+}
+
+.signup-profile-label {
+    @apply text-xs text-gray-500 cursor-pointer;
+}
+
+/* 폼 필드 */
+.signup-field-group {
+    @apply space-y-2;
+}
+
+.signup-grid-2col {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
+}
+
+.signup-grid-bank {
+    @apply grid grid-cols-1 sm:grid-cols-5 gap-4;
+}
+
+.signup-bank-select-col {
+    @apply sm:col-span-2 space-y-2;
+}
+
+.signup-bank-select-trigger {
+    @apply w-full;
+}
+
+.signup-account-col {
+    @apply sm:col-span-3 space-y-2;
+}
+
+.signup-grid-1col {
+    @apply grid grid-cols-1 gap-4;
+}
+
+/* 비밀번호 */
+.signup-password-wrapper {
+    @apply relative;
+}
+
+.signup-password-toggle {
+    @apply absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700;
+}
+
+.signup-password-toggle-icon {
+    @apply size-4;
+}
+
+/* 성별 선택 */
+.signup-gender-group {
+    @apply flex gap-4;
+}
+
+.signup-gender-option {
+    @apply flex-1 flex items-center justify-center p-3 rounded-lg border cursor-pointer transition-all;
+}
+
+.signup-gender-option.active-male {
+    @apply border-blue-500 bg-blue-50 text-blue-700 font-semibold;
+}
+
+.signup-gender-option.active-female {
+    @apply border-pink-500 bg-pink-50 text-pink-700 font-semibold;
+}
+
+.signup-gender-option.inactive {
+    @apply border-gray-200 hover:bg-gray-50;
+}
+
+.signup-gender-radio {
+    @apply hidden;
+}
+
+/* 제출 버튼 */
+.signup-submit-btn {
+    @apply w-full mt-4;
+}
+
+/* 하단 영역 */
+.signup-login-prompt {
+    @apply mt-6 text-center text-sm;
+}
+
+.signup-login-prompt-text {
+    @apply text-gray-600;
+}
+
+.signup-login-link {
+    @apply text-blue-600 hover:text-blue-700 hover:underline font-medium;
+}
+
+.signup-home-btn-wrapper {
+    @apply mt-4;
+}
+
+.signup-home-btn {
+    @apply w-full text-gray-500;
+}

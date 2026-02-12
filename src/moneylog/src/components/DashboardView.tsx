@@ -1,98 +1,98 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Progress } from './ui/progress';
-import { Transaction, Budget, Category } from '../types/finance';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
-import { TrendingUp, TrendingDown, Wallet, Target } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, Target, Loader2 } from 'lucide-react';
+import { useDashboard, useBudgets, useCategories } from '../api/queries';
 
-interface DashboardViewProps {
-  transactions: Transaction[];
-  budgets: Budget[];
-  categories: Category[];
-}
+// 카테고리 색상 팔레트 (순환 사용)
+const CHART_COLORS = [
+  '#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6',
+  '#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16',
+  '#6366f1', '#e11d48'
+];
 
-export function DashboardView({ transactions, budgets, categories }: DashboardViewProps) {
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
+export function DashboardView() {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1; // 1-indexed for API
 
-  const monthTransactions = transactions.filter((t) => {
-    const date = new Date(t.date);
-    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-  });
+  // TanStack Query로 데이터 조회
+  const { data: dashboardData, isLoading: dashLoading } = useDashboard(currentYear, currentMonth);
+  const { data: budgets = [] } = useBudgets();
+  const { data: categories = [] } = useCategories();
 
-  const totalIncome = monthTransactions
-    .filter((t) => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0);
+  // 최근 3개월 추세 데이터
+  const month1 = new Date(currentYear, currentMonth - 3, 1);
+  const month2 = new Date(currentYear, currentMonth - 2, 1);
+  const { data: dash1 } = useDashboard(month1.getFullYear(), month1.getMonth() + 1);
+  const { data: dash2 } = useDashboard(month2.getFullYear(), month2.getMonth() + 1);
 
-  const totalExpense = monthTransactions
-    .filter((t) => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0);
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('ko-KR').format(amount);
+  };
 
-  const netAmount = totalIncome - totalExpense;
-  const savingsRate = totalIncome > 0 ? ((netAmount / totalIncome) * 100).toFixed(1) : '0';
+  if (dashLoading || !dashboardData) {
+    return (
+      <div className="flex items-center justify-center h-64 gap-2 text-muted-foreground">
+        <Loader2 className="size-5 animate-spin" />
+        <span>대시보드 데이터를 불러오는 중...</span>
+      </div>
+    );
+  }
 
-  // Category breakdown
-  const expenseByCategory = categories
-    .filter((cat) => cat.type === 'expense')
-    .map((cat) => {
-      const amount = monthTransactions
-        .filter((t) => t.type === 'expense' && t.category === cat.name)
-        .reduce((sum, t) => sum + t.amount, 0);
-      return {
-        name: cat.name,
-        value: amount,
-        color: cat.color,
-      };
-    })
-    .filter((item) => item.value > 0);
+  const { totalIncome, totalExpense, totalBalance, categoryStats } = dashboardData;
+  const savingsRate = totalIncome > 0 ? ((totalBalance / totalIncome) * 100).toFixed(1) : '0';
 
-  // Budget tracking
+  // 카테고리 차트 데이터
+  const pieData = categoryStats
+    .filter(s => s.totalAmount > 0)
+    .map((s, i) => ({
+      name: s.categoryName,
+      value: s.totalAmount,
+      color: CHART_COLORS[i % CHART_COLORS.length],
+      ratio: s.ratio,
+    }));
+
+  // 최근 3개월 추세
+  const monthlyTrend = [
+    {
+      date: `${month1.getFullYear()}.${month1.getMonth() + 1}`,
+      수입: dash1?.totalIncome || 0,
+      지출: dash1?.totalExpense || 0,
+    },
+    {
+      date: `${month2.getFullYear()}.${month2.getMonth() + 1}`,
+      수입: dash2?.totalIncome || 0,
+      지출: dash2?.totalExpense || 0,
+    },
+    {
+      date: `${currentYear}.${currentMonth}`,
+      수입: totalIncome,
+      지출: totalExpense,
+    },
+  ];
+
+  // 예산 추적
   const budgetStatus = budgets.map((budget) => {
-    const spent = monthTransactions
-      .filter((t) => t.type === 'expense' && t.category === budget.category)
-      .reduce((sum, t) => sum + t.amount, 0);
-    const percentage = (spent / budget.amount) * 100;
+    const categoryStat = categoryStats.find(
+      (s) => {
+        const cat = categories.find(c => String(c.categoryId) === String(budget.categoryId));
+        return cat && s.categoryName === cat.name;
+      }
+    );
+    const spent = categoryStat ? categoryStat.totalAmount : 0;
+    const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
+    const categoryName = budget.categoryName ||
+      categories.find(c => String(c.categoryId) === String(budget.categoryId))?.name ||
+      '알 수 없음';
     return {
-      category: budget.category,
+      category: categoryName,
       budget: budget.amount,
       spent,
       percentage,
       remaining: budget.amount - spent,
     };
   });
-
-  // Monthly spending trend (last 3 months)
-  const last3Months = Array.from({ length: 3 }, (_, i) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - (2 - i));
-    return date;
-  });
-
-  const monthlyTrend = last3Months.map((date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    
-    const monthTransactions = transactions.filter((t) => {
-      const tDate = new Date(t.date);
-      return tDate.getFullYear() === year && tDate.getMonth() === month;
-    });
-    
-    const income = monthTransactions
-      .filter((t) => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
-    const expense = monthTransactions
-      .filter((t) => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
-    
-    return {
-      date: `${year}.${month + 1}`,
-      수입: income,
-      지출: expense,
-    };
-  });
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ko-KR').format(amount);
-  };
 
   return (
     <div className="space-y-6">
@@ -104,7 +104,7 @@ export function DashboardView({ transactions, budgets, categories }: DashboardVi
             <TrendingUp className="size-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-green-600">{formatCurrency(totalIncome)}원</div>
+            <div className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome)}원</div>
           </CardContent>
         </Card>
 
@@ -114,7 +114,7 @@ export function DashboardView({ transactions, budgets, categories }: DashboardVi
             <TrendingDown className="size-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-red-600">{formatCurrency(totalExpense)}원</div>
+            <div className="text-2xl font-bold text-red-600">{formatCurrency(totalExpense)}원</div>
           </CardContent>
         </Card>
 
@@ -124,8 +124,8 @@ export function DashboardView({ transactions, budgets, categories }: DashboardVi
             <Wallet className="size-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className={netAmount >= 0 ? 'text-green-600' : 'text-red-600'}>
-              {formatCurrency(netAmount)}원
+            <div className={`text-2xl font-bold ${totalBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {formatCurrency(totalBalance)}원
             </div>
           </CardContent>
         </Card>
@@ -136,7 +136,7 @@ export function DashboardView({ transactions, budgets, categories }: DashboardVi
             <Target className="size-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-purple-600">{savingsRate}%</div>
+            <div className="text-2xl font-bold text-purple-600">{savingsRate}%</div>
           </CardContent>
         </Card>
       </div>
@@ -149,24 +149,24 @@ export function DashboardView({ transactions, budgets, categories }: DashboardVi
             <CardTitle>카테고리별 지출</CardTitle>
           </CardHeader>
           <CardContent>
-            {expenseByCategory.length > 0 ? (
+            {pieData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={expenseByCategory}
+                    data={pieData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, payload }) => `${name} ${(payload?.ratio ?? 0).toFixed(1)}%`}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {expenseByCategory.map((entry, index) => (
+                    {pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => `${formatCurrency(value)}원`} />
+                  <Tooltip formatter={(value: any) => `${formatCurrency(Number(value))}원`} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
@@ -187,7 +187,7 @@ export function DashboardView({ transactions, budgets, categories }: DashboardVi
               <BarChart data={monthlyTrend}>
                 <XAxis dataKey="date" />
                 <YAxis />
-                <Tooltip formatter={(value: number) => `${formatCurrency(value)}원`} />
+                <Tooltip formatter={(value: any) => `${formatCurrency(Number(value))}원`} />
                 <Legend />
                 <Bar dataKey="수입" fill="#22c55e" />
                 <Bar dataKey="지출" fill="#ef4444" />

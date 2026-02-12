@@ -1,13 +1,13 @@
-import {useState} from 'react';
-import {Card, CardContent, CardHeader, CardTitle} from './ui/card';
-import {Button} from './ui/button';
-import {Input} from './ui/input';
-import {Label} from './ui/label';
-import {Account, Category, Payment} from '../types/finance';
-import {List, Trash, Plus, Pencil, CreditCard} from 'lucide-react';
-import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription} from './ui/dialog';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Account, Category, Payment } from '../types/finance';
+import { List, Trash, Plus, Pencil, CreditCard } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import {Tabs, TabsContent, TabsList, TabsTrigger} from './ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -18,7 +18,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "./ui/alert-dialog";
-import useResourceStore from '../stores/resourceStore';
+import { useCategories, usePayments, useAccounts } from '../api/queries';
 
 interface CategoryManagerProps {
     onAdd: (category: Omit<Category, "categoryId" | "userId" | "createdAt" | "updatedAt">) => void;
@@ -44,7 +44,7 @@ interface CategoryFormProps {
     setColor: (value: string) => void;
 }
 
-const CategoryForm = ({name, setName, type, setType, color, setColor}: CategoryFormProps) => (
+const CategoryForm = ({ name, setName, type, setType, color, setColor }: CategoryFormProps) => (
     <div className="space-y-4">
         <div className="space-y-2">
             <Label htmlFor="category-name">카테고리명</Label>
@@ -85,10 +85,9 @@ const CategoryForm = ({name, setName, type, setType, color, setColor}: CategoryF
                     <button
                         key={c}
                         type="button"
-                        className={`size-10 rounded-full border-2 ${
-                            color === c ? 'border-foreground' : 'border-transparent'
-                        }`}
-                        style={{backgroundColor: c}}
+                        className={`size-10 rounded-full border-2 ${color === c ? 'border-foreground' : 'border-transparent'
+                            }`}
+                        style={{ backgroundColor: c }}
                         onClick={() => setColor(c)}
                     />
                 ))}
@@ -107,7 +106,7 @@ interface PaymentFormProps {
     setAccountId: (value: string) => void;
 }
 
-const PaymentForm = ({name, setName, type, setType, accountId, setAccountId, accounts}: PaymentFormProps) => (
+const PaymentForm = ({ name, setName, type, setType, accountId, setAccountId, accounts }: PaymentFormProps) => (
     <div className="space-y-4">
         <div className="space-y-2">
             <Label htmlFor="payment-name">결제수단명</Label>
@@ -122,6 +121,7 @@ const PaymentForm = ({name, setName, type, setType, accountId, setAccountId, acc
         <div className="space-y-2">
             <Label>유형</Label>
             <div className="flex gap-2">
+                {/*// todo 현금을 선택하면, 은행을 선택하지 않도록 변경 */}
                 <Button
                     type="button"
                     variant={type === 'CASH' ? 'default' : 'outline'}
@@ -152,7 +152,7 @@ const PaymentForm = ({name, setName, type, setType, accountId, setAccountId, acc
                     className="flex-1"
                     onClick={() => setType('BANK')}
                 >
-                    계좌이체
+                    은행
                 </Button>
             </div>
         </div>
@@ -174,7 +174,7 @@ const PaymentForm = ({name, setName, type, setType, accountId, setAccountId, acc
     </div>
 );
 
-const CategoryList = ({items, onEdit, onDelete}: {
+const CategoryList = ({ items, onEdit, onDelete }: {
     items: Category[];
     onEdit: (category: Category) => void;
     onDelete: (id: string) => void;
@@ -191,16 +191,16 @@ const CategoryList = ({items, onEdit, onDelete}: {
                     <div className="flex items-center gap-3">
                         <div
                             className="size-6 rounded-full"
-                            style={{backgroundColor: category.color}}
+                            style={{ backgroundColor: category.color }}
                         />
                         <span>{category.name}</span>
                     </div>
                     <div className="flex gap-2">
                         <Button variant="ghost" size="icon" onClick={() => onEdit(category)}>
-                            <Pencil className="size-4"/>
+                            <Pencil className="size-4" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => onDelete(category.categoryId)}>
-                            <Trash className="size-4"/>
+                            <Trash className="size-4" />
                         </Button>
                     </div>
                 </div>
@@ -209,7 +209,7 @@ const CategoryList = ({items, onEdit, onDelete}: {
     </div>
 );
 
-const PaymentList = ({items, onEdit, onDelete}: {
+const PaymentList = ({ items, onEdit, onDelete }: {
     items: Payment[];
     onEdit: (payment: Payment) => void;
     onDelete: (id: string) => void;
@@ -230,16 +230,16 @@ const PaymentList = ({items, onEdit, onDelete}: {
                         <div className="flex flex-col">
                             <span className="font-medium">{payment.name}</span>
                             <span className="text-xs text-muted-foreground">
-                                {payment.type === 'CASH' ? '현금' : payment.type === 'CREDIT_CARD' ? '신용카드' : payment.type === 'CHECK_CARD' ? '체크카드' : '계좌이체'}
+                                {payment.type === 'CASH' ? '현금' : payment.type === 'CREDIT_CARD' ? '신용카드' : payment.type === 'CHECK_CARD' ? '체크카드' : '은행'}
                             </span>
                         </div>
                     </div>
                     <div className="flex gap-2">
                         <Button variant="ghost" size="icon" onClick={() => onEdit(payment)}>
-                            <Pencil className="size-4"/>
+                            <Pencil className="size-4" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => onDelete(payment.paymentId)}>
-                            <Trash className="size-4"/>
+                            <Trash className="size-4" />
                         </Button>
                     </div>
                 </div>
@@ -253,7 +253,9 @@ export function CategoryManager({
     onAdd, onUpdate, onDelete,
     onAddPayment, onUpdatePayment, onDeletePayment
 }: CategoryManagerProps) {
-    const {categories, payments, accounts} = useResourceStore();
+    const { data: categories = [] } = useCategories();
+    const { data: payments = [] } = usePayments();
+    const { data: accounts = [] } = useAccounts();
 
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -273,7 +275,7 @@ export function CategoryManager({
 
     const handleAdd = () => {
         if (!name) return;
-        onAdd({name, type, color});
+        onAdd({ name, type, color });
         resetForm();
         setIsAddDialogOpen(false);
     };
@@ -289,7 +291,7 @@ export function CategoryManager({
 
     const handleUpdate = () => {
         if (!editingCategory || !name) return;
-        onUpdate({categoryId, name, type, color});
+        onUpdate({ categoryId, name, type, color });
         resetForm();
         setEditingCategory(null);
         setIsEditDialogOpen(false);
@@ -326,13 +328,13 @@ export function CategoryManager({
         setIsAddPaymentOpen(false);
     };
 
-const handleEditPayment = (payment: Payment) => {
+    const handleEditPayment = (payment: Payment) => {
         setEditingPayment(payment);
         setPaymentName(payment.name);
         setPaymentType(payment.type as 'CASH' | 'CREDIT_CARD' | 'CHECK_CARD' | 'BANK');
         setPaymentId(payment.paymentId);
         setAccountId(payment.accountId ? String(payment.accountId) : '');
-        
+
         setIsEditPaymentOpen(true);
     };
 
@@ -364,11 +366,11 @@ const handleEditPayment = (payment: Payment) => {
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-2">
-                            <List className="size-5"/>
+                            <List className="size-5" />
                             카테고리 관리
                         </CardTitle>
                         <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
-                            <Plus className="size-4 mr-2"/>
+                            <Plus className="size-4 mr-2" />
                             카테고리 추가
                         </Button>
                     </div>
@@ -393,20 +395,20 @@ const handleEditPayment = (payment: Payment) => {
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-2">
-                            <CreditCard className="size-5"/>
+                            <CreditCard className="size-5" />
                             결제수단 관리
                         </CardTitle>
                         <Button onClick={() => setIsAddPaymentOpen(true)} size="sm">
-                            <Plus className="size-4 mr-2"/>
+                            <Plus className="size-4 mr-2" />
                             결제수단 추가
                         </Button>
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <PaymentList 
-                        items={payments} 
-                        onEdit={handleEditPayment} 
-                        onDelete={handleDeletePayment} 
+                    <PaymentList
+                        items={payments}
+                        onEdit={handleEditPayment}
+                        onDelete={handleDeletePayment}
                     />
                 </CardContent>
             </Card>
@@ -444,7 +446,7 @@ const handleEditPayment = (payment: Payment) => {
                     <AlertDialogHeader>
                         <AlertDialogTitle>정말 삭제하시겠습니까?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            삭제된 카테고리는 복구할 수 없습니다.<br/>관련 내역은 보존되지만 정보는 사라집니다.
+                            삭제된 카테고리는 복구할 수 없습니다.<br />관련 내역은 보존되지만 정보는 사라집니다.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -460,7 +462,7 @@ const handleEditPayment = (payment: Payment) => {
                         <DialogTitle>결제수단 추가</DialogTitle>
                         <DialogDescription>새로운 결제수단을 추가하세요.</DialogDescription>
                     </DialogHeader>
-                    <PaymentForm name={paymentName} setName={setPaymentName} type={paymentType} setType={setPaymentType} accountId={accountId} setAccountId={setAccountId} accounts={accounts}/>
+                    <PaymentForm name={paymentName} setName={setPaymentName} type={paymentType} setType={setPaymentType} accountId={accountId} setAccountId={setAccountId} accounts={accounts} />
                     <div className="flex gap-2 pt-4">
                         <Button variant="outline" className="flex-1" onClick={() => setIsAddPaymentOpen(false)}>취소</Button>
                         <Button className="flex-1" onClick={handleAddPayment}>추가</Button>
@@ -474,7 +476,7 @@ const handleEditPayment = (payment: Payment) => {
                         <DialogTitle>결제수단 수정</DialogTitle>
                         <DialogDescription>결제수단 정보를 수정하세요.</DialogDescription>
                     </DialogHeader>
-                    <PaymentForm name={paymentName} setName={setPaymentName} type={paymentType} setType={setPaymentType} accountId={accountId} setAccountId={setAccountId} accounts={accounts}/>
+                    <PaymentForm name={paymentName} setName={setPaymentName} type={paymentType} setType={setPaymentType} accountId={accountId} setAccountId={setAccountId} accounts={accounts} />
                     <div className="flex gap-2 pt-4">
                         <Button variant="outline" className="flex-1" onClick={() => setIsEditPaymentOpen(false)}>취소</Button>
                         <Button className="flex-1" onClick={handleUpdatePayment}>수정</Button>
@@ -487,7 +489,7 @@ const handleEditPayment = (payment: Payment) => {
                     <AlertDialogHeader>
                         <AlertDialogTitle>결제수단을 삭제하시겠습니까?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            삭제된 결제수단은 복구할 수 없습니다.<br/>관련 내역은 보존되지만 정보는 사라집니다.
+                            삭제된 결제수단은 복구할 수 없습니다.<br />관련 내역은 보존되지만 정보는 사라집니다.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

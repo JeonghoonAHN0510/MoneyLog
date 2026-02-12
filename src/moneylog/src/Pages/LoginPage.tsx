@@ -8,6 +8,7 @@ import { Wallet, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../api/axiosConfig';
 import useUserStore from '../stores/authStore';
+import '../styles/pages/LoginPage.css';
 
 export default function LoginPage() {
   const login = useUserStore((state) => state.login);
@@ -52,31 +53,31 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="login-page">
+      <div className="login-wrapper">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <Wallet className="size-10 text-blue-600" />
-          <span className="text-3xl font-bold text-gray-900">내 가계부</span>
+        <div className="login-logo">
+          <Wallet className="login-logo-icon" />
+          <span className="login-logo-text">내 가계부</span>
         </div>
 
         {/* Login Card */}
-        <Card className="border-2">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl">로그인</CardTitle>
+        <Card className="login-card">
+          <CardHeader className="login-card-header">
+            <CardTitle className="login-card-title">로그인</CardTitle>
             <CardDescription>
               아이디와 비밀번호를 입력하여 로그인하세요
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4" noValidate>
+            <form onSubmit={handleLogin} className="login-form" noValidate>
               {error && (
-                <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-alert-circle"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
+                <div className="login-error-alert">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
                   {error}
                 </div>
               )}
-              <div className="space-y-2">
+              <div className="login-field-group">
                 <Label htmlFor="id">아이디</Label>
                 <Input
                   id="id"
@@ -88,9 +89,9 @@ export default function LoginPage() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="login-field-group">
                 <Label htmlFor="password">비밀번호</Label>
-                <div className="relative">
+                <div className="login-password-wrapper">
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
@@ -102,45 +103,45 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="login-password-toggle"
                   >
                     {showPassword ? (
-                      <EyeOff className="size-4" />
+                      <EyeOff className="login-password-toggle-icon" />
                     ) : (
-                      <Eye className="size-4" />
+                      <Eye className="login-password-toggle-icon" />
                     )}
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-sm">
+              <div className="login-actions">
                 <Link
                   to="/forgot-password"
-                  className="text-blue-600 hover:text-blue-700 hover:underline"
+                  className="login-forgot-link"
                 >
                   비밀번호를 잊으셨나요?
                 </Link>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="login-submit-btn" disabled={isLoading}>
                 {isLoading ? '로그인 중...' : '로그인'}
               </Button>
             </form>
 
-            <div className="mt-6 text-center text-sm">
-              <span className="text-gray-600">계정이 없으신가요? </span>
+            <div className="login-signup-prompt">
+              <span className="login-signup-prompt-text">계정이 없으신가요? </span>
               <Link
                 to="/signup"
-                className="text-blue-600 hover:text-blue-700 hover:underline font-medium"
+                className="login-signup-link"
               >
                 회원가입
               </Link>
             </div>
 
-            <div className="mt-6">
+            <div className="login-home-btn-wrapper">
               <Button
                 variant="outline"
-                className="w-full"
+                className="login-home-btn"
                 onClick={() => navigate('/')}
               >
                 홈으로 돌아가기
@@ -150,8 +151,8 @@ export default function LoginPage() {
         </Card>
 
         {/* Demo Info */}
-        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
+        <div className="login-demo-info">
+          <p>
             <strong>데모 계정:</strong> 아직 회원가입하지 않으셨다면, 먼저 회원가입을 진행해주세요.
           </p>
         </div>

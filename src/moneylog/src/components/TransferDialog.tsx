@@ -6,7 +6,7 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
 import { Transfer } from '../types/finance';
-import useResourceStore from '../stores/resourceStore';
+import { useAccounts } from '../api/queries';
 
 interface TransferDialogProps {
   open: boolean;
@@ -19,7 +19,7 @@ export function TransferDialog({
   onOpenChange,
   onAdd,
 }: TransferDialogProps) {
-  const { accounts } = useResourceStore();
+  const { data: accounts = [] } = useAccounts();
 
   const [fromAccountId, setFromAccountId] = useState<string>('');
   const [toAccountId, setToAccountId] = useState<string>('');
@@ -36,9 +36,9 @@ export function TransferDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!fromAccountId || !toAccountId || !amount) return;
-    
+
     if (fromAccountId === toAccountId) {
       alert('출금 계좌와 입금 계좌가 같을 수 없습니다.');
       return;
