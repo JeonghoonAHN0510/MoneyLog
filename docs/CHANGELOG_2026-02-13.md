@@ -142,6 +142,103 @@
 ## 계획 외 수정 사항
 - 없음
 
+## [TIME] 23:24 (KST) — [PLAN] Payment CASH 전환 시 accountId 잔존(stale) 문제 수정
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- 현재 브랜치 유지: `fix/idor-budget-payment-ownership`
+
+## 1. 작업 목표
+- 결제수단 타입을 `CASH`로 변경할 때 기존 `accountId`가 남는 문제를 제거한다.
+- `CASH`/비`CASH`에 맞는 accountId 검증 정책을 서비스 계층에서 일관 적용한다.
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/main/java/com/moneylog_backend/moneylog/payment/service/PaymentService.java`
+  - `src/main/java/com/moneylog_backend/moneylog/payment/entity/PaymentEntity.java`
+  - `docs/CHANGELOG_2026-02-13.md`
+- 현재 로직 요약
+  - `PaymentService`는 `accountId == null`을 허용하고 `updateDetails`를 호출한다.
+  - `PaymentEntity.updateDetails`는 `accountId != null`일 때만 값을 갱신한다.
+- 문제 원인
+  - `CASH` 전환 시 `null` accountId가 전달되어도 엔티티가 기존 값을 유지하여 링크가 해제되지 않는다.
+
+## 3. 변경 예정 파일 목록
+- `src/main/java/com/moneylog_backend/moneylog/payment/service/PaymentService.java`
+- `src/main/java/com/moneylog_backend/moneylog/payment/entity/PaymentEntity.java`
+- `docs/CHANGELOG_2026-02-13.md`
+
+## 4. 변경 전략
+- 서비스에서 타입별 accountId 정책을 정규화한다.
+  - `CASH`면 accountId를 강제로 `null` 처리
+  - 비`CASH`면 accountId 필수 + 소유권 검증
+- 엔티티 `updateDetails`에서 `accountId`는 null 포함하여 항상 반영해 명시적 unlink를 허용한다.
+
+## 5. 예상 영향 범위
+- 결제수단 저장/수정의 accountId 처리 규칙에 영향
+- API 스키마/DB 스키마 변경 없음
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 비`CASH`인데 accountId 누락 요청이 이제 명시적 에러가 될 수 있음
+- 롤백 방법
+  - `PaymentService`, `PaymentEntity` 변경분 원복으로 즉시 복구 가능
+
+## 7. 테스트 계획
+- 정적 확인
+  - `CASH` 경로에서 accountId null 강제 적용 여부 확인
+  - 비`CASH` 경로에서 accountId 필수 검증 여부 확인
+- 실행 검증
+  - `./gradlew`
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "수정하자")
+- 승인 시간: 23:23
+
+## [TIME] 23:24 (KST) — [START] Payment CASH 전환 시 accountId 잔존 문제 보정
+
+### 작업 목표 요약
+- 결제수단 타입이 `CASH`로 바뀔 때 기존 account link가 남지 않도록 수정한다.
+- 결제수단 타입별 accountId 입력 정책을 저장/수정 경로에 일관 적용한다.
+
+## [TIME] 23:25 (KST) — [IMPLEMENT] Payment type별 accountId 정규화 및 unlink 반영
+
+### 수행 내용
+- `src/main/java/com/moneylog_backend/moneylog/payment/service/PaymentService.java`
+  - `resolveAccountId(type, accountId, userId)` 헬퍼 추가
+    - `CASH`면 accountId를 `null`로 강제
+    - 비`CASH`면 accountId 필수 + 소유권 검증
+  - `savePayment`에서 DTO `toEntity` 사용 대신, 정규화된 accountId로 `PaymentEntity` 직접 빌드
+  - `updatePayment`에서도 정규화된 accountId를 사용
+  - `validateAccountOwnership`는 non-null accountId 전제 로직으로 정리
+- `src/main/java/com/moneylog_backend/moneylog/payment/entity/PaymentEntity.java`
+  - `updateDetails`에서 `accountId`를 null 포함 항상 반영하도록 변경 (`this.accountId = accountId`)
+  - 결과적으로 `CASH` 전환 시 기존 계좌 연결이 명시적으로 해제됨
+
+### 영향 범위
+- 결제수단 저장/수정 시 accountId 처리 정책 강화
+- `CASH` 전환/저장 시 계좌 연결 해제 동작 정상화
+- API/DB 스키마 변경 없음
+
+### VERIFY
+- 정적 확인
+  - `resolveAccountId` 경유 처리, `PaymentEnum.CASH` 분기, 비`CASH` accountId 필수 예외, 엔티티 null 반영 확인
+- 실행 검증
+  - 루트에서 `./gradlew` 실행: 성공 (`BUILD SUCCESSFUL`)
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 없음 (계획한 서비스/엔티티 2파일 범위 내 반영)
+
+## 추가 발생 이슈
+- 없음
+
+## 계획 외 수정 사항
+- 없음
+
 ## [TIME] 23:11 (KST) — [PLAN] IDOR 위험 지점 1·2번(Budget/Payment) 보강
 
 ### 실행 계획
