@@ -231,6 +231,19 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
         setColor(defaultColors[0]);
     };
 
+    const handleOpenAddDialog = () => {
+        resetForm();
+        setEditingAccount(null);
+        setIsAddDialogOpen(true);
+    };
+
+    const handleAddDialogOpenChange = (open: boolean) => {
+        setIsAddDialogOpen(open);
+        if (!open) {
+            resetForm();
+        }
+    };
+
     const handleAdd = () => {
         if (!nickname) return;
         if (type === 'BANK' && !bankId) return;
@@ -306,7 +319,7 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
                                     계좌 이체
                                 </Button>
                             )}
-                            <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
+                            <Button onClick={handleOpenAddDialog} size="sm">
                                 <Plus className="size-4 mr-2" />
                                 계좌 추가
                             </Button>
@@ -327,7 +340,7 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
                 </CardContent>
             </Card>
 
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>계좌 추가</DialogTitle>
@@ -344,7 +357,7 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
                     />
 
                     <div className="flex gap-2 pt-4">
-                        <Button variant="outline" className="flex-1" onClick={() => setIsAddDialogOpen(false)}>
+                        <Button variant="outline" className="flex-1" onClick={() => handleAddDialogOpenChange(false)}>
                             취소
                         </Button>
                         <Button className="flex-1" onClick={handleAdd}>

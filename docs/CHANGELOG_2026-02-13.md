@@ -333,3 +333,103 @@
 
 ## 계획 외 수정 사항
 - 작업 브랜치 생성: `feat/payment-account-type-label-ko`
+
+## [TIME] 21:42 (KST) — [PLAN] 계좌 수정 후 계좌 추가 폼 상태 잔존 문제 수정
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 1. 작업 목표
+- `계좌 수정` 다이얼로그에서 사용한 입력값이 `계좌 추가` 다이얼로그에 남아 보이는 문제를 제거한다.
+- `계좌 추가`는 항상 초기값으로 열리도록 보장한다.
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/moneylog/src/components/AccountManager.tsx`
+  - `docs/CHANGELOG_2026-02-13.md`
+- 현재 로직 요약
+  - `AccountManager`는 추가/수정 다이얼로그가 동일한 폼 상태(`type/nickname/balance/color/bankId/accountNumber`)를 공유한다.
+  - 수정 시작(`handleEdit`)에서는 계좌 데이터로 상태를 채운다.
+  - 추가 버튼은 `setIsAddDialogOpen(true)`만 수행하고, 열기 전에 `resetForm()`을 호출하지 않는다.
+  - `resetForm()`은 추가/수정 저장 성공 시에만 호출된다.
+- 문제 원인
+  - 공유 상태를 사용하는 구조에서 `계좌 추가` 오픈 시 초기화가 누락되어, 직전 수정 상태가 그대로 재노출된다.
+
+## 3. 변경 예정 파일 목록
+- `src/moneylog/src/components/AccountManager.tsx`
+- `docs/CHANGELOG_2026-02-13.md` (계획/승인/결과 기록)
+
+## 4. 변경 전략
+- `계좌 추가` 버튼 클릭 핸들러를 분리해 `resetForm()` 후 `setIsAddDialogOpen(true)`를 호출한다.
+- 필요 시 `editingAccount`도 함께 `null`로 정리해 상태 오염 가능성을 차단한다.
+- 취소/닫기 동작에서도 추가 폼 상태가 남지 않도록 `onOpenChange` 처리 보강 여부를 검토한다.
+
+## 5. 예상 영향 범위
+- 프론트 `AccountManager`의 다이얼로그 오픈 UX에만 영향.
+- 인증/DB/API/외부연동/빌드 설정 영향 없음.
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 초기화 시점이 과도하면 편집 중 사용자가 의도치 않게 입력값을 잃을 수 있음.
+- 롤백 방법
+  - `AccountManager.tsx`의 오픈 핸들러 변경분을 원복하면 즉시 복구 가능.
+
+## 7. 테스트 계획
+- 수동 검증
+  - 임의 계좌 `수정` 클릭 후 값 확인
+  - 수정 다이얼로그 닫고 `계좌 추가` 클릭 시 폼이 초기값인지 확인
+  - `계좌 추가` 입력 후 취소 -> 재오픈 시 초기값 유지 확인
+  - `계좌 수정` 동작(값 로딩/저장)이 기존과 동일한지 확인
+- 필요 시 빌드 검증
+  - `./gradlew`
+  - `./gradlew build`
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "변경할 브랜치명 알려주고 작업 진행해")
+- 승인 시간: 21:43
+
+## [TIME] 21:43 (KST) — [START] 계좌 수정 후 계좌 추가 폼 초기화 보강
+
+### 작업 목표 요약
+- 계좌 수정에서 사용한 폼 상태가 계좌 추가 다이얼로그로 유입되는 문제를 차단한다.
+- 계좌 추가 다이얼로그 오픈/닫기 시 폼이 항상 초기 상태를 유지하도록 보강한다.
+
+## [TIME] 21:44 (KST) — [IMPLEMENT] 계좌 추가 다이얼로그 오픈 핸들러 및 닫힘 초기화 적용
+
+### 수행 내용
+- `src/moneylog/src/components/AccountManager.tsx`
+  - `handleOpenAddDialog` 추가
+    - `resetForm()` 선호출 후 `setEditingAccount(null)` 및 `setIsAddDialogOpen(true)` 수행
+  - `handleAddDialogOpenChange(open)` 추가
+    - 다이얼로그 닫힘 시(`open === false`) `resetForm()` 실행
+  - 계좌 추가 버튼 클릭 핸들러를 `handleOpenAddDialog`로 변경
+  - 계좌 추가 다이얼로그 `onOpenChange`를 `handleAddDialogOpenChange`로 변경
+  - 계좌 추가 다이얼로그 취소 버튼도 `handleAddDialogOpenChange(false)`를 사용하도록 변경
+
+### 영향 범위
+- `AccountManager` 내 계좌 추가 다이얼로그의 상태 초기화 동작에만 영향
+- 계좌 수정 다이얼로그 및 저장 payload 구조 변경 없음
+
+### VERIFY
+- 루트에서 `./gradlew` 실행
+  - 결과: 성공 (`BUILD SUCCESSFUL`)
+- 루트에서 `./gradlew build` 실행
+  - 결과: 실패
+  - 실패 핵심 로그
+    - `MoneyLogApplicationTests > contextLoads() FAILED`
+    - `BeanCreationException`
+    - `ServiceException`
+    - `HibernateException at DialectFactoryImpl.java:191`
+  - 재현 방법: 프로젝트 루트에서 `./gradlew build`
+  - 해결 시도/결과: 재실행했으나 동일 테스트 실패로 종료
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획대로 `AccountManager.tsx` 단일 파일에서 계좌 추가 다이얼로그 오픈/닫힘 초기화를 보강함.
+
+## 추가 발생 이슈
+- 기존 테스트 환경 이슈(`contextLoads`)로 `./gradlew build`는 통과하지 못함.
+
+## 계획 외 수정 사항
+- 없음
