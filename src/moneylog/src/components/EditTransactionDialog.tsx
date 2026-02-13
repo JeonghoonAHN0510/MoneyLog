@@ -64,7 +64,6 @@ export function EditTransactionDialog({
 
         onUpdate({
             transactionId: transaction.transactionId,
-            categoryType: type,
             categoryId,
             accountId,
             paymentId: paymentId || undefined,

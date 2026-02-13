@@ -142,6 +142,113 @@
 ## 계획 외 수정 사항
 - 없음
 
+## [TIME] 22:57 (KST) — [PLAN] 거래 요청에서 프론트 categoryType 제거 및 서버 검증 강화
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- 현재 브랜치 유지: `refactor/enum-usability-improvements`
+
+## 1. 작업 목표
+- 거래 저장/수정 요청에서 프론트의 `categoryType` 전송을 제거한다.
+- 서버는 `categoryId` 기반으로 타입을 결정하도록 유지하고, `updateTransaction`의 보안 검증(IDOR)을 강화한다.
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/moneylog/src/components/AddTransactionDialog.tsx`
+  - `src/moneylog/src/components/EditTransactionDialog.tsx`
+  - `src/main/java/com/moneylog_backend/moneylog/transaction/service/TransactionService.java`
+  - `src/main/java/com/moneylog_backend/moneylog/transaction/dto/req/TransactionReqDto.java`
+  - `docs/CHANGELOG_2026-02-13.md`
+- 현재 로직 요약
+  - 백엔드 `TransactionReqDto`에는 `categoryType` 필드가 없음.
+  - 프론트 `Add/EditTransactionDialog`는 요청 payload에 `categoryType`을 포함해 전송하고 있음(서버에서는 무시됨).
+  - `updateTransaction`은 새 `categoryId` 소유권 검증 없이 mapper로 타입 코드만 조회하고, `paymentId`도 존재 여부만 확인함.
+- 문제 원인
+  - 불필요 필드 전송으로 API 계약이 불명확하며, update 경로에 소유권 검증 누락이 존재함.
+
+## 3. 변경 예정 파일 목록
+- `src/moneylog/src/components/AddTransactionDialog.tsx`
+- `src/moneylog/src/components/EditTransactionDialog.tsx`
+- `src/main/java/com/moneylog_backend/moneylog/transaction/service/TransactionService.java`
+- `docs/CHANGELOG_2026-02-13.md`
+
+## 4. 변경 전략
+- 프론트
+  - 거래 저장/수정 payload에서 `categoryType` 필드를 제거한다.
+  - UI 내부 상태(`type`)는 카테고리 필터링/폼 표시용으로만 유지한다.
+- 백엔드
+  - `updateTransaction`에서 `newCategoryId`는 `getCategoryByIdAndValidateOwnership`으로 조회해 타입을 획득한다.
+  - `newPaymentId`는 지출(`EXPENSE`)일 때 `validatePaymentOwnership`으로 소유권 검증한다.
+  - 필요 시 지출인데 `paymentId`가 없는 경우 명시적 예외를 추가해 `saveTransaction` 정책과 일치시킨다.
+
+## 5. 예상 영향 범위
+- 프론트 거래 생성/수정 요청 payload 필드 정리
+- 백엔드 거래 수정 경로의 보안 검증 강화
+- DB 스키마/외부 연동 영향 없음
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 지출 수정 시 paymentId 필수 정책을 엄격화하면 기존 비정상 데이터 업데이트가 실패할 수 있음.
+- 롤백 방법
+  - 프론트 payload 필드/백엔드 검증 분기 변경분만 파일 단위로 원복 가능
+
+## 7. 테스트 계획
+- 정적 확인
+  - 프론트 거래 payload에 `categoryType` 잔존 여부 검색
+  - `updateTransaction`에서 `newCategoryId`/`newPaymentId` 소유권 검증 호출 여부 확인
+- 실행 검증
+  - `./gradlew` 실행
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "작업해")
+- 승인 시간: 22:57
+
+## [TIME] 22:58 (KST) — [START] 거래 요청 DTO 정합화 및 updateTransaction 보안 검증 보강
+
+### 작업 목표 요약
+- 프론트 거래 요청 payload에서 불필요한 `categoryType` 전송을 제거한다.
+- 거래 수정 경로에서 카테고리/결제수단 소유권 검증을 강화해 IDOR 가능성을 차단한다.
+
+## [TIME] 22:59 (KST) — [IMPLEMENT] categoryType 제거 + 카테고리/결제수단 ownership 검증 강화
+
+### 수행 내용
+- 프론트
+  - `src/moneylog/src/components/AddTransactionDialog.tsx`
+    - 거래 생성 payload에서 `categoryType` 필드 제거
+  - `src/moneylog/src/components/EditTransactionDialog.tsx`
+    - 거래 수정 payload에서 `categoryType` 필드 제거
+- 백엔드
+  - `src/main/java/com/moneylog_backend/moneylog/transaction/service/TransactionService.java`
+    - `updateTransaction`에서 `newCategoryId`를 `getCategoryByIdAndValidateOwnership`으로 조회해 소유권 검증 후 타입 획득
+    - 지출(`CategoryEnum.EXPENSE`) 수정 시 `validatePaymentOwnership(newPaymentId, userId)`로 결제수단 소유권 검증
+    - 수입 수정 시 `paymentId`를 `null`로 정규화
+    - `validatePaymentOwnership`에 `paymentId == null` 방어 로직 추가 (`결제수단 ID는 필수입니다.`)
+
+### 영향 범위
+- 프론트 거래 생성/수정 요청 payload 정합성 개선
+- 백엔드 거래 수정 경로의 보안 검증 강화
+- API 스키마/DB 구조 변경 없음
+
+### VERIFY
+- 정적 확인
+  - `AddTransactionDialog`, `EditTransactionDialog`에서 `categoryType: type` 패턴 제거 확인
+  - `TransactionService.updateTransaction`에서 `validatePaymentOwnership(newPaymentId, userId)` 호출 및 null 방어 로직 확인
+- 실행 검증
+  - 루트에서 `./gradlew` 실행: 성공 (`BUILD SUCCESSFUL`)
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획대로 프론트 payload 정리 + update 경로 ownership 검증 강화를 모두 반영함.
+
+## 추가 발생 이슈
+- 없음
+
+## 계획 외 수정 사항
+- 없음
+
 ## [TIME] 22:48 (KST) — [PLAN] enum fromCode static map 기반 O(1) 조회 통일
 
 ### 실행 계획

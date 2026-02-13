@@ -96,16 +96,14 @@ public class TransactionService {
         Integer newAccountId = transactionReqDto.getAccountId();
         Integer newCategoryId = transactionReqDto.getCategoryId();
         AccountEntity newAccount = getAccountByIdAndValidateOwnership(newAccountId, userId);
-        String newTypeCode = categoryMapper.getCategoryTypeByCategoryId(newCategoryId);
-
-        if (newTypeCode == null) {
-            throw new IllegalArgumentException("유효하지 않은 카테고리입니다.");
-        }
-        CategoryEnum newType = CategoryEnum.fromCode(newTypeCode);
+        CategoryEntity newCategory = getCategoryByIdAndValidateOwnership(newCategoryId, userId);
+        CategoryEnum newType = newCategory.getType();
 
         Integer newPaymentId = transactionReqDto.getPaymentId();
-        if (newPaymentId != null && !paymentRepository.existsById(newPaymentId)) {
-            throw new IllegalArgumentException("유효하지 않은 결제 수단입니다.");
+        if (CategoryEnum.EXPENSE.equals(newType)) {
+            validatePaymentOwnership(newPaymentId, userId);
+        } else {
+            newPaymentId = null;
         }
 
         Integer newAmount = transactionReqDto.getAmount();
@@ -227,6 +225,10 @@ public class TransactionService {
     }
 
     private void validatePaymentOwnership (Integer paymentId, Integer userId) {
+        if (paymentId == null) {
+            throw new IllegalArgumentException("결제수단 ID는 필수입니다.");
+        }
+
         PaymentEntity paymentEntity = paymentRepository.findById(paymentId)
                                                        .orElseThrow(
                                                            () -> new ResourceNotFoundException("존재하지 않는 결제수단입니다."));

@@ -54,7 +54,6 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onTransactionS
         if (!categoryId || !amount || !date) return;
 
         onTransactionSubmit({
-            categoryType: type,
             categoryId,
             accountId,
             paymentId: paymentId || undefined,
