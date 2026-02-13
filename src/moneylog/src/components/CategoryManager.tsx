@@ -106,6 +106,20 @@ interface PaymentFormProps {
     setAccountId: (value: string) => void;
 }
 
+const accountTypeLabelMap: Record<Exclude<Account['type'], 'BANK'>, string> = {
+    CASH: '현금',
+    POINT: '포인트',
+    OTHER: '기타',
+};
+
+const getAccountOptionLabel = (account: Account) => {
+    if (account.type === 'BANK') {
+        return `${account.nickname} (${account.bankName})`;
+    }
+
+    return `${account.nickname} (${accountTypeLabelMap[account.type] ?? account.type})`;
+};
+
 const PaymentForm = ({ name, setName, type, setType, accountId, setAccountId, accounts }: PaymentFormProps) => (
     <div className="space-y-4">
         <div className="space-y-2">
@@ -165,7 +179,7 @@ const PaymentForm = ({ name, setName, type, setType, accountId, setAccountId, ac
                     <SelectContent>
                         {accounts.map((account) => (
                             <SelectItem key={account.accountId} value={String(account.accountId)}>
-                                {account.nickname} ({account.bankName})
+                                {getAccountOptionLabel(account)}
                             </SelectItem>
                         ))}
                     </SelectContent>

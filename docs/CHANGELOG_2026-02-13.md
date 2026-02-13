@@ -284,3 +284,52 @@
   - `BANK` 타입 계좌: 기존처럼 `{nickname} ({bankName})` 출력 확인
   - `CASH/POINT/OTHER` 타입 계좌: `{nickname} (현금/포인트/기타)` 출력 확인
 - 빌드/테스트는 사용자 승인 후 필요 시 수행
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "진행해")
+- 승인 시간: 21:34
+
+## [TIME] 21:34 (KST) — [START] 결제수단 계좌 옵션 타입 한글화 적용
+
+### 작업 목표 요약
+- 결제수단 추가/수정 폼의 계좌 선택 옵션 텍스트를 계좌 타입에 맞게 표기한다.
+- 은행 계좌는 기존 표시를 유지하고, 비은행 계좌는 타입을 한국어로 보여준다.
+
+## [TIME] 21:35 (KST) — [IMPLEMENT] 계좌 옵션 라벨 분기 및 타입 한글 매핑 추가
+
+### 수행 내용
+- `src/moneylog/src/components/CategoryManager.tsx`
+  - `accountTypeLabelMap` 추가 (`CASH: 현금`, `POINT: 포인트`, `OTHER: 기타`)
+  - `getAccountOptionLabel(account)` 헬퍼 추가
+    - `BANK`: `{nickname} ({bankName})`
+    - 그 외: `{nickname} ({한글 타입명})`
+  - `PaymentForm`의 계좌 옵션 렌더링을 `getAccountOptionLabel(account)` 호출로 변경
+
+### 영향 범위
+- 결제수단 추가/수정 다이얼로그의 계좌 옵션 라벨 텍스트에만 영향
+- 데이터 저장 구조/API/백엔드 로직 영향 없음
+
+### VERIFY
+- 루트에서 `./gradlew` 실행
+  - 결과: 성공 (`BUILD SUCCESSFUL`)
+- 루트에서 `./gradlew build` 실행
+  - 결과: 실패
+  - 실패 핵심 로그
+    - `MoneyLogApplicationTests > contextLoads() FAILED`
+    - `BeanCreationException`
+    - `ServiceException`
+    - `HibernateException at DialectFactoryImpl.java:191`
+  - 재현 방법: 프로젝트 루트에서 `./gradlew build`
+  - 해결 시도/결과: 재실행했으나 동일 테스트 실패로 종료
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획대로 `CategoryManager.tsx` 단일 파일에서 옵션 라벨 분기와 타입 한글 매핑을 적용함.
+- 예외 타입 대응은 기본값으로 원본 타입을 노출하도록 처리해 안전 분기를 유지함.
+
+## 추가 발생 이슈
+- 빌드 과정에서 기존 백엔드 테스트(`contextLoads`) 실패로 `./gradlew build`가 통과하지 못함.
+
+## 계획 외 수정 사항
+- 작업 브랜치 생성: `feat/payment-account-type-label-ko`
