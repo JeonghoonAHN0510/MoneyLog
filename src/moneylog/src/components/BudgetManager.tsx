@@ -18,16 +18,13 @@ import {
     AlertDialogTitle,
 } from "./ui/alert-dialog";
 import { useCategories, useBudgets } from '../api/queries';
+import { formatKrw } from '../utils/currency';
 
 interface BudgetManagerProps {
     onAdd: (budget: Omit<Budget, 'budgetId' | "userId" | "budgetDate" | "createdAt" | "updatedAt" | "categoryName">) => void;
     onUpdate: (budget: Partial<Budget>) => void;
     onDelete: (budgetId: string) => void;
 }
-
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ko-KR').format(amount);
-};
 
 // =========================================================
 // 1. BudgetForm 컴포넌트
@@ -101,7 +98,7 @@ const BudgetList = ({ items, categories, onEdit, onDelete }: {
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
-                            <span className="font-medium">{formatCurrency(Number(budget.amount))}원</span>
+                            <span className="font-medium">{formatKrw(Number(budget.amount))}원</span>
                             <Button variant="ghost" size="icon" onClick={() => onEdit(budget)}>
                                 <Pencil className="size-4" />
                             </Button>

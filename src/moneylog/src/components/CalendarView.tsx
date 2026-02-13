@@ -4,6 +4,7 @@ import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react';
 import { useCalendar } from '../api/queries';
+import { formatKrw } from '../utils/currency';
 
 interface CalendarViewProps {
   onDateClick: (date: string) => void;
@@ -37,10 +38,6 @@ export function CalendarView({ onDateClick }: CalendarViewProps) {
     setCurrentDate(new Date(year, month + 1, 1));
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ko-KR').format(amount);
-  };
-
   const days = [];
   for (let i = 0; i < startingDayOfWeek; i++) {
     days.push(<div key={`empty-${i}`} className="calendar-day-empty" />);
@@ -66,13 +63,13 @@ export function CalendarView({ onDateClick }: CalendarViewProps) {
             {summary!.totalIncome > 0 && (
               <div className="calendar-summary-income">
                 <ArrowUpRight className="calendar-summary-icon" />
-                <span>{formatCurrency(summary!.totalIncome)}</span>
+                <span>{formatKrw(summary!.totalIncome)}</span>
               </div>
             )}
             {summary!.totalExpense > 0 && (
               <div className="calendar-summary-expense">
                 <ArrowDownRight className="calendar-summary-icon" />
-                <span>{formatCurrency(summary!.totalExpense)}</span>
+                <span>{formatKrw(summary!.totalExpense)}</span>
               </div>
             )}
           </div>

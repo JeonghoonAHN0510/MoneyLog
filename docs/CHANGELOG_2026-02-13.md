@@ -142,6 +142,132 @@
 ## 계획 외 수정 사항
 - 없음
 
+## [TIME] 22:09 (KST) — [PLAN] Front/Back 중복 코드 1차 중앙화 리팩터링
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 1. 작업 목표
+- 프론트/백엔드에 반복 정의된 중복 코드를 공통 상수/유틸로 이동해 한 곳에서 관리하도록 개선한다.
+- 기능 동작은 유지하고, 유지보수 포인트만 단일화한다.
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - 프론트: `src/moneylog/src/components/*` (통화 포맷 중복)
+  - 백엔드: `src/main/java/com/moneylog_backend/moneylog/*/service/*.java` (NotFound 메시지 문자열 중복)
+  - 변경 로그: `docs/CHANGELOG_2026-02-13.md`
+- 현재 로직 요약
+  - 프론트에서 `new Intl.NumberFormat('ko-KR').format(...)` 및 `formatCurrency` 함수가 여러 컴포넌트에 중복 선언됨.
+  - 백엔드 서비스들에서 `new ResourceNotFoundException("존재하지 않는 ...입니다.")` 메시지 문자열이 중복 하드코딩됨.
+- 문제 원인
+  - 공통 포맷/메시지에 대한 중앙 관리 지점이 없어 변경 시 다중 파일 수정이 필요함.
+
+## 3. 변경 예정 파일 목록
+- 프론트
+  - `src/moneylog/src/utils/currency.ts` (신규)
+  - `src/moneylog/src/components/AccountManager.tsx`
+  - `src/moneylog/src/components/BudgetManager.tsx`
+  - `src/moneylog/src/components/CalendarView.tsx`
+  - `src/moneylog/src/components/DashboardView.tsx`
+  - `src/moneylog/src/components/TakeHomeCalculator.tsx`
+  - `src/moneylog/src/components/TransactionList.tsx`
+  - `src/moneylog/src/components/TransferDialog.tsx`
+- 백엔드
+  - `src/main/java/com/moneylog_backend/global/constant/ErrorMessageConstants.java` (신규)
+  - `src/main/java/com/moneylog_backend/moneylog/account/service/AccountService.java`
+  - `src/main/java/com/moneylog_backend/moneylog/user/service/UserService.java`
+  - `src/main/java/com/moneylog_backend/moneylog/transaction/service/TransactionService.java`
+  - `src/main/java/com/moneylog_backend/moneylog/payment/service/PaymentService.java`
+  - `src/main/java/com/moneylog_backend/moneylog/category/service/CategoryService.java`
+  - `src/main/java/com/moneylog_backend/moneylog/fixed/service/FixedService.java`
+  - `src/main/java/com/moneylog_backend/moneylog/budget/service/BudgetService.java`
+- 로그
+  - `docs/CHANGELOG_2026-02-13.md`
+
+## 4. 변경 전략
+- 프론트
+  - `formatKrw(amount, options?)` 유틸을 추가하고 기존 로컬 `formatCurrency`/직접 `Intl.NumberFormat` 호출을 유틸 호출로 치환한다.
+  - `TakeHomeCalculator`의 반올림 요구는 옵션(`round`)으로 보존한다.
+- 백엔드
+  - 리소스 미존재 메시지를 상수 클래스로 분리하고, 서비스의 하드코딩 문자열을 상수 참조로 치환한다.
+  - 메시지 텍스트는 기존과 동일하게 유지한다.
+
+## 5. 예상 영향 범위
+- 프론트 표시 문자열(금액 포맷), 백엔드 예외 메시지 참조 경로에만 영향.
+- API 스키마/DB/인증/외부연동/빌드 설정 영향 없음.
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 포맷 유틸 치환 중 일부 컴포넌트에서 반올림/부호 처리 차이가 발생할 수 있음.
+  - 상수 import 누락 시 컴파일 오류 가능성.
+- 롤백 방법
+  - 신규 유틸/상수 파일 및 치환 커밋 범위를 파일 단위로 원복하면 복구 가능.
+
+## 7. 테스트 계획
+- 정적 확인
+  - 프론트 치환 대상에서 `Intl.NumberFormat('ko-KR')` 잔존 여부 검사
+  - 백엔드 서비스의 하드코딩 NotFound 문자열 잔존 여부 검사
+- 실행 검증
+  - `./gradlew` 실행
+  - 실패 시 핵심 에러 로그 요약/재현 경로 기록
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "작업해")
+- 승인 시간: 22:10
+
+## [TIME] 22:10 (KST) — [START] Front/Back 중복 코드 1차 중앙화 리팩터링
+
+### 작업 목표 요약
+- 프론트 통화 포맷 중복을 공통 유틸로 통합한다.
+- 백엔드 `ResourceNotFoundException` 메시지 중복을 상수 클래스로 통합한다.
+
+## [TIME] 22:13 (KST) — [IMPLEMENT] 통화 포맷/NotFound 메시지 중앙화 적용
+
+### 수행 내용
+- 프론트
+  - `src/moneylog/src/utils/currency.ts` 신규 생성 (`formatKrw`)
+  - 아래 컴포넌트의 로컬 `formatCurrency`/직접 `Intl.NumberFormat` 호출을 `formatKrw`로 치환
+    - `src/moneylog/src/components/AccountManager.tsx`
+    - `src/moneylog/src/components/BudgetManager.tsx`
+    - `src/moneylog/src/components/CalendarView.tsx`
+    - `src/moneylog/src/components/DashboardView.tsx`
+    - `src/moneylog/src/components/TakeHomeCalculator.tsx` (반올림은 `formatKrw(..., { round: true })`로 유지)
+    - `src/moneylog/src/components/TransactionList.tsx`
+    - `src/moneylog/src/components/TransferDialog.tsx`
+- 백엔드
+  - `src/main/java/com/moneylog_backend/global/constant/ErrorMessageConstants.java` 신규 생성
+  - 아래 서비스들의 하드코딩 NotFound 메시지를 상수 참조로 치환
+    - `src/main/java/com/moneylog_backend/moneylog/account/service/AccountService.java`
+    - `src/main/java/com/moneylog_backend/moneylog/user/service/UserService.java`
+    - `src/main/java/com/moneylog_backend/moneylog/transaction/service/TransactionService.java`
+    - `src/main/java/com/moneylog_backend/moneylog/payment/service/PaymentService.java`
+    - `src/main/java/com/moneylog_backend/moneylog/category/service/CategoryService.java`
+    - `src/main/java/com/moneylog_backend/moneylog/fixed/service/FixedService.java`
+    - `src/main/java/com/moneylog_backend/moneylog/budget/service/BudgetService.java`
+
+### 영향 범위
+- 프론트 금액 포맷 로직 호출 경로 변경(출력 포맷 동일 유지)
+- 백엔드 예외 메시지 선언 위치 변경(문구 동일 유지)
+- API/DB/인증 동작 변경 없음
+
+### VERIFY
+- 정적 확인
+  - 프론트 `components` 내 `new Intl.NumberFormat('ko-KR')`, `const formatCurrency` 검색 결과 없음
+  - 백엔드 서비스 내 대상 `존재하지 않는 ...입니다.` 하드코딩 검색 결과 없음
+- 실행 검증
+  - 루트에서 `./gradlew` 실행: 성공 (`BUILD SUCCESSFUL`)
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획한 파일 범위 내에서 모두 반영되었고, 메시지 텍스트/포맷 결과는 유지함.
+
+## 추가 발생 이슈
+- 없음
+
+## 계획 외 수정 사항
+- 없음
+
 ## [TIME] 22:00 (KST) — [PLAN] 계좌 타입 라벨 상수 중앙화 리팩터링
 
 ### 실행 계획

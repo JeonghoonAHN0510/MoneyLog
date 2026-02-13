@@ -15,6 +15,7 @@ import {
     AlertDialogTitle,
 } from "./ui/alert-dialog";
 import { useTransactions, useCategories } from '../api/queries';
+import { formatKrw } from '../utils/currency';
 
 interface TransactionListProps {
     selectedDate?: string;
@@ -33,10 +34,6 @@ interface TransactionItemProps {
 }
 
 const TransactionItem = ({ transaction, categoryColor, onEdit, onDeleteClick }: TransactionItemProps) => {
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('ko-KR').format(amount);
-    };
-
     return (
         <div className="flex items-center justify-between p-2 hover:bg-accent/50 transition-colors rounded-md">
             <div className="flex items-center gap-3 flex-1">
@@ -79,7 +76,7 @@ const TransactionItem = ({ transaction, categoryColor, onEdit, onDeleteClick }: 
                         }`}
                 >
                     {transaction.categoryType === 'INCOME' ? '+' : '-'}
-                    {formatCurrency(transaction.amount)}원
+                    {formatKrw(transaction.amount)}원
                 </span>
                 <Button
                     variant="ghost"
@@ -185,7 +182,7 @@ export function TransactionList({
                                             {formatDate(date)}
                                         </span>
                                         <span className={`text-sm font-semibold ${dailyTotal > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                            {dailyTotal > 0 ? '+' : ''}{new Intl.NumberFormat('ko-KR').format(dailyTotal)}원
+                                            {dailyTotal > 0 ? '+' : ''}{formatKrw(dailyTotal)}원
                                         </span>
                                     </div>
 

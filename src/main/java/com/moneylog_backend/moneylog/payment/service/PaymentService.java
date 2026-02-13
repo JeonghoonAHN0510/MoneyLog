@@ -2,6 +2,7 @@ package com.moneylog_backend.moneylog.payment.service;
 
 import java.util.List;
 
+import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
@@ -59,7 +60,8 @@ public class PaymentService {
     private PaymentEntity getPaymentByIdAndValidateOwnership (int paymentId, int userId) {
         PaymentEntity paymentEntity = paymentRepository.findById(paymentId)
                                                        .orElseThrow(
-                                                           () -> new ResourceNotFoundException("존재하지 않는 결제수단입니다."));
+                                                           () -> new ResourceNotFoundException(
+                                                               ErrorMessageConstants.PAYMENT_NOT_FOUND));
 
         if (paymentEntity.getUserId() != userId) {
             throw new AccessDeniedException("본인의 결제수단이 아닙니다.");
@@ -71,7 +73,8 @@ public class PaymentService {
     private void validateAccountOwnership (int accountId, int userId) {
         AccountEntity accountEntity = accountRepository.findById(accountId)
                                                        .orElseThrow(
-                                                           () -> new ResourceNotFoundException("존재하지 않는 계좌입니다."));
+                                                           () -> new ResourceNotFoundException(
+                                                               ErrorMessageConstants.ACCOUNT_NOT_FOUND));
 
         if (!accountEntity.getUserId().equals(userId)) {
             throw new AccessDeniedException("본인의 계좌가 아닙니다.");

@@ -19,6 +19,7 @@ import {
 } from "./ui/alert-dialog";
 import { useAccounts, useBanks } from '../api/queries';
 import { getAccountTypeLabel } from '../constants/account';
+import { formatKrw } from '../utils/currency';
 
 interface AccountManagerProps {
     onAdd: (account: Omit<Account, "accountId" | "userId" | "createdAt" | "updatedAt" | "bankName">) => void;
@@ -38,10 +39,6 @@ const defaultColors = [
     '#ef4444', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#10b981',
     '#14b8a6', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#64748b',
 ];
-
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ko-KR').format(amount);
-};
 
 interface AccountFormProps {
     nickname: string;
@@ -185,7 +182,7 @@ const AccountList = ({ items, onEdit, onDelete }: {
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
-                            <span>{formatCurrency(account.balance)}원</span>
+                            <span>{formatKrw(account.balance)}원</span>
                             <Button variant="ghost" size="icon" onClick={() => onEdit(account)}>
                                 <Pencil className="size-4" />
                             </Button>
@@ -323,7 +320,7 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
                 <CardContent className="space-y-4">
                     <div className="p-4 bg-primary/10 rounded-lg">
                         <div className="text-sm text-muted-foreground mb-1">총 자산</div>
-                        <div className="text-primary font-bold text-xl">{formatCurrency(totalBalance)}원</div>
+                        <div className="text-primary font-bold text-xl">{formatKrw(totalBalance)}원</div>
                     </div>
 
                     <AccountList
