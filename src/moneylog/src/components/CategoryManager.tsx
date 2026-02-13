@@ -157,9 +157,9 @@ const PaymentForm = ({ name, setName, type, setType, accountId, setAccountId, ac
         </div>
         {type !== 'CASH' && (
             <div className="space-y-2">
-                <Label htmlFor="bank-select">계좌 선택</Label>
+                <Label htmlFor="account-select">계좌 선택</Label>
                 <Select value={accountId} onValueChange={setAccountId}>
-                    <SelectTrigger id="bank-select">
+                    <SelectTrigger id="account-select">
                         <SelectValue placeholder="계좌를 선택해주세요" />
                     </SelectTrigger>
                     <SelectContent>
@@ -317,7 +317,7 @@ export function CategoryManager({
     const [paymentType, setPaymentType] = useState<'CASH' | 'CREDIT_CARD' | 'CHECK_CARD' | 'BANK'>('CASH');
     const [paymentId, setPaymentId] = useState('');
 
-    const handlePaymentTypeChange = (nextType: 'CASH' | 'CREDIT_CARD' | 'CHECK_CARD' | 'BANK') => {
+    const handlePaymentTypeChange = (nextType: Payment['type']) => {
         setPaymentType(nextType);
         if (nextType === 'CASH') {
             setAccountId('');
