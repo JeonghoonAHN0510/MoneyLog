@@ -142,6 +142,110 @@
 ## 계획 외 수정 사항
 - 없음
 
+## [TIME] 22:00 (KST) — [PLAN] 계좌 타입 라벨 상수 중앙화 리팩터링
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 1. 작업 목표
+- `CategoryManager.tsx`와 `AccountManager.tsx`에 중복된 계좌 타입 라벨 상수를 중앙화한다.
+- 라벨 변경 시 한 곳만 수정하면 두 컴포넌트에 동일 반영되도록 구조를 단순화한다.
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/moneylog/src/components/AccountManager.tsx`
+  - `src/moneylog/src/components/CategoryManager.tsx`
+- 현재 로직 요약
+  - `AccountManager`는 `accountTypeLabels`(소문자 key)를 내부 상수로 사용한다.
+  - `CategoryManager`는 `accountTypeLabelMap`(대문자 key)를 내부 상수로 사용한다.
+  - 두 상수는 실질적으로 동일 의미(은행/현금/포인트/기타 라벨)를 분산 정의 중이다.
+- 문제 원인
+  - 동일 도메인 상수가 컴포넌트별로 분리되어 변경 누락/불일치 가능성이 있다.
+
+## 3. 변경 예정 파일 목록
+- `src/moneylog/src/constants/account.ts` (신규)
+- `src/moneylog/src/components/AccountManager.tsx`
+- `src/moneylog/src/components/CategoryManager.tsx`
+- `docs/CHANGELOG_2026-02-13.md` (계획/승인/결과 기록)
+
+## 4. 변경 전략
+- `account.ts`에 계좌 타입 라벨 상수와 라벨 조회 헬퍼를 추가한다.
+  - 예: `ACCOUNT_TYPE_LABELS`, `getAccountTypeLabel(type)`
+- `AccountManager`의 기존 내부 상수를 제거하고 중앙 상수/헬퍼 import로 교체한다.
+- `CategoryManager`의 `accountTypeLabelMap`을 제거하고 동일 import를 사용한다.
+- key 대소문자 불일치 이슈를 줄이기 위해 `Account['type']`(대문자 enum) 기준으로 통일한다.
+
+## 5. 예상 영향 범위
+- 프론트엔드 컴포넌트 2개와 상수 파일 1개에 영향.
+- 화면 텍스트 라벨 일관성에 긍정적 영향.
+- 인증/DB/API/외부연동/빌드 설정 영향 없음.
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 타입 key 변환 로직 실수 시 라벨 fallback이 노출될 수 있음.
+- 롤백 방법
+  - 신규 상수 import를 제거하고 각 컴포넌트 내부 상수로 원복하면 즉시 복구 가능.
+
+## 7. 테스트 계획
+- 수동 검증
+  - 계좌 목록의 타입 라벨(은행/현금/포인트/기타) 표시 확인
+  - 결제수단의 계좌 선택 옵션 라벨 표시 확인
+- 빌드 검증
+  - `./gradlew`
+  - `./gradlew build`
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "진행해줘")
+- 승인 시간: 22:01
+
+## [TIME] 22:01 (KST) — [START] 계좌 타입 라벨 상수 중앙화 리팩터링
+
+### 작업 목표 요약
+- 분산된 계좌 타입 라벨 상수를 단일 상수 파일로 통합한다.
+- `AccountManager`와 `CategoryManager`가 동일 상수를 공유하도록 변경한다.
+
+## [TIME] 22:03 (KST) — [IMPLEMENT] 계좌 타입 라벨 상수 파일 분리 및 컴포넌트 교체
+
+### 수행 내용
+- `src/moneylog/src/constants/account.ts` 신규 생성
+  - `ACCOUNT_TYPE_LABELS` 추가 (`BANK/CASH/POINT/OTHER`)
+  - `getAccountTypeLabel(type)` 헬퍼 추가
+- `src/moneylog/src/components/AccountManager.tsx`
+  - 내부 `accountTypeLabels` 상수 제거
+  - `getAccountTypeLabel` import 후 라벨 표시 로직 교체
+- `src/moneylog/src/components/CategoryManager.tsx`
+  - 내부 `accountTypeLabelMap` 상수 제거
+  - `getAccountTypeLabel` import 후 계좌 옵션 라벨 로직 교체
+
+### 영향 범위
+- 계좌 타입 라벨 텍스트 관리 위치가 중앙화됨
+- 계좌 목록 및 결제수단 계좌 옵션의 라벨 표시 로직에만 영향
+- API/DB/인증 로직 영향 없음
+
+### VERIFY
+- 루트에서 `./gradlew` 실행
+  - 결과: 성공 (`BUILD SUCCESSFUL`)
+- 루트에서 `./gradlew build` 실행
+  - 결과: 실패
+  - 실패 핵심 로그
+    - `MoneyLogApplicationTests > contextLoads() FAILED`
+    - `BeanCreationException`
+    - `ServiceException`
+    - `HibernateException at DialectFactoryImpl.java:191`
+  - 재현 방법: 프로젝트 루트에서 `./gradlew build`
+  - 해결 시도/결과: 재실행했으나 동일 테스트 실패로 종료
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획대로 상수 파일 1개 생성 + 컴포넌트 2개 교체를 완료함.
+
+## 추가 발생 이슈
+- 기존 테스트 환경 이슈로 `./gradlew build`는 통과하지 못함.
+
+## 계획 외 수정 사항
+- 없음
+
 ## [TIME] 21:10 (KST) — [PLAN] 결제수단 현금 선택 시 은행 선택 비필수 처리
 
 ### 실행 계획

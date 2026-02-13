@@ -18,6 +18,7 @@ import {
     AlertDialogTitle,
 } from "./ui/alert-dialog";
 import { useAccounts, useBanks } from '../api/queries';
+import { getAccountTypeLabel } from '../constants/account';
 
 interface AccountManagerProps {
     onAdd: (account: Omit<Account, "accountId" | "userId" | "createdAt" | "updatedAt" | "bankName">) => void;
@@ -25,13 +26,6 @@ interface AccountManagerProps {
     onDelete: (accountId: string) => void;
     onTransferClick?: () => void;
 }
-
-const accountTypeLabels = {
-    bank: '은행',
-    cash: '현금',
-    point: '포인트',
-    other: '기타',
-};
 
 const accountTypeIcons: Record<string, any> = {
     bank: Building,
@@ -185,7 +179,7 @@ const AccountList = ({ items, onEdit, onDelete }: {
                             <div>
                                 <div>{account.nickname}</div>
                                 <div className="text-xs text-muted-foreground">
-                                    {accountTypeLabels[typeKey as keyof typeof accountTypeLabels] || '기타'}
+                                    {getAccountTypeLabel(account.type)}
                                     {account.type === 'BANK' && account.accountNumber && ` · ${account.accountNumber}`}
                                 </div>
                             </div>
