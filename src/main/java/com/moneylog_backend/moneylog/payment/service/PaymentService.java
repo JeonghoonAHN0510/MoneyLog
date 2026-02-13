@@ -28,6 +28,8 @@ public class PaymentService {
 
     @Transactional
     public int savePayment(PaymentReqDto paymentReqDto, int userId) {
+        validateAccountOwnership(paymentReqDto.getAccountId(), userId);
+
         PaymentEntity paymentEntity = paymentReqDto.toEntity(userId);
         paymentRepository.save(paymentEntity);
 
@@ -68,7 +70,11 @@ public class PaymentService {
         return paymentEntity;
     }
 
-    private void validateAccountOwnership (int accountId, int userId) {
+    private void validateAccountOwnership (Integer accountId, int userId) {
+        if (accountId == null) {
+            return;
+        }
+
         AccountEntity accountEntity = accountRepository.findById(accountId)
                                                        .orElseThrow(
                                                            () -> new ResourceNotFoundException(

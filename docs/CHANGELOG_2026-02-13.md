@@ -142,6 +142,102 @@
 ## 계획 외 수정 사항
 - 없음
 
+## [TIME] 23:11 (KST) — [PLAN] IDOR 위험 지점 1·2번(Budget/Payment) 보강
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- `master` 기준 신규 브랜치 생성/이동
+- 브랜치명: `fix/idor-budget-payment-ownership`
+
+## 1. 작업 목표
+- `BudgetService`에서 카테고리 ID에 대한 소유권 검증 누락을 보완한다.
+- `PaymentService`에서 결제수단 생성 시 계좌 소유권 검증 누락을 보완한다.
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/main/java/com/moneylog_backend/moneylog/budget/service/BudgetService.java`
+  - `src/main/java/com/moneylog_backend/moneylog/payment/service/PaymentService.java`
+  - `docs/CHANGELOG_2026-02-13.md`
+- 현재 로직 요약
+  - `BudgetService.saveBudget/updateBudget`는 `categoryId` 존재 여부만 확인하고 소유권은 확인하지 않는다.
+  - `PaymentService.savePayment`는 `accountId` 소유권 검증 없이 저장한다.
+- 문제 원인
+  - 사용자 입력 ID를 리소스 소유자 검증 없이 사용해 IDOR 가능성이 존재한다.
+
+## 3. 변경 예정 파일 목록
+- `src/main/java/com/moneylog_backend/moneylog/budget/service/BudgetService.java`
+- `src/main/java/com/moneylog_backend/moneylog/payment/service/PaymentService.java`
+- `docs/CHANGELOG_2026-02-13.md`
+
+## 4. 변경 전략
+- `BudgetService`
+  - 카테고리 조회 + 소유권 검증 헬퍼를 추가하고 `saveBudget/updateBudget`에서 호출
+- `PaymentService`
+  - `savePayment`에 `validateAccountOwnership`를 추가
+  - `validateAccountOwnership` 파라미터를 `Integer`로 바꿔 `null`(현금형 결제수단) 안전 처리
+
+## 5. 예상 영향 범위
+- 예산/결제수단 생성·수정 시 권한 검증 동작 강화
+- DB 스키마/API 형식 변경 없음
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 기존에 잘못 허용되던 교차 소유 리소스 요청이 이제 403/에러로 차단될 수 있음
+- 롤백 방법
+  - 두 서비스 파일 변경분만 원복하면 즉시 복구 가능
+
+## 7. 테스트 계획
+- 정적 확인
+  - `BudgetService`의 save/update에서 category ownership 검증 호출 여부 확인
+  - `PaymentService.savePayment`에서 account ownership 검증 호출 여부 확인
+- 실행 검증
+  - `./gradlew`
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "1번과 2번만 브랜치를 이동해서 작업해줘.")
+- 승인 시간: 23:10
+
+## [TIME] 23:11 (KST) — [START] IDOR 위험 지점 1·2번(Budget/Payment) 보강
+
+### 작업 목표 요약
+- 예산 저장/수정 시 카테고리 소유권을 검증해 교차 사용자 참조를 차단한다.
+- 결제수단 저장 시 계좌 소유권 검증을 적용해 교차 사용자 계좌 연결을 차단한다.
+
+## [TIME] 23:12 (KST) — [IMPLEMENT] Budget/Payment ownership 검증 보강
+
+### 수행 내용
+- `src/main/java/com/moneylog_backend/moneylog/budget/service/BudgetService.java`
+  - `saveBudget`, `updateBudget`에 `getCategoryByIdAndValidateOwnership(categoryId, userId)` 호출 추가
+  - `categoryRepository.existsById` 기반 확인 로직 제거
+  - `CategoryEntity` 조회 + `OwnershipValidator` 검증 헬퍼 추가
+- `src/main/java/com/moneylog_backend/moneylog/payment/service/PaymentService.java`
+  - `savePayment`에 `validateAccountOwnership(paymentReqDto.getAccountId(), userId)` 추가
+  - `validateAccountOwnership` 파라미터를 `Integer`로 변경하고 `null`이면 통과 처리(현금형 결제수단 호환)
+
+### 영향 범위
+- 예산/결제수단 생성·수정 시 리소스 소유권 검증 강화
+- API 스펙/DB 스키마 영향 없음
+
+### VERIFY
+- 정적 확인
+  - `BudgetService`의 save/update에서 category ownership 검증 호출 확인
+  - `PaymentService.savePayment`에서 account ownership 검증 호출 확인
+- 실행 검증
+  - 루트에서 `./gradlew` 실행: 성공 (`BUILD SUCCESSFUL`)
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 없음 (계획한 1번/2번 범위만 반영)
+
+## 추가 발생 이슈
+- 없음
+
+## 계획 외 수정 사항
+- 없음
+
 ## [TIME] 22:21 (KST) — [PLAN] 반복 로직 2차 중앙화 (dialog/date/ownership)
 ## [TIME] 22:57 (KST) — [PLAN] 거래 요청에서 프론트 categoryType 제거 및 서버 검증 강화
 
