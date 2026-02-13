@@ -19,6 +19,7 @@ import {
     AlertDialogTitle,
 } from "./ui/alert-dialog";
 import { useCategories, usePayments, useAccounts } from '../api/queries';
+import { getAccountTypeLabel } from '../constants/account';
 
 interface CategoryManagerProps {
     onAdd: (category: Omit<Category, "categoryId" | "userId" | "createdAt" | "updatedAt">) => void;
@@ -106,6 +107,14 @@ interface PaymentFormProps {
     setAccountId: (value: string) => void;
 }
 
+const getAccountOptionLabel = (account: Account) => {
+    if (account.type === 'BANK') {
+        return `${account.nickname} (${account.bankName})`;
+    }
+
+    return `${account.nickname} (${getAccountTypeLabel(account.type)})`;
+};
+
 const PaymentForm = ({ name, setName, type, setType, accountId, setAccountId, accounts }: PaymentFormProps) => (
     <div className="space-y-4">
         <div className="space-y-2">
@@ -165,7 +174,7 @@ const PaymentForm = ({ name, setName, type, setType, accountId, setAccountId, ac
                     <SelectContent>
                         {accounts.map((account) => (
                             <SelectItem key={account.accountId} value={String(account.accountId)}>
-                                {account.nickname} ({account.bankName})
+                                {getAccountOptionLabel(account)}
                             </SelectItem>
                         ))}
                     </SelectContent>

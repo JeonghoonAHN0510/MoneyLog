@@ -18,6 +18,7 @@ import {
     AlertDialogTitle,
 } from "./ui/alert-dialog";
 import { useAccounts, useBanks } from '../api/queries';
+import { getAccountTypeLabel } from '../constants/account';
 
 interface AccountManagerProps {
     onAdd: (account: Omit<Account, "accountId" | "userId" | "createdAt" | "updatedAt" | "bankName">) => void;
@@ -25,13 +26,6 @@ interface AccountManagerProps {
     onDelete: (accountId: string) => void;
     onTransferClick?: () => void;
 }
-
-const accountTypeLabels = {
-    bank: '은행',
-    cash: '현금',
-    point: '포인트',
-    other: '기타',
-};
 
 const accountTypeIcons: Record<string, any> = {
     bank: Building,
@@ -185,7 +179,7 @@ const AccountList = ({ items, onEdit, onDelete }: {
                             <div>
                                 <div>{account.nickname}</div>
                                 <div className="text-xs text-muted-foreground">
-                                    {accountTypeLabels[typeKey as keyof typeof accountTypeLabels] || '기타'}
+                                    {getAccountTypeLabel(account.type)}
                                     {account.type === 'BANK' && account.accountNumber && ` · ${account.accountNumber}`}
                                 </div>
                             </div>
@@ -229,6 +223,19 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
         setBalance(0);
         setAccountNumber('');
         setColor(defaultColors[0]);
+    };
+
+    const handleOpenAddDialog = () => {
+        resetForm();
+        setEditingAccount(null);
+        setIsAddDialogOpen(true);
+    };
+
+    const handleAddDialogOpenChange = (open: boolean) => {
+        setIsAddDialogOpen(open);
+        if (!open) {
+            resetForm();
+        }
     };
 
     const handleAdd = () => {
@@ -306,7 +313,7 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
                                     계좌 이체
                                 </Button>
                             )}
-                            <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
+                            <Button onClick={handleOpenAddDialog} size="sm">
                                 <Plus className="size-4 mr-2" />
                                 계좌 추가
                             </Button>
@@ -327,7 +334,7 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
                 </CardContent>
             </Card>
 
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>계좌 추가</DialogTitle>
@@ -344,7 +351,7 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
                     />
 
                     <div className="flex gap-2 pt-4">
-                        <Button variant="outline" className="flex-1" onClick={() => setIsAddDialogOpen(false)}>
+                        <Button variant="outline" className="flex-1" onClick={() => handleAddDialogOpenChange(false)}>
                             취소
                         </Button>
                         <Button className="flex-1" onClick={handleAdd}>

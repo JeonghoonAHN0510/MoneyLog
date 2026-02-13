@@ -142,6 +142,110 @@
 ## 계획 외 수정 사항
 - 없음
 
+## [TIME] 22:00 (KST) — [PLAN] 계좌 타입 라벨 상수 중앙화 리팩터링
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 1. 작업 목표
+- `CategoryManager.tsx`와 `AccountManager.tsx`에 중복된 계좌 타입 라벨 상수를 중앙화한다.
+- 라벨 변경 시 한 곳만 수정하면 두 컴포넌트에 동일 반영되도록 구조를 단순화한다.
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/moneylog/src/components/AccountManager.tsx`
+  - `src/moneylog/src/components/CategoryManager.tsx`
+- 현재 로직 요약
+  - `AccountManager`는 `accountTypeLabels`(소문자 key)를 내부 상수로 사용한다.
+  - `CategoryManager`는 `accountTypeLabelMap`(대문자 key)를 내부 상수로 사용한다.
+  - 두 상수는 실질적으로 동일 의미(은행/현금/포인트/기타 라벨)를 분산 정의 중이다.
+- 문제 원인
+  - 동일 도메인 상수가 컴포넌트별로 분리되어 변경 누락/불일치 가능성이 있다.
+
+## 3. 변경 예정 파일 목록
+- `src/moneylog/src/constants/account.ts` (신규)
+- `src/moneylog/src/components/AccountManager.tsx`
+- `src/moneylog/src/components/CategoryManager.tsx`
+- `docs/CHANGELOG_2026-02-13.md` (계획/승인/결과 기록)
+
+## 4. 변경 전략
+- `account.ts`에 계좌 타입 라벨 상수와 라벨 조회 헬퍼를 추가한다.
+  - 예: `ACCOUNT_TYPE_LABELS`, `getAccountTypeLabel(type)`
+- `AccountManager`의 기존 내부 상수를 제거하고 중앙 상수/헬퍼 import로 교체한다.
+- `CategoryManager`의 `accountTypeLabelMap`을 제거하고 동일 import를 사용한다.
+- key 대소문자 불일치 이슈를 줄이기 위해 `Account['type']`(대문자 enum) 기준으로 통일한다.
+
+## 5. 예상 영향 범위
+- 프론트엔드 컴포넌트 2개와 상수 파일 1개에 영향.
+- 화면 텍스트 라벨 일관성에 긍정적 영향.
+- 인증/DB/API/외부연동/빌드 설정 영향 없음.
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 타입 key 변환 로직 실수 시 라벨 fallback이 노출될 수 있음.
+- 롤백 방법
+  - 신규 상수 import를 제거하고 각 컴포넌트 내부 상수로 원복하면 즉시 복구 가능.
+
+## 7. 테스트 계획
+- 수동 검증
+  - 계좌 목록의 타입 라벨(은행/현금/포인트/기타) 표시 확인
+  - 결제수단의 계좌 선택 옵션 라벨 표시 확인
+- 빌드 검증
+  - `./gradlew`
+  - `./gradlew build`
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "진행해줘")
+- 승인 시간: 22:01
+
+## [TIME] 22:01 (KST) — [START] 계좌 타입 라벨 상수 중앙화 리팩터링
+
+### 작업 목표 요약
+- 분산된 계좌 타입 라벨 상수를 단일 상수 파일로 통합한다.
+- `AccountManager`와 `CategoryManager`가 동일 상수를 공유하도록 변경한다.
+
+## [TIME] 22:03 (KST) — [IMPLEMENT] 계좌 타입 라벨 상수 파일 분리 및 컴포넌트 교체
+
+### 수행 내용
+- `src/moneylog/src/constants/account.ts` 신규 생성
+  - `ACCOUNT_TYPE_LABELS` 추가 (`BANK/CASH/POINT/OTHER`)
+  - `getAccountTypeLabel(type)` 헬퍼 추가
+- `src/moneylog/src/components/AccountManager.tsx`
+  - 내부 `accountTypeLabels` 상수 제거
+  - `getAccountTypeLabel` import 후 라벨 표시 로직 교체
+- `src/moneylog/src/components/CategoryManager.tsx`
+  - 내부 `accountTypeLabelMap` 상수 제거
+  - `getAccountTypeLabel` import 후 계좌 옵션 라벨 로직 교체
+
+### 영향 범위
+- 계좌 타입 라벨 텍스트 관리 위치가 중앙화됨
+- 계좌 목록 및 결제수단 계좌 옵션의 라벨 표시 로직에만 영향
+- API/DB/인증 로직 영향 없음
+
+### VERIFY
+- 루트에서 `./gradlew` 실행
+  - 결과: 성공 (`BUILD SUCCESSFUL`)
+- 루트에서 `./gradlew build` 실행
+  - 결과: 실패
+  - 실패 핵심 로그
+    - `MoneyLogApplicationTests > contextLoads() FAILED`
+    - `BeanCreationException`
+    - `ServiceException`
+    - `HibernateException at DialectFactoryImpl.java:191`
+  - 재현 방법: 프로젝트 루트에서 `./gradlew build`
+  - 해결 시도/결과: 재실행했으나 동일 테스트 실패로 종료
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획대로 상수 파일 1개 생성 + 컴포넌트 2개 교체를 완료함.
+
+## 추가 발생 이슈
+- 기존 테스트 환경 이슈로 `./gradlew build`는 통과하지 못함.
+
+## 계획 외 수정 사항
+- 없음
+
 ## [TIME] 21:10 (KST) — [PLAN] 결제수단 현금 선택 시 은행 선택 비필수 처리
 
 ### 실행 계획
@@ -284,3 +388,152 @@
   - `BANK` 타입 계좌: 기존처럼 `{nickname} ({bankName})` 출력 확인
   - `CASH/POINT/OTHER` 타입 계좌: `{nickname} (현금/포인트/기타)` 출력 확인
 - 빌드/테스트는 사용자 승인 후 필요 시 수행
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "진행해")
+- 승인 시간: 21:34
+
+## [TIME] 21:34 (KST) — [START] 결제수단 계좌 옵션 타입 한글화 적용
+
+### 작업 목표 요약
+- 결제수단 추가/수정 폼의 계좌 선택 옵션 텍스트를 계좌 타입에 맞게 표기한다.
+- 은행 계좌는 기존 표시를 유지하고, 비은행 계좌는 타입을 한국어로 보여준다.
+
+## [TIME] 21:35 (KST) — [IMPLEMENT] 계좌 옵션 라벨 분기 및 타입 한글 매핑 추가
+
+### 수행 내용
+- `src/moneylog/src/components/CategoryManager.tsx`
+  - `accountTypeLabelMap` 추가 (`CASH: 현금`, `POINT: 포인트`, `OTHER: 기타`)
+  - `getAccountOptionLabel(account)` 헬퍼 추가
+    - `BANK`: `{nickname} ({bankName})`
+    - 그 외: `{nickname} ({한글 타입명})`
+  - `PaymentForm`의 계좌 옵션 렌더링을 `getAccountOptionLabel(account)` 호출로 변경
+
+### 영향 범위
+- 결제수단 추가/수정 다이얼로그의 계좌 옵션 라벨 텍스트에만 영향
+- 데이터 저장 구조/API/백엔드 로직 영향 없음
+
+### VERIFY
+- 루트에서 `./gradlew` 실행
+  - 결과: 성공 (`BUILD SUCCESSFUL`)
+- 루트에서 `./gradlew build` 실행
+  - 결과: 실패
+  - 실패 핵심 로그
+    - `MoneyLogApplicationTests > contextLoads() FAILED`
+    - `BeanCreationException`
+    - `ServiceException`
+    - `HibernateException at DialectFactoryImpl.java:191`
+  - 재현 방법: 프로젝트 루트에서 `./gradlew build`
+  - 해결 시도/결과: 재실행했으나 동일 테스트 실패로 종료
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획대로 `CategoryManager.tsx` 단일 파일에서 옵션 라벨 분기와 타입 한글 매핑을 적용함.
+- 예외 타입 대응은 기본값으로 원본 타입을 노출하도록 처리해 안전 분기를 유지함.
+
+## 추가 발생 이슈
+- 빌드 과정에서 기존 백엔드 테스트(`contextLoads`) 실패로 `./gradlew build`가 통과하지 못함.
+
+## 계획 외 수정 사항
+- 작업 브랜치 생성: `feat/payment-account-type-label-ko`
+
+## [TIME] 21:42 (KST) — [PLAN] 계좌 수정 후 계좌 추가 폼 상태 잔존 문제 수정
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 1. 작업 목표
+- `계좌 수정` 다이얼로그에서 사용한 입력값이 `계좌 추가` 다이얼로그에 남아 보이는 문제를 제거한다.
+- `계좌 추가`는 항상 초기값으로 열리도록 보장한다.
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/moneylog/src/components/AccountManager.tsx`
+  - `docs/CHANGELOG_2026-02-13.md`
+- 현재 로직 요약
+  - `AccountManager`는 추가/수정 다이얼로그가 동일한 폼 상태(`type/nickname/balance/color/bankId/accountNumber`)를 공유한다.
+  - 수정 시작(`handleEdit`)에서는 계좌 데이터로 상태를 채운다.
+  - 추가 버튼은 `setIsAddDialogOpen(true)`만 수행하고, 열기 전에 `resetForm()`을 호출하지 않는다.
+  - `resetForm()`은 추가/수정 저장 성공 시에만 호출된다.
+- 문제 원인
+  - 공유 상태를 사용하는 구조에서 `계좌 추가` 오픈 시 초기화가 누락되어, 직전 수정 상태가 그대로 재노출된다.
+
+## 3. 변경 예정 파일 목록
+- `src/moneylog/src/components/AccountManager.tsx`
+- `docs/CHANGELOG_2026-02-13.md` (계획/승인/결과 기록)
+
+## 4. 변경 전략
+- `계좌 추가` 버튼 클릭 핸들러를 분리해 `resetForm()` 후 `setIsAddDialogOpen(true)`를 호출한다.
+- 필요 시 `editingAccount`도 함께 `null`로 정리해 상태 오염 가능성을 차단한다.
+- 취소/닫기 동작에서도 추가 폼 상태가 남지 않도록 `onOpenChange` 처리 보강 여부를 검토한다.
+
+## 5. 예상 영향 범위
+- 프론트 `AccountManager`의 다이얼로그 오픈 UX에만 영향.
+- 인증/DB/API/외부연동/빌드 설정 영향 없음.
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 초기화 시점이 과도하면 편집 중 사용자가 의도치 않게 입력값을 잃을 수 있음.
+- 롤백 방법
+  - `AccountManager.tsx`의 오픈 핸들러 변경분을 원복하면 즉시 복구 가능.
+
+## 7. 테스트 계획
+- 수동 검증
+  - 임의 계좌 `수정` 클릭 후 값 확인
+  - 수정 다이얼로그 닫고 `계좌 추가` 클릭 시 폼이 초기값인지 확인
+  - `계좌 추가` 입력 후 취소 -> 재오픈 시 초기값 유지 확인
+  - `계좌 수정` 동작(값 로딩/저장)이 기존과 동일한지 확인
+- 필요 시 빌드 검증
+  - `./gradlew`
+  - `./gradlew build`
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "변경할 브랜치명 알려주고 작업 진행해")
+- 승인 시간: 21:43
+
+## [TIME] 21:43 (KST) — [START] 계좌 수정 후 계좌 추가 폼 초기화 보강
+
+### 작업 목표 요약
+- 계좌 수정에서 사용한 폼 상태가 계좌 추가 다이얼로그로 유입되는 문제를 차단한다.
+- 계좌 추가 다이얼로그 오픈/닫기 시 폼이 항상 초기 상태를 유지하도록 보강한다.
+
+## [TIME] 21:44 (KST) — [IMPLEMENT] 계좌 추가 다이얼로그 오픈 핸들러 및 닫힘 초기화 적용
+
+### 수행 내용
+- `src/moneylog/src/components/AccountManager.tsx`
+  - `handleOpenAddDialog` 추가
+    - `resetForm()` 선호출 후 `setEditingAccount(null)` 및 `setIsAddDialogOpen(true)` 수행
+  - `handleAddDialogOpenChange(open)` 추가
+    - 다이얼로그 닫힘 시(`open === false`) `resetForm()` 실행
+  - 계좌 추가 버튼 클릭 핸들러를 `handleOpenAddDialog`로 변경
+  - 계좌 추가 다이얼로그 `onOpenChange`를 `handleAddDialogOpenChange`로 변경
+  - 계좌 추가 다이얼로그 취소 버튼도 `handleAddDialogOpenChange(false)`를 사용하도록 변경
+
+### 영향 범위
+- `AccountManager` 내 계좌 추가 다이얼로그의 상태 초기화 동작에만 영향
+- 계좌 수정 다이얼로그 및 저장 payload 구조 변경 없음
+
+### VERIFY
+- 루트에서 `./gradlew` 실행
+  - 결과: 성공 (`BUILD SUCCESSFUL`)
+- 루트에서 `./gradlew build` 실행
+  - 결과: 실패
+  - 실패 핵심 로그
+    - `MoneyLogApplicationTests > contextLoads() FAILED`
+    - `BeanCreationException`
+    - `ServiceException`
+    - `HibernateException at DialectFactoryImpl.java:191`
+  - 재현 방법: 프로젝트 루트에서 `./gradlew build`
+  - 해결 시도/결과: 재실행했으나 동일 테스트 실패로 종료
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획대로 `AccountManager.tsx` 단일 파일에서 계좌 추가 다이얼로그 오픈/닫힘 초기화를 보강함.
+
+## 추가 발생 이슈
+- 기존 테스트 환경 이슈(`contextLoads`)로 `./gradlew build`는 통과하지 못함.
+
+## 계획 외 수정 사항
+- 없음
