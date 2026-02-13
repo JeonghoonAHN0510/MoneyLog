@@ -29,7 +29,7 @@ public class BudgetService {
     @Transactional
     public int saveBudget(BudgetReqDto budgetReqDto, Integer userId) {
         int categoryId = budgetReqDto.getCategoryId();
-        getCategoryByIdAndValidateOwnership(categoryId, userId);
+        validateCategoryOwnership(categoryId, userId);
 
         if (checkingCategoryAndUserIsDuplicate(categoryId, userId) > 0) {
             return -1;
@@ -47,7 +47,7 @@ public class BudgetService {
     @Transactional
     public BudgetResDto updateBudget(BudgetReqDto budgetReqDto, Integer userId) {
         int categoryId = budgetReqDto.getCategoryId();
-        getCategoryByIdAndValidateOwnership(categoryId, userId);
+        validateCategoryOwnership(categoryId, userId);
 
         BudgetEntity budgetEntity = getBudgetByIdAndValidateOwnership(budgetReqDto.getBudgetId(), userId);
 
@@ -68,14 +68,12 @@ public class BudgetService {
         return budgetMapper.checkCategoryAndUserIsDuplicate(categoryId, userId);
     }
 
-    private CategoryEntity getCategoryByIdAndValidateOwnership (int categoryId, int userId) {
+    private void validateCategoryOwnership (int categoryId, int userId) {
         CategoryEntity categoryEntity = categoryRepository.findById(categoryId)
                                                           .orElseThrow(() -> new ResourceNotFoundException(
                                                               ErrorMessageConstants.CATEGORY_NOT_FOUND));
 
         OwnershipValidator.validateOwner(categoryEntity.getUserId(), userId, "본인의 카테고리가 아닙니다.");
-
-        return categoryEntity;
     }
 
     private BudgetEntity getBudgetByIdAndValidateOwnership (int budgetId, int userId) {
