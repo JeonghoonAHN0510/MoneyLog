@@ -230,7 +230,7 @@ public class TransactionService {
                                                        .orElseThrow(
                                                            () -> new ResourceNotFoundException(
                                                                ErrorMessageConstants.PAYMENT_NOT_FOUND));
-        OwnershipValidator.validateOwner(paymentEntity.getUserId(), userId, "본인의 결제수단가 아닙니다.");
+        OwnershipValidator.validateOwner(paymentEntity.getUserId(), userId, "본인의 결제수단이 아닙니다.");
     }
 
     private SelectTransactionByUserIdQuery createMonthlyQuery (Integer userId, Integer year, Integer month) {
