@@ -1,6 +1,9 @@
 package com.moneylog_backend.global.type;
 
 import java.util.Arrays;
+import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -16,10 +19,19 @@ public enum PaymentEnum {
     private final String code;
     private final String label;
 
+    private static final Map<String, PaymentEnum> CODE_MAP = Arrays.stream(values())
+                                                                    .collect(Collectors.toMap(
+                                                                        type -> type.code.toUpperCase(Locale.ROOT),
+                                                                        type -> type));
+
     public static PaymentEnum fromCode(String code) {
-        return Arrays.stream(values())
-                     .filter(type -> type.code.equalsIgnoreCase(code))
-                     .findFirst()
-                     .orElseThrow(() -> new IllegalArgumentException("Unknown payment type: " + code));
+        if (code == null) {
+            throw new IllegalArgumentException("Unknown payment type: null");
+        }
+        PaymentEnum result = CODE_MAP.get(code.toUpperCase(Locale.ROOT));
+        if (result == null) {
+            throw new IllegalArgumentException("Unknown payment type: " + code);
+        }
+        return result;
     }
 }

@@ -142,6 +142,120 @@
 ## 계획 외 수정 사항
 - 없음
 
+## [TIME] 22:48 (KST) — [PLAN] enum fromCode static map 기반 O(1) 조회 통일
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- 사용자 요청에 따라 **현재 브랜치 유지**: `refactor/enum-usability-improvements`
+
+## 1. 작업 목표
+- PR 코멘트 기준으로 enum `fromCode`를 static map 기반 O(1) 조회로 통일한다.
+- Locale 이슈를 피하기 위해 대소문자 변환 시 `Locale.ROOT`를 적용한다.
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/main/java/com/moneylog_backend/global/type/AccountTypeEnum.java`
+  - `src/main/java/com/moneylog_backend/global/type/CategoryEnum.java`
+  - `src/main/java/com/moneylog_backend/global/type/PaymentEnum.java`
+  - `src/main/java/com/moneylog_backend/global/type/ProviderEnum.java`
+  - `src/main/java/com/moneylog_backend/global/type/RoleEnum.java`
+  - `src/main/java/com/moneylog_backend/global/type/StatusEnum.java`
+  - `src/main/java/com/moneylog_backend/global/type/ScheduleEnum.java`
+  - `docs/CHANGELOG_2026-02-13.md`
+- 현재 로직 요약
+  - `AccountTypeEnum`은 이미 static `CODE_MAP` 방식이나 `toUpperCase()`에 locale 지정이 없다.
+  - 나머지 enum들은 `fromCode`에서 `Arrays.stream(values())` 순회 방식이다.
+- 문제 원인
+  - enum별 구현 패턴이 불일치하고, 일부는 호출마다 선형 탐색을 수행한다.
+
+## 3. 변경 예정 파일 목록
+- `src/main/java/com/moneylog_backend/global/type/AccountTypeEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/CategoryEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/PaymentEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/ProviderEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/RoleEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/StatusEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/ScheduleEnum.java`
+- `docs/CHANGELOG_2026-02-13.md`
+
+## 4. 변경 전략
+- 각 enum에 `private static final Map<String, EnumType> CODE_MAP` 추가
+  - 초기화 시 `code.toUpperCase(Locale.ROOT)` 사용
+- `fromCode`에서
+  - `null` 방어 처리
+  - `CODE_MAP.get(code.toUpperCase(Locale.ROOT))` 조회
+  - 미존재 시 기존 포맷의 `IllegalArgumentException` 발생
+- 미사용 `Arrays` import 제거, 필요한 `Map`, `Collectors`, `Locale` import 추가
+
+## 5. 예상 영향 범위
+- enum 파싱 성능/일관성 개선에만 영향
+- 비즈니스 동작/DB/API 스키마 영향 없음
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 예외 메시지 문자열이 바뀌면 기존 의존 코드/테스트에 영향 가능
+- 롤백 방법
+  - 해당 enum 파일 변경분만 원복하면 즉시 복구 가능
+
+## 7. 테스트 계획
+- 정적 확인
+  - 대상 enum에서 `fromCode`가 `CODE_MAP` 조회 방식인지 확인
+  - `Locale.ROOT` 적용 여부 확인
+- 실행 검증
+  - `./gradlew` 실행
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "오케이 진행해줘")
+- 승인 시간: 22:49
+
+## [TIME] 22:49 (KST) — [START] enum fromCode static map 통일 적용
+
+### 작업 목표 요약
+- PR 코멘트 기준으로 enum `fromCode`를 static map 조회 방식으로 통일한다.
+- 대소문자 변환에 `Locale.ROOT`를 적용해 로케일 의존성을 제거한다.
+
+## [TIME] 22:52 (KST) — [IMPLEMENT] enum CODE_MAP + Locale.ROOT 적용
+
+### 수행 내용
+- 대상 enum
+  - `AccountTypeEnum`
+  - `CategoryEnum`
+  - `PaymentEnum`
+  - `ProviderEnum`
+  - `RoleEnum`
+  - `StatusEnum`
+  - `ScheduleEnum`
+- 변경 사항
+  - `private static final Map<String, EnumType> CODE_MAP` 추가
+  - `CODE_MAP` 초기화 시 key를 `code.toUpperCase(Locale.ROOT)`로 통일
+  - `fromCode`를 `CODE_MAP.get(code.toUpperCase(Locale.ROOT))` 조회 방식으로 변경
+  - `null` 입력에 대한 명시적 예외 처리 추가
+  - 필요한 `Locale`, `Map`, `Collectors` import 추가 및 순회 기반 조회 코드 제거
+- `ScheduleEnum`은 기존 `fromString` 하위 호환을 유지하면서 내부적으로 `fromCode` 재사용
+
+### 영향 범위
+- enum code 파싱 성능/일관성 개선
+- 기능 동작(정상 코드 입력 시 결과) 및 API/DB 스키마 변경 없음
+
+### VERIFY
+- 정적 확인
+  - 대상 enum 전부 `CODE_MAP` + `Locale.ROOT` 적용 확인
+- 실행 검증
+  - 루트에서 `./gradlew` 실행: 성공 (`BUILD SUCCESSFUL`)
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 없음 (계획 범위와 동일하게 적용)
+
+## 추가 발생 이슈
+- 없음
+
+## 계획 외 수정 사항
+- 없음
+
 ## [TIME] 22:32 (KST) — [PLAN] global/type enum 사용성 개선 리팩터링
 
 ### 실행 계획

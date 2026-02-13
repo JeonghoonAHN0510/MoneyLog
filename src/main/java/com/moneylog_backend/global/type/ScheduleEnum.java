@@ -1,6 +1,9 @@
 package com.moneylog_backend.global.type;
 
 import java.util.Arrays;
+import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -34,15 +37,25 @@ public enum ScheduleEnum {
     private final String code;
     private final String label;
 
+    private static final Map<String, ScheduleEnum> CODE_MAP = Arrays.stream(values())
+                                                                     .collect(Collectors.toMap(
+                                                                         schedule -> schedule.code.toUpperCase(
+                                                                             Locale.ROOT),
+                                                                         schedule -> schedule));
+
     // 각 Enum 상수에서 구현할 추상 메소드
     public abstract String toCron(int minute, int hour, Integer dayOfWeek, Integer dayOfMonth);
 
     // 문자열을 Enum으로 안전하게 변환하는 helper 메소드
     public static ScheduleEnum fromCode(String code) {
-        return Arrays.stream(values())
-                     .filter(schedule -> schedule.code.equalsIgnoreCase(code))
-                     .findFirst()
-                     .orElseThrow(() -> new IllegalArgumentException("Unknown frequency: " + code));
+        if (code == null) {
+            throw new IllegalArgumentException("Unknown frequency: null");
+        }
+        ScheduleEnum result = CODE_MAP.get(code.toUpperCase(Locale.ROOT));
+        if (result == null) {
+            throw new IllegalArgumentException("Unknown frequency: " + code);
+        }
+        return result;
     }
 
     public static ScheduleEnum fromString(String text) {
