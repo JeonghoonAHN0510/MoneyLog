@@ -121,7 +121,6 @@ const PaymentForm = ({ name, setName, type, setType, accountId, setAccountId, ac
         <div className="space-y-2">
             <Label>유형</Label>
             <div className="flex gap-2">
-                {/*// todo 현금을 선택하면, 은행을 선택하지 않도록 변경 */}
                 <Button
                     type="button"
                     variant={type === 'CASH' ? 'default' : 'outline'}
@@ -156,21 +155,23 @@ const PaymentForm = ({ name, setName, type, setType, accountId, setAccountId, ac
                 </Button>
             </div>
         </div>
-        <div className="space-y-2">
-            <Label htmlFor="bank-select">은행 선택</Label>
-            <Select value={accountId} onValueChange={setAccountId}>
-                <SelectTrigger id="bank-select">
-                    <SelectValue placeholder="은행을 선택해주세요" />
-                </SelectTrigger>
-                <SelectContent>
-                    {accounts.map((account) => (
-                        <SelectItem key={account.accountId} value={String(account.accountId)}>
-                            {account.nickname} ({account.bankName})
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-        </div>
+        {type !== 'CASH' && (
+            <div className="space-y-2">
+                <Label htmlFor="account-select">계좌 선택</Label>
+                <Select value={accountId} onValueChange={setAccountId}>
+                    <SelectTrigger id="account-select">
+                        <SelectValue placeholder="계좌를 선택해주세요" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {accounts.map((account) => (
+                            <SelectItem key={account.accountId} value={String(account.accountId)}>
+                                {account.nickname} ({account.bankName})
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+        )}
     </div>
 );
 
@@ -316,14 +317,23 @@ export function CategoryManager({
     const [paymentType, setPaymentType] = useState<'CASH' | 'CREDIT_CARD' | 'CHECK_CARD' | 'BANK'>('CASH');
     const [paymentId, setPaymentId] = useState('');
 
+    const handlePaymentTypeChange = (nextType: Payment['type']) => {
+        setPaymentType(nextType);
+        if (nextType === 'CASH') {
+            setAccountId('');
+        }
+    };
+
     const resetPaymentForm = () => {
         setPaymentName('');
         setPaymentType('CASH');
+        setAccountId('');
     };
 
     const handleAddPayment = () => {
         if (!paymentName) return;
-        onAddPayment({ name: paymentName, type: paymentType, accountId });
+        const nextAccountId = paymentType === 'CASH' ? '' : accountId;
+        onAddPayment({ name: paymentName, type: paymentType, accountId: nextAccountId });
         resetPaymentForm();
         setIsAddPaymentOpen(false);
     };
@@ -340,7 +350,8 @@ export function CategoryManager({
 
     const handleUpdatePayment = () => {
         if (!editingPayment || !paymentName) return;
-        onUpdatePayment({ paymentId, name: paymentName, type: paymentType, accountId });
+        const nextAccountId = paymentType === 'CASH' ? '' : accountId;
+        onUpdatePayment({ paymentId, name: paymentName, type: paymentType, accountId: nextAccountId });
         resetPaymentForm();
         setEditingPayment(null);
         setIsEditPaymentOpen(false);
@@ -462,7 +473,7 @@ export function CategoryManager({
                         <DialogTitle>결제수단 추가</DialogTitle>
                         <DialogDescription>새로운 결제수단을 추가하세요.</DialogDescription>
                     </DialogHeader>
-                    <PaymentForm name={paymentName} setName={setPaymentName} type={paymentType} setType={setPaymentType} accountId={accountId} setAccountId={setAccountId} accounts={accounts} />
+                    <PaymentForm name={paymentName} setName={setPaymentName} type={paymentType} setType={handlePaymentTypeChange} accountId={accountId} setAccountId={setAccountId} accounts={accounts} />
                     <div className="flex gap-2 pt-4">
                         <Button variant="outline" className="flex-1" onClick={() => setIsAddPaymentOpen(false)}>취소</Button>
                         <Button className="flex-1" onClick={handleAddPayment}>추가</Button>
@@ -476,7 +487,7 @@ export function CategoryManager({
                         <DialogTitle>결제수단 수정</DialogTitle>
                         <DialogDescription>결제수단 정보를 수정하세요.</DialogDescription>
                     </DialogHeader>
-                    <PaymentForm name={paymentName} setName={setPaymentName} type={paymentType} setType={setPaymentType} accountId={accountId} setAccountId={setAccountId} accounts={accounts} />
+                    <PaymentForm name={paymentName} setName={setPaymentName} type={paymentType} setType={handlePaymentTypeChange} accountId={accountId} setAccountId={setAccountId} accounts={accounts} />
                     <div className="flex gap-2 pt-4">
                         <Button variant="outline" className="flex-1" onClick={() => setIsEditPaymentOpen(false)}>취소</Button>
                         <Button className="flex-1" onClick={handleUpdatePayment}>수정</Button>
