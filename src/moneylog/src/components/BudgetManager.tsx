@@ -19,6 +19,7 @@ import {
 } from "./ui/alert-dialog";
 import { useCategories, useBudgets } from '../api/queries';
 import { formatKrw } from '../utils/currency';
+import { createDialogOpenChangeHandler } from '../utils/dialog';
 
 interface BudgetManagerProps {
     onAdd: (budget: Omit<Budget, 'budgetId' | "userId" | "budgetDate" | "createdAt" | "updatedAt" | "categoryName">) => void;
@@ -135,6 +136,12 @@ export function BudgetManager({ onAdd, onUpdate, onDelete }: BudgetManagerProps)
         setAmount('');
     };
 
+    const handleAddDialogOpenChange = createDialogOpenChangeHandler(setIsAddDialogOpen, resetForm);
+    const handleEditDialogOpenChange = createDialogOpenChangeHandler(setIsEditDialogOpen, () => {
+        resetForm();
+        setEditingBudget(null);
+    });
+
     const handleAdd = () => {
         if (!categoryId || !amount) return;
 
@@ -204,7 +211,7 @@ export function BudgetManager({ onAdd, onUpdate, onDelete }: BudgetManagerProps)
             </Card>
 
             {/* Add Dialog */}
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>예산 추가</DialogTitle>
@@ -218,7 +225,7 @@ export function BudgetManager({ onAdd, onUpdate, onDelete }: BudgetManagerProps)
                     />
 
                     <div className="flex gap-2 pt-4">
-                        <Button variant="outline" className="flex-1" onClick={() => setIsAddDialogOpen(false)}>
+                        <Button variant="outline" className="flex-1" onClick={() => handleAddDialogOpenChange(false)}>
                             취소
                         </Button>
                         <Button className="flex-1" onClick={handleAdd}>
@@ -229,7 +236,7 @@ export function BudgetManager({ onAdd, onUpdate, onDelete }: BudgetManagerProps)
             </Dialog>
 
             {/* Edit Dialog */}
-            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogOpenChange}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>예산 수정</DialogTitle>
@@ -243,7 +250,7 @@ export function BudgetManager({ onAdd, onUpdate, onDelete }: BudgetManagerProps)
                     />
 
                     <div className="flex gap-2 pt-4">
-                        <Button variant="outline" className="flex-1" onClick={() => setIsEditDialogOpen(false)}>
+                        <Button variant="outline" className="flex-1" onClick={() => handleEditDialogOpenChange(false)}>
                             취소
                         </Button>
                         <Button className="flex-1" onClick={handleUpdate}>

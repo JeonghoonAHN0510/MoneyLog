@@ -2,12 +2,12 @@ package com.moneylog_backend.moneylog.fixed.service;
 
 import java.time.LocalDate;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
+import com.moneylog_backend.global.util.OwnershipValidator;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
@@ -49,17 +49,13 @@ public class FixedService {
                                                  .orElseThrow(() -> new ResourceNotFoundException(
                                                      ErrorMessageConstants.ACCOUNT_NOT_FOUND));
 
-        if (!account.getUserId().equals(userId)) {
-            throw new AccessDeniedException("본인의 계좌가 아닙니다.");
-        }
+        OwnershipValidator.validateOwner(account.getUserId(), userId, "본인의 계좌가 아닙니다.");
 
         CategoryEntity category = categoryRepository.findById(categoryId)
                                                     .orElseThrow(
                                                         () -> new ResourceNotFoundException(
                                                             ErrorMessageConstants.CATEGORY_NOT_FOUND));
 
-        if (!category.getUserId().equals(userId)) {
-            throw new AccessDeniedException("본인의 카테고리가 아닙니다.");
-        }
+        OwnershipValidator.validateOwner(category.getUserId(), userId, "본인의 카테고리가 아닙니다.");
     }
 }

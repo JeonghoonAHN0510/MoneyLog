@@ -20,6 +20,7 @@ import {
 import { useAccounts, useBanks } from '../api/queries';
 import { getAccountTypeLabel } from '../constants/account';
 import { formatKrw } from '../utils/currency';
+import { createDialogOpenChangeHandler } from '../utils/dialog';
 
 interface AccountManagerProps {
     onAdd: (account: Omit<Account, "accountId" | "userId" | "createdAt" | "updatedAt" | "bankName">) => void;
@@ -228,12 +229,11 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
         setIsAddDialogOpen(true);
     };
 
-    const handleAddDialogOpenChange = (open: boolean) => {
-        setIsAddDialogOpen(open);
-        if (!open) {
-            resetForm();
-        }
-    };
+    const handleAddDialogOpenChange = createDialogOpenChangeHandler(setIsAddDialogOpen, resetForm);
+    const handleEditDialogOpenChange = createDialogOpenChangeHandler(setIsEditDialogOpen, () => {
+        resetForm();
+        setEditingAccount(null);
+    });
 
     const handleAdd = () => {
         if (!nickname) return;
@@ -358,7 +358,7 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogOpenChange}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>계좌 수정</DialogTitle>
@@ -375,7 +375,7 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
                     />
 
                     <div className="flex gap-2 pt-4">
-                        <Button variant="outline" className="flex-1" onClick={() => setIsEditDialogOpen(false)}>
+                        <Button variant="outline" className="flex-1" onClick={() => handleEditDialogOpenChange(false)}>
                             취소
                         </Button>
                         <Button className="flex-1" onClick={handleUpdate}>

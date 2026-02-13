@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
+import com.moneylog_backend.global.util.OwnershipValidator;
 import com.moneylog_backend.moneylog.category.dto.req.CategoryReqDto;
 import com.moneylog_backend.moneylog.category.dto.res.CategoryResDto;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
@@ -11,7 +12,6 @@ import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
 import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
 import com.moneylog_backend.moneylog.fixed.dto.query.CheckCategoryNameTypeUniqueQuery;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,9 +68,7 @@ public class CategoryService {
                                                               () -> new ResourceNotFoundException(
                                                                   ErrorMessageConstants.CATEGORY_NOT_FOUND));
 
-        if (categoryEntity.getUserId() != userId) {
-            throw new AccessDeniedException("본인의 카테고리가 아닙니다.");
-        }
+        OwnershipValidator.validateOwner(categoryEntity.getUserId(), userId, "본인의 카테고리가 아닙니다.");
 
         return categoryEntity;
     }

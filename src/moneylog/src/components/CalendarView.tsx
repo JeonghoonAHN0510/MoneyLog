@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import { ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownRight, Loader2 } from 'lucide-react';
 import { useCalendar } from '../api/queries';
 import { formatKrw } from '../utils/currency';
+import { getTodayIsoDate } from '../utils/date';
 
 interface CalendarViewProps {
   onDateClick: (date: string) => void;
@@ -46,7 +47,7 @@ export function CalendarView({ onDateClick }: CalendarViewProps) {
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const summary = summaryMap.get(dateStr);
-    const isToday = dateStr === new Date().toISOString().split('T')[0];
+    const isToday = dateStr === getTodayIsoDate();
     const hasData = summary && (summary.totalIncome > 0 || summary.totalExpense > 0);
 
     days.push(

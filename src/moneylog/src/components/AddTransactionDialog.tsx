@@ -8,6 +8,7 @@ import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Transaction, Category, Account, Payment, Fixed } from '../types/finance';
 import { useCategories, useAccounts, usePayments } from '../api/queries';
+import { getTodayIsoDate } from '../utils/date';
 
 interface AddTransactionDialogProps {
     open: boolean;
@@ -31,7 +32,7 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onTransactionS
     const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
     const [categoryId, setCategoryId] = useState('');
     const [amount, setAmount] = useState('');
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [date, setDate] = useState(getTodayIsoDate());
     const [paymentId, setPaymentId] = useState('');
     const [accountId, setAccountId] = useState('');
     const [description, setDescription] = useState('');
@@ -219,7 +220,7 @@ const FixedTransactionForm = ({ categories, accounts, onFixedSubmit, onCancel }:
     const [amount, setAmount] = useState('');
     const [fixedName, setFixedName] = useState('');
     const [fixedDay, setFixedDay] = useState('1');
-    const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+    const [startDate, setStartDate] = useState(getTodayIsoDate());
     const [endDate, setEndDate] = useState('');
 
     const filteredCategories = categories.filter(cat => cat.type === type);

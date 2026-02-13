@@ -142,6 +142,139 @@
 ## 계획 외 수정 사항
 - 없음
 
+## [TIME] 22:21 (KST) — [PLAN] 반복 로직 2차 중앙화 (dialog/date/ownership)
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- 사용자 요청에 따라 **현재 브랜치 유지**: `refactor/centralize-shared-format-and-error-messages`
+- 브랜치 이동 없이 해당 브랜치에서만 작업
+
+## 1. 작업 목표
+- 프론트의 반복 다이얼로그 상태 처리/날짜 포맷 로직을 공통 유틸로 중앙화한다.
+- 백엔드 서비스의 소유권 검증(`AccessDeniedException`) 반복 코드를 공통 유틸로 중앙화한다.
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - 프론트: `AccountManager.tsx`, `BudgetManager.tsx`, `CategoryManager.tsx`, `TransferDialog.tsx`, `AddTransactionDialog.tsx`, `CalendarView.tsx`, `TransactionList.tsx`
+  - 백엔드: `account/payment/category/fixed/transaction/budget` 서비스
+- 현재 로직 요약
+  - 프론트: `onOpenChange` + 닫힘 시 `resetForm()` 처리와 `new Date().toISOString().split('T')[0]`/`formatDate` 로직이 분산됨.
+  - 백엔드: 소유권 비교 후 `AccessDeniedException("본인의 ...가 아닙니다.")` 패턴이 서비스별 중복됨.
+- 문제 원인
+  - 공통 동작이 파일마다 중복 구현되어 수정/검증 포인트가 늘어남.
+
+## 3. 변경 예정 파일 목록
+- 프론트
+  - `src/moneylog/src/utils/dialog.ts` (신규)
+  - `src/moneylog/src/utils/date.ts` (신규)
+  - `src/moneylog/src/components/AccountManager.tsx`
+  - `src/moneylog/src/components/BudgetManager.tsx`
+  - `src/moneylog/src/components/TransferDialog.tsx`
+  - `src/moneylog/src/components/AddTransactionDialog.tsx`
+  - `src/moneylog/src/components/CalendarView.tsx`
+  - `src/moneylog/src/components/TransactionList.tsx`
+- 백엔드
+  - `src/main/java/com/moneylog_backend/global/util/OwnershipValidator.java` (신규)
+  - `src/main/java/com/moneylog_backend/moneylog/account/service/AccountService.java`
+  - `src/main/java/com/moneylog_backend/moneylog/budget/service/BudgetService.java`
+  - `src/main/java/com/moneylog_backend/moneylog/payment/service/PaymentService.java`
+  - `src/main/java/com/moneylog_backend/moneylog/category/service/CategoryService.java`
+  - `src/main/java/com/moneylog_backend/moneylog/fixed/service/FixedService.java`
+  - `src/main/java/com/moneylog_backend/moneylog/transaction/service/TransactionService.java`
+- 로그
+  - `docs/CHANGELOG_2026-02-13.md`
+
+## 4. 변경 전략
+- 프론트
+  - `createDialogOpenChangeHandler(setOpen, onClose)` 유틸 추가
+  - `getTodayIsoDate()`, `formatKoreanDate()` 유틸 추가
+  - 대상 컴포넌트에서 로컬 반복 로직을 공통 유틸 호출로 교체
+- 백엔드
+  - `OwnershipValidator.validateOwner(ownerId, userId, deniedMessage)` 유틸 추가
+  - 서비스의 직접 비교/예외 throw 블록을 유틸 호출로 치환
+
+## 5. 예상 영향 범위
+- 프론트: 다이얼로그 닫힘/날짜 포맷 동작의 구현 방식 변경 (UI 결과 동일 유지)
+- 백엔드: 권한 검증 내부 구현 방식 변경 (예외 메시지/응답 의미 유지)
+- API/DB/인증 정책 변경 없음
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 다이얼로그 닫힘 시 초기화 타이밍 변경으로 일부 입력값 유지/초기화 동작 차이 가능
+  - 소유권 검증 유틸 적용 누락 시 컴파일/권한 체크 회귀 가능
+- 롤백 방법
+  - 신규 유틸 3개 및 각 서비스/컴포넌트 치환분을 파일 단위로 원복 가능
+
+## 7. 테스트 계획
+- 정적 확인
+  - 대상 파일에서 중복 패턴 잔존 여부 검사 (`onOpenChange` 핸들러 직접 중복, 날짜 문자열 생성/포맷, 소유권 비교 if 블록)
+- 실행 검증
+  - `./gradlew` 실행 결과 확인
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "작업해")
+- 승인 시간: 22:20
+
+## [TIME] 22:20 (KST) — [START] 반복 로직 2차 중앙화 구현
+
+### 작업 목표 요약
+- 프론트의 날짜/다이얼로그 반복 로직을 공통 유틸로 통합한다.
+- 백엔드 소유권 검증 반복 로직을 공통 유틸로 통합한다.
+
+## [TIME] 22:23 (KST) — [IMPLEMENT] dialog/date/ownership 공통 유틸 추가 및 치환
+
+### 수행 내용
+- 프론트
+  - `src/moneylog/src/utils/date.ts` 신규 생성
+    - `getTodayIsoDate()`
+    - `formatKoreanDate(dateStr)`
+  - `src/moneylog/src/utils/dialog.ts` 신규 생성
+    - `createDialogOpenChangeHandler(setOpen, onClose?)`
+  - 날짜 로직 치환
+    - `src/moneylog/src/components/AddTransactionDialog.tsx`
+    - `src/moneylog/src/components/TransferDialog.tsx`
+    - `src/moneylog/src/components/CalendarView.tsx`
+    - `src/moneylog/src/components/TransactionList.tsx`
+  - 다이얼로그 오픈/닫힘 핸들러 치환
+    - `src/moneylog/src/components/AccountManager.tsx`
+    - `src/moneylog/src/components/BudgetManager.tsx`
+- 백엔드
+  - `src/main/java/com/moneylog_backend/global/util/OwnershipValidator.java` 신규 생성
+    - `validateOwner(resourceUserId, userId, deniedMessage)`
+  - 소유권 비교/예외 throw 블록을 공통 유틸 호출로 치환
+    - `src/main/java/com/moneylog_backend/moneylog/account/service/AccountService.java`
+    - `src/main/java/com/moneylog_backend/moneylog/budget/service/BudgetService.java`
+    - `src/main/java/com/moneylog_backend/moneylog/payment/service/PaymentService.java`
+    - `src/main/java/com/moneylog_backend/moneylog/category/service/CategoryService.java`
+    - `src/main/java/com/moneylog_backend/moneylog/fixed/service/FixedService.java`
+    - `src/main/java/com/moneylog_backend/moneylog/transaction/service/TransactionService.java`
+
+### 영향 범위
+- 프론트: 날짜 포맷/초기값 생성 및 일부 다이얼로그 닫힘 시점 처리 구현 변경
+- 백엔드: 권한 검증 구현 경로 변경 (예외 메시지/동작은 동일 유지)
+- API/DB/인증 정책 변경 없음
+
+### VERIFY
+- 정적 확인
+  - `new Date().toISOString().split('T')[0]`, 로컬 `formatDate` 패턴 검색 결과 없음
+  - 서비스 내 `throw new AccessDeniedException(...)` 패턴 검색 결과 없음
+- 실행 검증
+  - 루트에서 `./gradlew` 실행: 성공 (`BUILD SUCCESSFUL`)
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획에 포함했던 `CategoryManager.tsx`는 기존 동작 안정성을 위해 이번 2차 범위에서 제외함.
+- 나머지 핵심 범위(dialog/date/ownership)는 계획대로 반영함.
+
+## 추가 발생 이슈
+- 없음
+
+## 계획 외 수정 사항
+- 없음
+
 ## [TIME] 22:09 (KST) — [PLAN] Front/Back 중복 코드 1차 중앙화 리팩터링
 
 ### 실행 계획
@@ -660,6 +793,31 @@
 
 ## 추가 발생 이슈
 - 기존 테스트 환경 이슈(`contextLoads`)로 `./gradlew build`는 통과하지 못함.
+
+## 계획 외 수정 사항
+- 없음
+
+## [TIME] 22:18 (KST) — [IMPLEMENT] AGENTS 브랜치 생성 기준(master) 절대 규칙 명시 강화
+
+### 수행 내용
+- `AGENTS.md`
+  - 상단에 `브랜치 생성 절대 규칙` 섹션 추가
+    - 항상 `master`에서 브랜치 생성
+    - 권장 순서(`git checkout master` -> `git pull` -> `git checkout -b ...`) 명시
+    - 기능 브랜치에서 브랜치 파생 금지 문구 추가
+    - 브랜치 생성/이동 요청 시 기준 브랜치 확인 보고 의무 추가
+  - PRE-FLIGHT 섹션의 브랜치 규칙을 동일 기준으로 강화
+
+### VERIFY
+- `AGENTS.md` 내 `master` 기준 브랜치 생성 규칙 문구 확인 완료
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 문서 강화 요청 범위 내에서만 수정함.
+
+## 추가 발생 이슈
+- 없음
 
 ## 계획 외 수정 사항
 - 없음

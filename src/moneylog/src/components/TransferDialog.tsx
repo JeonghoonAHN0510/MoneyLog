@@ -8,6 +8,7 @@ import { Textarea } from './ui/textarea';
 import { Transfer } from '../types/finance';
 import { useAccounts } from '../api/queries';
 import { formatKrw } from '../utils/currency';
+import { getTodayIsoDate } from '../utils/date';
 
 interface TransferDialogProps {
   open: boolean;
@@ -25,7 +26,7 @@ export function TransferDialog({
   const [fromAccountId, setFromAccountId] = useState<string>('');
   const [toAccountId, setToAccountId] = useState<string>('');
   const [amount, setAmount] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(getTodayIsoDate());
   const [memo, setMemo] = useState<string>('');
 
   const resetForm = () => {
