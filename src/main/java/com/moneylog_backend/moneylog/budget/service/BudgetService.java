@@ -10,6 +10,7 @@ import com.moneylog_backend.moneylog.budget.dto.res.BudgetResDto;
 import com.moneylog_backend.moneylog.budget.entity.BudgetEntity;
 import com.moneylog_backend.moneylog.budget.mapper.BudgetMapper;
 import com.moneylog_backend.moneylog.budget.repository.BudgetRepository;
+import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
 
 import org.springframework.stereotype.Service;
@@ -28,9 +29,7 @@ public class BudgetService {
     @Transactional
     public int saveBudget(BudgetReqDto budgetReqDto, Integer userId) {
         int categoryId = budgetReqDto.getCategoryId();
-        if (!hasBudget(categoryId)) {
-            return -1;
-        }
+        validateCategoryOwnership(categoryId, userId);
 
         if (checkingCategoryAndUserIsDuplicate(categoryId, userId) > 0) {
             return -1;
@@ -48,9 +47,7 @@ public class BudgetService {
     @Transactional
     public BudgetResDto updateBudget(BudgetReqDto budgetReqDto, Integer userId) {
         int categoryId = budgetReqDto.getCategoryId();
-        if (!hasBudget(categoryId)) {
-            return null;
-        }
+        validateCategoryOwnership(categoryId, userId);
 
         BudgetEntity budgetEntity = getBudgetByIdAndValidateOwnership(budgetReqDto.getBudgetId(), userId);
 
@@ -67,12 +64,16 @@ public class BudgetService {
         return true;
     }
 
-    private boolean hasBudget (int categoryId) {
-        return categoryRepository.existsById(categoryId);
-    }
-
     private int checkingCategoryAndUserIsDuplicate (int categoryId, int userId) {
         return budgetMapper.checkCategoryAndUserIsDuplicate(categoryId, userId);
+    }
+
+    private void validateCategoryOwnership (int categoryId, int userId) {
+        CategoryEntity categoryEntity = categoryRepository.findById(categoryId)
+                                                          .orElseThrow(() -> new ResourceNotFoundException(
+                                                              ErrorMessageConstants.CATEGORY_NOT_FOUND));
+
+        OwnershipValidator.validateOwner(categoryEntity.getUserId(), userId, "본인의 카테고리가 아닙니다.");
     }
 
     private BudgetEntity getBudgetByIdAndValidateOwnership (int budgetId, int userId) {

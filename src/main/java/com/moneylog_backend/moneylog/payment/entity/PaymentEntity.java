@@ -50,9 +50,7 @@ public class PaymentEntity extends BaseTime {
     }
 
     public void updateDetails(Integer accountId, String name, PaymentEnum type) {
-        if (accountId != null) {
-            this.accountId = accountId;
-        }
+        this.accountId = accountId;
 
         if (name != null && !name.isEmpty()) {
             this.name = name;

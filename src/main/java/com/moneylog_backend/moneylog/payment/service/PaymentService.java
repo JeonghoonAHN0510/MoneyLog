@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
+import com.moneylog_backend.global.type.PaymentEnum;
 import com.moneylog_backend.global.util.OwnershipValidator;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
@@ -28,7 +29,14 @@ public class PaymentService {
 
     @Transactional
     public int savePayment(PaymentReqDto paymentReqDto, int userId) {
-        PaymentEntity paymentEntity = paymentReqDto.toEntity(userId);
+        Integer accountId = resolveAccountId(paymentReqDto.getType(), paymentReqDto.getAccountId(), userId);
+
+        PaymentEntity paymentEntity = PaymentEntity.builder()
+                                                   .userId(userId)
+                                                   .accountId(accountId)
+                                                   .name(paymentReqDto.getName())
+                                                   .type(paymentReqDto.getType())
+                                                   .build();
         paymentRepository.save(paymentEntity);
 
         return paymentEntity.getPaymentId();
@@ -40,8 +48,7 @@ public class PaymentService {
 
     @Transactional
     public PaymentResDto updatePayment(PaymentReqDto paymentReqDto, int userId) {
-        Integer accountId = paymentReqDto.getAccountId();
-        validateAccountOwnership(accountId, userId);
+        Integer accountId = resolveAccountId(paymentReqDto.getType(), paymentReqDto.getAccountId(), userId);
 
         PaymentEntity paymentEntity = getPaymentByIdAndValidateOwnership(paymentReqDto.getPaymentId(), userId);
         paymentEntity.updateDetails(accountId, paymentReqDto.getName(), paymentReqDto.getType());
@@ -68,12 +75,25 @@ public class PaymentService {
         return paymentEntity;
     }
 
-    private void validateAccountOwnership (int accountId, int userId) {
+    private void validateAccountOwnership (Integer accountId, int userId) {
         AccountEntity accountEntity = accountRepository.findById(accountId)
                                                        .orElseThrow(
                                                            () -> new ResourceNotFoundException(
                                                                ErrorMessageConstants.ACCOUNT_NOT_FOUND));
 
         OwnershipValidator.validateOwner(accountEntity.getUserId(), userId, "본인의 계좌가 아닙니다.");
+    }
+
+    private Integer resolveAccountId (PaymentEnum type, Integer accountId, int userId) {
+        if (PaymentEnum.CASH.equals(type)) {
+            return null;
+        }
+
+        if (accountId == null) {
+            throw new IllegalArgumentException("계좌 ID는 필수입니다.");
+        }
+
+        validateAccountOwnership(accountId, userId);
+        return accountId;
     }
 }
