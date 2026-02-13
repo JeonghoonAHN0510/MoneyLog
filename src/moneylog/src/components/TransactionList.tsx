@@ -15,6 +15,8 @@ import {
     AlertDialogTitle,
 } from "./ui/alert-dialog";
 import { useTransactions, useCategories } from '../api/queries';
+import { formatKrw } from '../utils/currency';
+import { formatKoreanDate } from '../utils/date';
 
 interface TransactionListProps {
     selectedDate?: string;
@@ -33,10 +35,6 @@ interface TransactionItemProps {
 }
 
 const TransactionItem = ({ transaction, categoryColor, onEdit, onDeleteClick }: TransactionItemProps) => {
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('ko-KR').format(amount);
-    };
-
     return (
         <div className="flex items-center justify-between p-2 hover:bg-accent/50 transition-colors rounded-md">
             <div className="flex items-center gap-3 flex-1">
@@ -79,7 +77,7 @@ const TransactionItem = ({ transaction, categoryColor, onEdit, onDeleteClick }: 
                         }`}
                 >
                     {transaction.categoryType === 'INCOME' ? '+' : '-'}
-                    {formatCurrency(transaction.amount)}원
+                    {formatKrw(transaction.amount)}원
                 </span>
                 <Button
                     variant="ghost"
@@ -139,12 +137,6 @@ export function TransactionList({
         return category?.color || '#64748b';
     };
 
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        const days = ['일', '월', '화', '수', '목', '금', '토'];
-        return `${date.getMonth() + 1}월 ${date.getDate()}일 (${days[date.getDay()]})`;
-    };
-
     const getDailyTotal = (transactions: Transaction[]) => {
         return transactions.reduce((acc, curr) => {
             return curr.categoryType === 'INCOME' ? acc + curr.amount : acc - curr.amount;
@@ -165,7 +157,7 @@ export function TransactionList({
         <Card className="border-none shadow-none">
             <CardHeader className="px-0 pt-0">
                 <CardTitle>
-                    {selectedDate ? `${formatDate(selectedDate)} 거래 내역` : '전체 거래 내역'}
+                    {selectedDate ? `${formatKoreanDate(selectedDate)} 거래 내역` : '전체 거래 내역'}
                 </CardTitle>
             </CardHeader>
             <CardContent className="px-0">
@@ -182,10 +174,10 @@ export function TransactionList({
                                 <div key={date} className="border rounded-xl bg-card shadow-sm overflow-hidden">
                                     <div className="bg-muted/30 p-3 flex justify-between items-center border-b">
                                         <span className="font-medium text-sm text-foreground">
-                                            {formatDate(date)}
+                                            {formatKoreanDate(date)}
                                         </span>
                                         <span className={`text-sm font-semibold ${dailyTotal > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                            {dailyTotal > 0 ? '+' : ''}{new Intl.NumberFormat('ko-KR').format(dailyTotal)}원
+                                            {dailyTotal > 0 ? '+' : ''}{formatKrw(dailyTotal)}원
                                         </span>
                                     </div>
 

@@ -3,6 +3,7 @@ import { Progress } from './ui/progress';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { TrendingUp, TrendingDown, Wallet, Target, Loader2 } from 'lucide-react';
 import { useDashboard, useBudgets, useCategories } from '../api/queries';
+import { formatKrw } from '../utils/currency';
 
 // 카테고리 색상 팔레트 (순환 사용)
 const CHART_COLORS = [
@@ -26,10 +27,6 @@ export function DashboardView() {
   const month2 = new Date(currentYear, currentMonth - 2, 1);
   const { data: dash1 } = useDashboard(month1.getFullYear(), month1.getMonth() + 1);
   const { data: dash2 } = useDashboard(month2.getFullYear(), month2.getMonth() + 1);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ko-KR').format(amount);
-  };
 
   if (dashLoading || !dashboardData) {
     return (
@@ -104,7 +101,7 @@ export function DashboardView() {
             <TrendingUp className="size-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome)}원</div>
+            <div className="text-2xl font-bold text-green-600">{formatKrw(totalIncome)}원</div>
           </CardContent>
         </Card>
 
@@ -114,7 +111,7 @@ export function DashboardView() {
             <TrendingDown className="size-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{formatCurrency(totalExpense)}원</div>
+            <div className="text-2xl font-bold text-red-600">{formatKrw(totalExpense)}원</div>
           </CardContent>
         </Card>
 
@@ -125,7 +122,7 @@ export function DashboardView() {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${totalBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {formatCurrency(totalBalance)}원
+              {formatKrw(totalBalance)}원
             </div>
           </CardContent>
         </Card>
@@ -166,7 +163,7 @@ export function DashboardView() {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: any) => `${formatCurrency(Number(value))}원`} />
+                  <Tooltip formatter={(value: any) => `${formatKrw(Number(value))}원`} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
@@ -187,7 +184,7 @@ export function DashboardView() {
               <BarChart data={monthlyTrend}>
                 <XAxis dataKey="date" />
                 <YAxis />
-                <Tooltip formatter={(value: any) => `${formatCurrency(Number(value))}원`} />
+                <Tooltip formatter={(value: any) => `${formatKrw(Number(value))}원`} />
                 <Legend />
                 <Bar dataKey="수입" fill="#22c55e" />
                 <Bar dataKey="지출" fill="#ef4444" />
@@ -209,7 +206,7 @@ export function DashboardView() {
                 <div className="flex justify-between text-sm">
                   <span>{budget.category}</span>
                   <span className={budget.percentage > 100 ? 'text-red-600' : ''}>
-                    {formatCurrency(budget.spent)} / {formatCurrency(budget.budget)}원
+                    {formatKrw(budget.spent)} / {formatKrw(budget.budget)}원
                   </span>
                 </div>
                 <Progress
@@ -220,8 +217,8 @@ export function DashboardView() {
                   <span>{budget.percentage.toFixed(1)}% 사용</span>
                   <span>
                     {budget.remaining > 0
-                      ? `${formatCurrency(budget.remaining)}원 남음`
-                      : `${formatCurrency(Math.abs(budget.remaining))}원 초과`}
+                      ? `${formatKrw(budget.remaining)}원 남음`
+                      : `${formatKrw(Math.abs(budget.remaining))}원 초과`}
                   </span>
                 </div>
               </div>

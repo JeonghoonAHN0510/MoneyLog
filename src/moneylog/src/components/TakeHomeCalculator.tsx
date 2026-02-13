@@ -4,6 +4,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
 import { Calculator } from 'lucide-react';
+import { formatKrw } from '../utils/currency';
 
 export function TakeHomeCalculator() {
   const [annualSalary, setAnnualSalary] = useState(''); // 연봉 상태로 변경
@@ -84,10 +85,6 @@ export function TakeHomeCalculator() {
 
   const result = calculateTakeHome();
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ko-KR').format(Math.round(amount));
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -111,7 +108,7 @@ export function TakeHomeCalculator() {
                 />
                 {result.annual > 0 && (
                     <p className="text-xs text-muted-foreground mt-1 absolute right-1 -bottom-5">
-                        월 환산: 약 {formatCurrency(result.gross)}원
+                        월 환산: 약 {formatKrw(result.gross, { round: true })}원
                     </p>
                 )}
             </div>
@@ -161,35 +158,35 @@ export function TakeHomeCalculator() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <div className="text-xs text-muted-foreground">국민연금 (4.5%)</div>
-              <div className="text-sm">{formatCurrency(result.nationalPension)}원</div>
+              <div className="text-sm">{formatKrw(result.nationalPension, { round: true })}원</div>
             </div>
             <div className="space-y-1">
               <div className="text-xs text-muted-foreground">건강보험 (3.545%)</div>
-              <div className="text-sm">{formatCurrency(result.healthInsurance)}원</div>
+              <div className="text-sm">{formatKrw(result.healthInsurance, { round: true })}원</div>
             </div>
             <div className="space-y-1">
               <div className="text-xs text-muted-foreground">장기요양 (12.95%)</div>
-              <div className="text-sm">{formatCurrency(result.longTermCare)}원</div>
+              <div className="text-sm">{formatKrw(result.longTermCare, { round: true })}원</div>
             </div>
             <div className="space-y-1">
               <div className="text-xs text-muted-foreground">고용보험 (0.9%)</div>
-              <div className="text-sm">{formatCurrency(result.employmentInsurance)}원</div>
+              <div className="text-sm">{formatKrw(result.employmentInsurance, { round: true })}원</div>
             </div>
             <div className="space-y-1">
               <div className="text-xs text-muted-foreground">
                   소득세 {isSMEYouth && <span className="text-green-600 font-bold">(90% 감면)</span>}
               </div>
-              <div className="text-sm">{formatCurrency(result.incomeTax)}원</div>
+              <div className="text-sm">{formatKrw(result.incomeTax, { round: true })}원</div>
             </div>
             <div className="space-y-1">
               <div className="text-xs text-muted-foreground">지방소득세</div>
-              <div className="text-sm">{formatCurrency(result.localTax)}원</div>
+              <div className="text-sm">{formatKrw(result.localTax, { round: true })}원</div>
             </div>
           </div>
           <div className="pt-2 border-t">
             <div className="flex justify-between">
               <span className="text-sm">공제액 합계</span>
-              <span className="text-sm text-red-600">{formatCurrency(result.totalDeduction)}원</span>
+              <span className="text-sm text-red-600">{formatKrw(result.totalDeduction, { round: true })}원</span>
             </div>
           </div>
         </div>
@@ -199,14 +196,14 @@ export function TakeHomeCalculator() {
             <div className="pt-2 space-y-2">
               <div className="flex justify-between items-center">
                 <span className="font-medium text-muted-foreground">월 예상 공제액</span>
-                <span className="text-red-600 font-medium">-{formatCurrency(result.totalDeduction)}원</span>
+                <span className="text-red-600 font-medium">-{formatKrw(result.totalDeduction, { round: true })}원</span>
               </div>
               <div className="flex justify-between items-center text-lg">
                 <span className="font-bold">월 예상 실수령액</span>
-                <span className="text-green-600 font-bold text-xl">{formatCurrency(result.takeHome)}원</span>
+                <span className="text-green-600 font-bold text-xl">{formatKrw(result.takeHome, { round: true })}원</span>
               </div>
               <div className="text-right text-xs text-muted-foreground">
-                  (연간 예상 실수령액: {formatCurrency(result.takeHome * 12)}원)
+                  (연간 예상 실수령액: {formatKrw(result.takeHome * 12, { round: true })}원)
               </div>
             </div>
 

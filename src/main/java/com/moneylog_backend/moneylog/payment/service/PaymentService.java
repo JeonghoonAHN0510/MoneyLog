@@ -2,7 +2,9 @@ package com.moneylog_backend.moneylog.payment.service;
 
 import java.util.List;
 
+import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
+import com.moneylog_backend.global.util.OwnershipValidator;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.payment.dto.req.PaymentReqDto;
@@ -11,7 +13,6 @@ import com.moneylog_backend.moneylog.payment.entity.PaymentEntity;
 import com.moneylog_backend.moneylog.payment.mapper.PaymentMapper;
 import com.moneylog_backend.moneylog.payment.repository.PaymentRepository;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,11 +60,10 @@ public class PaymentService {
     private PaymentEntity getPaymentByIdAndValidateOwnership (int paymentId, int userId) {
         PaymentEntity paymentEntity = paymentRepository.findById(paymentId)
                                                        .orElseThrow(
-                                                           () -> new ResourceNotFoundException("존재하지 않는 결제수단입니다."));
+                                                           () -> new ResourceNotFoundException(
+                                                               ErrorMessageConstants.PAYMENT_NOT_FOUND));
 
-        if (paymentEntity.getUserId() != userId) {
-            throw new AccessDeniedException("본인의 결제수단이 아닙니다.");
-        }
+        OwnershipValidator.validateOwner(paymentEntity.getUserId(), userId, "본인의 결제수단이 아닙니다.");
 
         return paymentEntity;
     }
@@ -71,10 +71,9 @@ public class PaymentService {
     private void validateAccountOwnership (int accountId, int userId) {
         AccountEntity accountEntity = accountRepository.findById(accountId)
                                                        .orElseThrow(
-                                                           () -> new ResourceNotFoundException("존재하지 않는 계좌입니다."));
+                                                           () -> new ResourceNotFoundException(
+                                                               ErrorMessageConstants.ACCOUNT_NOT_FOUND));
 
-        if (!accountEntity.getUserId().equals(userId)) {
-            throw new AccessDeniedException("본인의 계좌가 아닙니다.");
-        }
+        OwnershipValidator.validateOwner(accountEntity.getUserId(), userId, "본인의 계좌가 아닙니다.");
     }
 }

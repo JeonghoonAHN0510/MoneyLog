@@ -1,6 +1,7 @@
 package com.moneylog_backend.moneylog.user.service;
 
 import com.moneylog_backend.global.auth.jwt.JwtProvider;
+import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.global.file.FileStore;
 import com.moneylog_backend.global.type.AccountTypeEnum;
@@ -110,7 +111,8 @@ public class UserService {
 
     public UserDto getUserInfo (String loginId) {
         UserEntity userEntity = userRepository.findByLoginId(loginId)
-                                              .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 회원입니다."));
+                                              .orElseThrow(
+                                                  () -> new ResourceNotFoundException(ErrorMessageConstants.USER_NOT_FOUND));
         return userEntity.excludePassword();
     }
 
@@ -125,7 +127,8 @@ public class UserService {
 
     private String getBankName (int bankId) {
         BankEntity bankEntity = bankRepository.findById(bankId)
-                                              .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 은행입니다."));
+                                              .orElseThrow(
+                                                  () -> new ResourceNotFoundException(ErrorMessageConstants.BANK_NOT_FOUND));
 
         return bankEntity.getName();
     }

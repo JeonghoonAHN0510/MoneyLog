@@ -5,7 +5,9 @@ import java.time.YearMonth;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
+import com.moneylog_backend.global.util.OwnershipValidator;
 import com.moneylog_backend.global.type.CategoryEnum;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
@@ -25,7 +27,6 @@ import com.moneylog_backend.moneylog.transaction.entity.TransactionEntity;
 import com.moneylog_backend.moneylog.transaction.mapper.TransactionMapper;
 import com.moneylog_backend.moneylog.transaction.repository.TransactionRepository;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -194,10 +195,8 @@ public class TransactionService {
     private TransactionEntity getTransactionByIdAndValidateOwnership (Integer transactionId, Integer userId) {
         TransactionEntity transactionEntity = transactionRepository.findById(transactionId)
                                                                    .orElseThrow(() -> new ResourceNotFoundException(
-                                                                       "존재하지 않는 지출 내역입니다."));
-        if (!userId.equals(transactionEntity.getUserId())) {
-            throw new AccessDeniedException("본인의 지출 내역이 아닙니다.");
-        }
+                                                                       ErrorMessageConstants.TRANSACTION_NOT_FOUND));
+        OwnershipValidator.validateOwner(transactionEntity.getUserId(), userId, "본인의 지출 내역이 아닙니다.");
 
         return transactionEntity;
     }
@@ -205,10 +204,9 @@ public class TransactionService {
     private AccountEntity getAccountByIdAndValidateOwnership (Integer accountId, Integer userId) {
         AccountEntity accountEntity = accountRepository.findById(accountId)
                                                        .orElseThrow(
-                                                           () -> new ResourceNotFoundException("존재하지 않는 계좌입니다."));
-        if (!accountEntity.getUserId().equals(userId)) {
-            throw new AccessDeniedException("본인의 계좌가 아닙니다.");
-        }
+                                                           () -> new ResourceNotFoundException(
+                                                               ErrorMessageConstants.ACCOUNT_NOT_FOUND));
+        OwnershipValidator.validateOwner(accountEntity.getUserId(), userId, "본인의 계좌가 아닙니다.");
 
         return accountEntity;
     }
@@ -216,10 +214,9 @@ public class TransactionService {
     private CategoryEntity getCategoryByIdAndValidateOwnership (Integer categoryId, Integer userId) {
         CategoryEntity categoryEntity = categoryRepository.findById(categoryId)
                                                           .orElseThrow(
-                                                              () -> new ResourceNotFoundException("존재하지 않는 카테고리입니다."));
-        if (!categoryEntity.getUserId().equals(userId)) {
-            throw new AccessDeniedException("본인의 카테고리가 아닙니다.");
-        }
+                                                              () -> new ResourceNotFoundException(
+                                                                  ErrorMessageConstants.CATEGORY_NOT_FOUND));
+        OwnershipValidator.validateOwner(categoryEntity.getUserId(), userId, "본인의 카테고리가 아닙니다.");
 
         return categoryEntity;
     }
@@ -231,10 +228,9 @@ public class TransactionService {
 
         PaymentEntity paymentEntity = paymentRepository.findById(paymentId)
                                                        .orElseThrow(
-                                                           () -> new ResourceNotFoundException("존재하지 않는 결제수단입니다."));
-        if (!paymentEntity.getUserId().equals(userId)) {
-            throw new AccessDeniedException("본인의 결제수단가 아닙니다.");
-        }
+                                                           () -> new ResourceNotFoundException(
+                                                               ErrorMessageConstants.PAYMENT_NOT_FOUND));
+        OwnershipValidator.validateOwner(paymentEntity.getUserId(), userId, "본인의 결제수단가 아닙니다.");
     }
 
     private SelectTransactionByUserIdQuery createMonthlyQuery (Integer userId, Integer year, Integer month) {

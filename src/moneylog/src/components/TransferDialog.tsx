@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from './ui/textarea';
 import { Transfer } from '../types/finance';
 import { useAccounts } from '../api/queries';
+import { formatKrw } from '../utils/currency';
+import { getTodayIsoDate } from '../utils/date';
 
 interface TransferDialogProps {
   open: boolean;
@@ -24,7 +26,7 @@ export function TransferDialog({
   const [fromAccountId, setFromAccountId] = useState<string>('');
   const [toAccountId, setToAccountId] = useState<string>('');
   const [amount, setAmount] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(getTodayIsoDate());
   const [memo, setMemo] = useState<string>('');
 
   const resetForm = () => {
@@ -78,7 +80,7 @@ export function TransferDialog({
                   .filter((acc) => acc.balance > 0)
                   .map((acc) => (
                     <SelectItem key={acc.accountId} value={String(acc.accountId)}>
-                      {acc.nickname} ({new Intl.NumberFormat('ko-KR').format(acc.balance)}원)
+                      {acc.nickname} ({formatKrw(acc.balance)}원)
                     </SelectItem>
                   ))}
               </SelectContent>
@@ -94,7 +96,7 @@ export function TransferDialog({
               <SelectContent>
                 {availableToAccounts.map((acc) => (
                   <SelectItem key={acc.accountId} value={String(acc.accountId)}>
-                    {acc.nickname} ({new Intl.NumberFormat('ko-KR').format(acc.balance)}원)
+                    {acc.nickname} ({formatKrw(acc.balance)}원)
                   </SelectItem>
                 ))}
               </SelectContent>
