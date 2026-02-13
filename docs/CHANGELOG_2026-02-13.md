@@ -141,3 +141,146 @@
 
 ## 계획 외 수정 사항
 - 없음
+
+## [TIME] 21:10 (KST) — [PLAN] 결제수단 현금 선택 시 은행 선택 비필수 처리
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 1. 작업 목표
+- `CategoryManager`에서 결제수단 유형이 `CASH`일 때 은행 계좌를 선택하지 않아도 저장/수정이 가능하도록 UI/제출 값을 조정한다.
+- 작업 완료 후 해당 TODO 주석을 제거한다.
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/moneylog/src/components/CategoryManager.tsx`
+  - `docs/CHANGELOG_2026-02-13.md`
+- 현재 로직 요약
+  - `PaymentForm`은 결제수단 유형과 무관하게 "은행 선택" 셀렉트를 항상 노출한다.
+  - `handleAddPayment`, `handleUpdatePayment`는 공통 상태 `accountId`를 그대로 전달한다.
+- 문제 원인
+  - 결제수단이 `CASH`여도 은행 선택 UI가 동일하게 보이고, 저장 시에도 계좌값 처리 분기가 없어 요구사항(현금은 은행 선택 불필요)과 불일치한다.
+
+## 3. 변경 예정 파일 목록
+- `src/moneylog/src/components/CategoryManager.tsx`
+- `docs/CHANGELOG_2026-02-13.md` (계획/승인/결과 기록)
+
+## 4. 변경 전략
+- `PaymentForm`에서 `type === 'CASH'`인 경우 은행 선택 영역을 숨기거나 비활성 처리해 사용자 입력을 요구하지 않도록 변경한다.
+- 결제수단 유형 변경 시 `CASH` 선택이면 `accountId`를 비우는 분기를 추가한다.
+- 추가/수정 제출 시 `CASH`는 `accountId`를 빈값으로 전달하고, 그 외 유형은 기존처럼 선택값을 전달한다.
+- 기존 TODO 주석은 구현 완료 시 삭제한다.
+
+## 5. 예상 영향 범위
+- 프론트엔드 컴포넌트 단일 파일(`CategoryManager`)의 결제수단 입력 UX에만 영향.
+- 인증/DB 스키마/외부 API/빌드 설정 영향 없음.
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 수정 모달에서 기존 데이터(`CASH`인데 accountId 존재) 표시 시 값 동기화가 어색해질 수 있음.
+- 롤백 방법
+  - `CategoryManager.tsx` 변경분을 되돌리면 기존 동작으로 즉시 복구 가능.
+
+## 7. 테스트 계획
+- 수동 검증
+  - 결제수단 추가: `CASH` 선택 시 은행 선택 없이 저장 가능 여부 확인
+  - 결제수단 추가: `CREDIT_CARD/CHECK_CARD/BANK`는 기존처럼 은행 선택 가능 여부 확인
+  - 결제수단 수정: 유형을 `CASH`로 바꾸면 은행 선택값이 초기화되는지 확인
+- 필요 시 프론트 빌드 검증: `src/moneylog`에서 `npm run build`
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "작업해")
+- 승인 시간: 21:13
+
+## [TIME] 21:13 (KST) — [START] CategoryManager 결제수단 입력 조건 분기 적용
+
+### 작업 목표 요약
+- `CASH` 선택 시 은행 계좌 선택 없이 결제수단 저장/수정이 가능하도록 UI와 제출값을 조정한다.
+- `CategoryManager` 단일 파일에서 최소 변경으로 처리한다.
+- 구현 완료 후 기존 TODO 주석을 제거한다.
+
+## [TIME] 21:14 (KST) — [IMPLEMENT] 현금 결제수단 은행 선택 비필수 처리
+
+### 수행 내용
+- `src/moneylog/src/components/CategoryManager.tsx`
+  - `PaymentForm`에서 `type === 'CASH'`일 때 은행 선택 UI를 숨기도록 조건부 렌더링 적용
+  - 결제수단 타입 변경 핸들러(`handlePaymentTypeChange`)를 추가해 `CASH` 선택 시 `accountId`를 즉시 초기화
+  - 추가/수정 제출 시 `paymentType === 'CASH'`이면 `accountId`를 빈 문자열로 전달하도록 분기 추가
+  - 결제수단 폼 리셋 시 `accountId`도 함께 초기화하도록 보완
+  - 요청된 TODO 주석 제거 완료
+
+### 영향 범위
+- 결제수단 추가/수정 다이얼로그의 입력 UX 및 제출 payload에만 영향
+- 백엔드/DB/인증 로직 영향 없음
+
+### VERIFY
+- `src/moneylog`에서 `npm run build` 실행
+  - 결과: 실패 (`vite: not found`)
+  - 원인 요약: 로컬/환경에 프론트 빌드 도구(vite 실행 파일) 미설치 상태
+- 루트에서 `./gradlew test` 실행
+  - 결과: 실패
+  - 실패 핵심 로그
+    - `MoneyLogApplicationTests > contextLoads() FAILED`
+    - `BeanCreationException`
+    - `ServiceException`
+    - `HibernateException at DialectFactoryImpl.java:191`
+  - 재현 방법: 프로젝트 루트에서 `./gradlew test`
+  - 해결 시도/결과: 권한 문제를 우회해 재실행했으나 동일 테스트 실패로 종료
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획대로 `CategoryManager` 단일 파일에서 `CASH` 조건 분기 및 제출값 보정을 적용함.
+- 추가 검증으로 `./gradlew test`를 수행했으나, 기존 테스트 환경 문제(컨텍스트 로딩 실패)로 통과하지 못함.
+
+## 추가 발생 이슈
+- 프론트 빌드 도구(`vite`)가 현재 환경에서 실행 불가하여 `npm run build` 실패.
+- 백엔드 기본 테스트(`contextLoads`)가 Hibernate Dialect 초기화 단계에서 실패.
+
+## 계획 외 수정 사항
+- 없음
+
+## [TIME] 21:33 (KST) — [PLAN] 결제수단 계좌 옵션에 계좌 타입 한글 표기 적용
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 1. 작업 목표
+- 결제수단 추가/수정 시 노출되는 `계좌 선택` 옵션 문구를 개선한다.
+- `account.type === 'BANK'`이면 기존 표시(`{nickname} ({bankName})`)를 유지한다.
+- `BANK`가 아닌 타입이면 `{nickname} ({type의 한국어명})` 형식으로 표기한다.
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/moneylog/src/components/CategoryManager.tsx`
+  - `src/moneylog/src/types/finance.ts`
+- 현재 로직 요약
+  - `PaymentForm`의 `계좌 선택` 옵션이 모든 계좌에 대해 `{account.nickname} ({account.bankName})`를 출력한다.
+  - 계좌 타입은 `BANK | CASH | POINT | OTHER`로 정의되어 있다.
+- 문제 원인
+  - 계좌 타입별 라벨 분기가 없어 비은행 계좌도 은행명 기준으로 표기된다.
+
+## 3. 변경 예정 파일 목록
+- `src/moneylog/src/components/CategoryManager.tsx`
+- `docs/CHANGELOG_2026-02-13.md` (계획/승인/결과 기록)
+
+## 4. 변경 전략
+- `CategoryManager.tsx` 내부에 계좌 타입 한글 매핑(`CASH/POINT/OTHER`)을 추가한다.
+- 옵션 렌더링 시 `BANK`는 기존 포맷을 유지하고, 그 외 타입은 한글 매핑값을 사용해 표기한다.
+- 매핑에 없는 예외 타입이 들어오면 기본값(원본 타입 또는 '기타')으로 안전 처리한다.
+
+## 5. 예상 영향 범위
+- 프론트 `CategoryManager`의 결제수단 폼 UI 텍스트에만 영향.
+- 인증/DB/API/외부연동/빌드 설정 영향 없음.
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 타입 매핑 누락 시 일부 옵션이 기대와 다른 텍스트로 보일 수 있음.
+- 롤백 방법
+  - `CategoryManager.tsx` 해당 라벨 렌더링 분기를 원복하면 즉시 복구 가능.
+
+## 7. 테스트 계획
+- 수동 확인
+  - `BANK` 타입 계좌: 기존처럼 `{nickname} ({bankName})` 출력 확인
+  - `CASH/POINT/OTHER` 타입 계좌: `{nickname} (현금/포인트/기타)` 출력 확인
+- 빌드/테스트는 사용자 승인 후 필요 시 수행
