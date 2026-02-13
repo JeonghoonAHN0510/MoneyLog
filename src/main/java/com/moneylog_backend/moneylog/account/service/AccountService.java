@@ -2,8 +2,10 @@ package com.moneylog_backend.moneylog.account.service;
 
 import java.util.List;
 
+import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.global.util.BankAccountNumberFormatter;
+import com.moneylog_backend.global.util.OwnershipValidator;
 import com.moneylog_backend.moneylog.account.dto.req.AccountReqDto;
 import com.moneylog_backend.moneylog.account.dto.res.AccountResDto;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
@@ -17,7 +19,6 @@ import com.moneylog_backend.moneylog.transaction.entity.TransferEntity;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 import com.moneylog_backend.moneylog.user.repository.UserRepository;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -133,17 +134,17 @@ public class AccountService {
     }
 
     private UserEntity getUserEntityById (int userId) {
-        return userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 회원입니다."));
+        return userRepository.findById(userId)
+                             .orElseThrow(() -> new ResourceNotFoundException(ErrorMessageConstants.USER_NOT_FOUND));
     }
 
     private AccountEntity getAccountByIdAndValidateOwnership (int accountId, int userId) {
         AccountEntity accountEntity = accountRepository.findById(accountId)
                                                        .orElseThrow(
-                                                           () -> new ResourceNotFoundException("존재하지 않는 계좌입니다."));
+                                                           () -> new ResourceNotFoundException(
+                                                               ErrorMessageConstants.ACCOUNT_NOT_FOUND));
 
-        if (userId != accountEntity.getUserId()) {
-            throw new AccessDeniedException("본인의 계좌가 아닙니다.");
-        }
+        OwnershipValidator.validateOwner(accountEntity.getUserId(), userId, "본인의 계좌가 아닙니다.");
 
         return accountEntity;
     }
@@ -154,7 +155,8 @@ public class AccountService {
 
     private String getBankName (int bankId) {
         BankEntity bankEntity = bankRepository.findById(bankId)
-                                              .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 은행입니다."));
+                                              .orElseThrow(
+                                                  () -> new ResourceNotFoundException(ErrorMessageConstants.BANK_NOT_FOUND));
 
         return bankEntity.getName();
     }
