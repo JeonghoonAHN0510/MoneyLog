@@ -143,11 +143,99 @@
 - 없음
 
 ## [TIME] 22:21 (KST) — [PLAN] 반복 로직 2차 중앙화 (dialog/date/ownership)
+## [TIME] 22:57 (KST) — [PLAN] 거래 요청에서 프론트 categoryType 제거 및 서버 검증 강화
 
 ### 실행 계획
 # 🧠 실행 계획 보고
 
 ## 0. 이동할 브랜치
+- 현재 브랜치 유지: `refactor/enum-usability-improvements`
+
+## 1. 작업 목표
+- 거래 저장/수정 요청에서 프론트의 `categoryType` 전송을 제거한다.
+- 서버는 `categoryId` 기반으로 타입을 결정하도록 유지하고, `updateTransaction`의 보안 검증(IDOR)을 강화한다.
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/moneylog/src/components/AddTransactionDialog.tsx`
+  - `src/moneylog/src/components/EditTransactionDialog.tsx`
+  - `src/main/java/com/moneylog_backend/moneylog/transaction/service/TransactionService.java`
+  - `src/main/java/com/moneylog_backend/moneylog/transaction/dto/req/TransactionReqDto.java`
+  - `docs/CHANGELOG_2026-02-13.md`
+- 현재 로직 요약
+  - 백엔드 `TransactionReqDto`에는 `categoryType` 필드가 없음.
+  - 프론트 `Add/EditTransactionDialog`는 요청 payload에 `categoryType`을 포함해 전송하고 있음(서버에서는 무시됨).
+  - `updateTransaction`은 새 `categoryId` 소유권 검증 없이 mapper로 타입 코드만 조회하고, `paymentId`도 존재 여부만 확인함.
+- 문제 원인
+  - 불필요 필드 전송으로 API 계약이 불명확하며, update 경로에 소유권 검증 누락이 존재함.
+
+## 3. 변경 예정 파일 목록
+- `src/moneylog/src/components/AddTransactionDialog.tsx`
+- `src/moneylog/src/components/EditTransactionDialog.tsx`
+- `src/main/java/com/moneylog_backend/moneylog/transaction/service/TransactionService.java`
+- `docs/CHANGELOG_2026-02-13.md`
+
+## 4. 변경 전략
+- 프론트
+  - 거래 저장/수정 payload에서 `categoryType` 필드를 제거한다.
+  - UI 내부 상태(`type`)는 카테고리 필터링/폼 표시용으로만 유지한다.
+- 백엔드
+  - `updateTransaction`에서 `newCategoryId`는 `getCategoryByIdAndValidateOwnership`으로 조회해 타입을 획득한다.
+  - `newPaymentId`는 지출(`EXPENSE`)일 때 `validatePaymentOwnership`으로 소유권 검증한다.
+  - 필요 시 지출인데 `paymentId`가 없는 경우 명시적 예외를 추가해 `saveTransaction` 정책과 일치시킨다.
+
+## 5. 예상 영향 범위
+- 프론트 거래 생성/수정 요청 payload 필드 정리
+- 백엔드 거래 수정 경로의 보안 검증 강화
+- DB 스키마/외부 연동 영향 없음
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 지출 수정 시 paymentId 필수 정책을 엄격화하면 기존 비정상 데이터 업데이트가 실패할 수 있음.
+- 롤백 방법
+  - 프론트 payload 필드/백엔드 검증 분기 변경분만 파일 단위로 원복 가능
+
+## 7. 테스트 계획
+- 정적 확인
+  - 프론트 거래 payload에 `categoryType` 잔존 여부 검색
+  - `updateTransaction`에서 `newCategoryId`/`newPaymentId` 소유권 검증 호출 여부 확인
+- 실행 검증
+  - `./gradlew` 실행
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "작업해")
+- 승인 시간: 22:57
+
+## [TIME] 22:58 (KST) — [START] 거래 요청 DTO 정합화 및 updateTransaction 보안 검증 보강
+
+### 작업 목표 요약
+- 프론트 거래 요청 payload에서 불필요한 `categoryType` 전송을 제거한다.
+- 거래 수정 경로에서 카테고리/결제수단 소유권 검증을 강화해 IDOR 가능성을 차단한다.
+
+## [TIME] 22:59 (KST) — [IMPLEMENT] categoryType 제거 + 카테고리/결제수단 ownership 검증 강화
+
+### 수행 내용
+- 프론트
+  - `src/moneylog/src/components/AddTransactionDialog.tsx`
+    - 거래 생성 payload에서 `categoryType` 필드 제거
+  - `src/moneylog/src/components/EditTransactionDialog.tsx`
+    - 거래 수정 payload에서 `categoryType` 필드 제거
+- 백엔드
+  - `src/main/java/com/moneylog_backend/moneylog/transaction/service/TransactionService.java`
+    - `updateTransaction`에서 `newCategoryId`를 `getCategoryByIdAndValidateOwnership`으로 조회해 소유권 검증 후 타입 획득
+    - 지출(`CategoryEnum.EXPENSE`) 수정 시 `validatePaymentOwnership(newPaymentId, userId)`로 결제수단 소유권 검증
+    - 수입 수정 시 `paymentId`를 `null`로 정규화
+    - `validatePaymentOwnership`에 `paymentId == null` 방어 로직 추가 (`결제수단 ID는 필수입니다.`)
+
+### 영향 범위
+- 프론트 거래 생성/수정 요청 payload 정합성 개선
+- 백엔드 거래 수정 경로의 보안 검증 강화
+- API 스키마/DB 구조 변경 없음
+
+### VERIFY
+- 정적 확인
+  - `AddTransactionDialog`, `EditTransactionDialog`에서 `categoryType: type` 패턴 제거 확인
+  - `TransactionService.updateTransaction`에서 `validatePaymentOwnership(newPaymentId, userId)` 호출 및 null 방어 로직 확인
 - 사용자 요청에 따라 **현재 브랜치 유지**: `refactor/centralize-shared-format-and-error-messages`
 - 브랜치 이동 없이 해당 브랜치에서만 작업
 
@@ -266,6 +354,222 @@
 # 📊 계획 대비 수행 결과 비교
 
 ## 계획 대비 차이
+- 계획대로 프론트 payload 정리 + update 경로 ownership 검증 강화를 모두 반영함.
+
+## 추가 발생 이슈
+- 없음
+
+## 계획 외 수정 사항
+- 없음
+
+## [TIME] 22:48 (KST) — [PLAN] enum fromCode static map 기반 O(1) 조회 통일
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- 사용자 요청에 따라 **현재 브랜치 유지**: `refactor/enum-usability-improvements`
+
+## 1. 작업 목표
+- PR 코멘트 기준으로 enum `fromCode`를 static map 기반 O(1) 조회로 통일한다.
+- Locale 이슈를 피하기 위해 대소문자 변환 시 `Locale.ROOT`를 적용한다.
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/main/java/com/moneylog_backend/global/type/AccountTypeEnum.java`
+  - `src/main/java/com/moneylog_backend/global/type/CategoryEnum.java`
+  - `src/main/java/com/moneylog_backend/global/type/PaymentEnum.java`
+  - `src/main/java/com/moneylog_backend/global/type/ProviderEnum.java`
+  - `src/main/java/com/moneylog_backend/global/type/RoleEnum.java`
+  - `src/main/java/com/moneylog_backend/global/type/StatusEnum.java`
+  - `src/main/java/com/moneylog_backend/global/type/ScheduleEnum.java`
+  - `docs/CHANGELOG_2026-02-13.md`
+- 현재 로직 요약
+  - `AccountTypeEnum`은 이미 static `CODE_MAP` 방식이나 `toUpperCase()`에 locale 지정이 없다.
+  - 나머지 enum들은 `fromCode`에서 `Arrays.stream(values())` 순회 방식이다.
+- 문제 원인
+  - enum별 구현 패턴이 불일치하고, 일부는 호출마다 선형 탐색을 수행한다.
+
+## 3. 변경 예정 파일 목록
+- `src/main/java/com/moneylog_backend/global/type/AccountTypeEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/CategoryEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/PaymentEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/ProviderEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/RoleEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/StatusEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/ScheduleEnum.java`
+- `docs/CHANGELOG_2026-02-13.md`
+
+## 4. 변경 전략
+- 각 enum에 `private static final Map<String, EnumType> CODE_MAP` 추가
+  - 초기화 시 `code.toUpperCase(Locale.ROOT)` 사용
+- `fromCode`에서
+  - `null` 방어 처리
+  - `CODE_MAP.get(code.toUpperCase(Locale.ROOT))` 조회
+  - 미존재 시 기존 포맷의 `IllegalArgumentException` 발생
+- 미사용 `Arrays` import 제거, 필요한 `Map`, `Collectors`, `Locale` import 추가
+
+## 5. 예상 영향 범위
+- enum 파싱 성능/일관성 개선에만 영향
+- 비즈니스 동작/DB/API 스키마 영향 없음
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 예외 메시지 문자열이 바뀌면 기존 의존 코드/테스트에 영향 가능
+- 롤백 방법
+  - 해당 enum 파일 변경분만 원복하면 즉시 복구 가능
+
+## 7. 테스트 계획
+- 정적 확인
+  - 대상 enum에서 `fromCode`가 `CODE_MAP` 조회 방식인지 확인
+  - `Locale.ROOT` 적용 여부 확인
+- 실행 검증
+  - `./gradlew` 실행
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "오케이 진행해줘")
+- 승인 시간: 22:49
+
+## [TIME] 22:49 (KST) — [START] enum fromCode static map 통일 적용
+
+### 작업 목표 요약
+- PR 코멘트 기준으로 enum `fromCode`를 static map 조회 방식으로 통일한다.
+- 대소문자 변환에 `Locale.ROOT`를 적용해 로케일 의존성을 제거한다.
+
+## [TIME] 22:52 (KST) — [IMPLEMENT] enum CODE_MAP + Locale.ROOT 적용
+
+### 수행 내용
+- 대상 enum
+  - `AccountTypeEnum`
+  - `CategoryEnum`
+  - `PaymentEnum`
+  - `ProviderEnum`
+  - `RoleEnum`
+  - `StatusEnum`
+  - `ScheduleEnum`
+- 변경 사항
+  - `private static final Map<String, EnumType> CODE_MAP` 추가
+  - `CODE_MAP` 초기화 시 key를 `code.toUpperCase(Locale.ROOT)`로 통일
+  - `fromCode`를 `CODE_MAP.get(code.toUpperCase(Locale.ROOT))` 조회 방식으로 변경
+  - `null` 입력에 대한 명시적 예외 처리 추가
+  - 필요한 `Locale`, `Map`, `Collectors` import 추가 및 순회 기반 조회 코드 제거
+- `ScheduleEnum`은 기존 `fromString` 하위 호환을 유지하면서 내부적으로 `fromCode` 재사용
+
+### 영향 범위
+- enum code 파싱 성능/일관성 개선
+- 기능 동작(정상 코드 입력 시 결과) 및 API/DB 스키마 변경 없음
+
+### VERIFY
+- 정적 확인
+  - 대상 enum 전부 `CODE_MAP` + `Locale.ROOT` 적용 확인
+- 실행 검증
+  - 루트에서 `./gradlew` 실행: 성공 (`BUILD SUCCESSFUL`)
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 없음 (계획 범위와 동일하게 적용)
+
+## 추가 발생 이슈
+- 없음
+
+## 계획 외 수정 사항
+- 없음
+
+## [TIME] 22:32 (KST) — [PLAN] global/type enum 사용성 개선 리팩터링
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- 현재 브랜치 유지: `master`
+- 이번 작업은 브랜치 이동 없이 `master`에서 수행
+
+## 1. 작업 목표
+- `src/main/java/com/moneylog_backend/global/type`의 enum들을 추후 확장/재사용하기 쉽게 정리한다.
+- enum 기반 분기에서 문자열 하드코딩 비교를 제거해 타입 안정성을 높인다.
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/main/java/com/moneylog_backend/global/type/*.java`
+  - `src/main/java/com/moneylog_backend/moneylog/transaction/service/TransactionService.java`
+  - 필요 시 enum 사용 서비스/DTO 일부
+- 현재 로직 요약
+  - `AccountTypeEnum`, `CategoryEnum`, `PaymentEnum`, `ProviderEnum`, `RoleEnum`, `StatusEnum`은 단순 상수형 enum이다.
+  - `ColorEnum`은 `hexCode`와 `@JsonCreator/@JsonValue`를 갖고 있고, `ScheduleEnum`은 `frequency`와 `fromString`을 갖는다.
+  - 일부 서비스 로직에서 enum 문자열 비교(`"INCOME"`, `"EXPENSE"`)가 남아 있다.
+- 문제 원인
+  - enum마다 표현/파싱 규칙이 제각각이고, 공통적인 코드/라벨/파싱 관례가 없어 재사용성이 낮다.
+
+## 3. 변경 예정 파일 목록
+- `src/main/java/com/moneylog_backend/global/type/AccountTypeEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/CategoryEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/PaymentEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/ProviderEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/RoleEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/StatusEnum.java`
+- `src/main/java/com/moneylog_backend/global/type/ScheduleEnum.java` (공통 규칙 정렬 범위)
+- `src/main/java/com/moneylog_backend/moneylog/transaction/service/TransactionService.java`
+- `docs/CHANGELOG_2026-02-13.md`
+
+## 4. 변경 전략
+- 각 enum에 `code`/`label` 필드와 `fromCode(String)` 정적 팩토리를 추가해 일관된 사용 패턴을 만든다.
+- 기존 enum name 기반 동작은 유지하고, JSON 직렬화 동작 변화가 생기지 않도록 `@JsonValue`는 새로 추가하지 않는다.
+- `TransactionService`의 문자열 비교를 enum 비교(`CategoryEnum.EXPENSE` 등)로 치환한다.
+- `ColorEnum`/`ScheduleEnum`은 기존 기능을 보존하되 메서드 명/패턴을 전체 enum 관례와 맞게 정리한다.
+
+## 5. 예상 영향 범위
+- 백엔드 enum 모델/서비스 내부 분기 로직 영향.
+- API 응답 구조/DB 스키마/외부 연동 영향 없음(직렬화 정책 유지 전제).
+
+## 6. 리스크 분석
+- 실패 가능성
+  - `fromCode` 도입 시 대소문자/예외 처리 미흡하면 파싱 오류 가능.
+  - enum 비교 치환 중 로직 누락 시 거래 반영 분기 회귀 가능.
+- 롤백 방법
+  - enum 파일과 서비스 치환분을 파일 단위로 원복 가능.
+
+## 7. 테스트 계획
+- 정적 확인
+  - enum 문자열 비교 하드코딩(`"INCOME"`, `"EXPENSE"`) 잔존 여부 검색
+  - enum별 `code/label/fromCode` 일관성 점검
+- 실행 검증
+  - `./gradlew` 실행 결과 확인
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "브랜치 이동해서 진행해줘.")
+- 승인 시간: 22:33
+
+## [TIME] 22:34 (KST) — [START] enum 사용성 개선 리팩터링 구현
+
+### 작업 목표 요약
+- global/type enum에 공통 사용 패턴(`code/label/fromCode`)을 추가해 확장성을 높인다.
+- 거래 서비스의 문자열 기반 enum 비교를 타입 비교로 전환한다.
+
+## [TIME] 22:35 (KST) — [IMPLEMENT] enum 공통 패턴 추가 및 문자열 비교 제거
+
+### 수행 내용
+- `src/main/java/com/moneylog_backend/global/type/*.java`
+  - `AccountTypeEnum`, `CategoryEnum`, `PaymentEnum`, `ProviderEnum`, `RoleEnum`, `StatusEnum`
+    - `code`, `label` 필드 추가
+    - `fromCode(String)` 정적 메서드 추가
+  - `ScheduleEnum`
+    - `frequency` 필드를 `code`, `label`로 확장
+    - `fromCode(String)` 추가
+    - 기존 `fromString(String)`은 `fromCode`를 호출하도록 유지(하위 호환)
+- `src/main/java/com/moneylog_backend/moneylog/transaction/service/TransactionService.java`
+  - `saveTransaction`의 수입/지출 분기 문자열 비교 제거 (`CategoryEnum` 비교로 변경)
+  - `updateTransaction`, `deleteTransaction`에서 mapper 반환 문자열을 `CategoryEnum.fromCode(...)`로 변환 후 처리
+  - `updateAccountBalance` 파라미터를 `String`에서 `CategoryEnum`으로 변경
+
+### 영향 범위
+- enum 내부 구조(메타데이터/파싱)와 거래 서비스 분기 타입 안정성에 영향
+- API 스펙/DB 스키마/외부 연동 변경 없음
+
+### VERIFY
+- 정적 확인
+  - `TransactionService` 내 `"INCOME"`, `"EXPENSE"` 문자열 분기 제거 확인
+  - enum들에 `fromCode` 추가 및 `ScheduleEnum.fromString` 하위 호환 유지 확인
 - 계획에 포함했던 `CategoryManager.tsx`는 기존 동작 안정성을 위해 이번 2차 범위에서 제외함.
 - 나머지 핵심 범위(dialog/date/ownership)는 계획대로 반영함.
 
@@ -393,6 +697,8 @@
 # 📊 계획 대비 수행 결과 비교
 
 ## 계획 대비 차이
+- 계획 대비 브랜치 항목 변경
+  - 초기 계획은 `master` 유지였으나, 사용자 요청에 따라 `master`에서 `refactor/enum-usability-improvements` 브랜치를 생성해 진행함.
 - 계획한 파일 범위 내에서 모두 반영되었고, 메시지 텍스트/포맷 결과는 유지함.
 
 ## 추가 발생 이슈
