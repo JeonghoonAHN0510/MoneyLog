@@ -50,10 +50,10 @@ public class TransactionService {
         CategoryEnum type = categoryEntity.getType();
 
         Integer amount = transactionReqDto.getAmount();
-        if ("EXPENSE".equals(type.name())) {
+        if (CategoryEnum.EXPENSE.equals(type)) {
             validatePaymentOwnership(transactionReqDto.getPaymentId(), userId);
             accountEntity.withdraw(amount);
-        } else if ("INCOME".equals(type.name())) {
+        } else if (CategoryEnum.INCOME.equals(type)) {
             accountEntity.deposit(amount);
         }
 
@@ -88,18 +88,20 @@ public class TransactionService {
 
         AccountEntity oldAccount = getAccountByIdAndValidateOwnership(transactionEntity.getAccountId(),
                                                                       transactionEntity.getUserId());
-        String oldType = categoryMapper.getCategoryTypeByCategoryId(transactionEntity.getCategoryId());
+        String oldTypeCode = categoryMapper.getCategoryTypeByCategoryId(transactionEntity.getCategoryId());
+        CategoryEnum oldType = CategoryEnum.fromCode(oldTypeCode);
 
         updateAccountBalance(oldAccount, oldType, transactionEntity.getAmount(), true);
 
         Integer newAccountId = transactionReqDto.getAccountId();
         Integer newCategoryId = transactionReqDto.getCategoryId();
         AccountEntity newAccount = getAccountByIdAndValidateOwnership(newAccountId, userId);
-        String newType = categoryMapper.getCategoryTypeByCategoryId(newCategoryId);
+        String newTypeCode = categoryMapper.getCategoryTypeByCategoryId(newCategoryId);
 
-        if (newType == null) {
+        if (newTypeCode == null) {
             throw new IllegalArgumentException("유효하지 않은 카테고리입니다.");
         }
+        CategoryEnum newType = CategoryEnum.fromCode(newTypeCode);
 
         Integer newPaymentId = transactionReqDto.getPaymentId();
         if (newPaymentId != null && !paymentRepository.existsById(newPaymentId)) {
@@ -119,13 +121,13 @@ public class TransactionService {
      * 계좌 잔액 업데이트 헬퍼 메서드
      *
      * @param account  계좌 엔티티
-     * @param type     수입/지출 타입 ("INCOME" or "EXPENSE")
+     * @param type     수입/지출 타입
      * @param amount   금액
      * @param isRevert true면 기존 내역 취소(원복), false면 신규 반영
      */
-    private void updateAccountBalance (AccountEntity account, String type, int amount, boolean isRevert) {
-        boolean isExpense = "EXPENSE".equals(type);
-        boolean isIncome = "INCOME".equals(type);
+    private void updateAccountBalance (AccountEntity account, CategoryEnum type, int amount, boolean isRevert) {
+        boolean isExpense = CategoryEnum.EXPENSE.equals(type);
+        boolean isIncome = CategoryEnum.INCOME.equals(type);
 
         if (isRevert) {
             if (isExpense) {
@@ -147,7 +149,8 @@ public class TransactionService {
         TransactionEntity transactionEntity = getTransactionByIdAndValidateOwnership(transactionId, userId);
 
         AccountEntity accountEntity = getAccountByIdAndValidateOwnership(transactionEntity.getAccountId(), userId);
-        String categoryType = categoryMapper.getCategoryTypeByCategoryId(transactionEntity.getCategoryId());
+        String categoryTypeCode = categoryMapper.getCategoryTypeByCategoryId(transactionEntity.getCategoryId());
+        CategoryEnum categoryType = CategoryEnum.fromCode(categoryTypeCode);
         updateAccountBalance(accountEntity, categoryType, transactionEntity.getAmount(), true);
 
         transactionRepository.delete(transactionEntity);
