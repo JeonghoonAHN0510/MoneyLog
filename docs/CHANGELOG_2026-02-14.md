@@ -130,3 +130,87 @@
 
 ## 계획 외 수정 사항
 - `src/moneylog/src/api/queryClient.ts`에 `queryKeys.schedules` 상수 추가.
+
+## [TIME] 23:54 (KST) — [PLAN] ScheduleDialog parseCronExpression 외부 분리 리팩터링
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- 현재 브랜치 유지: `feature/schedule-api-frontend-connect`
+- 이번 작업은 브랜치 생성/이동 없이 현재 브랜치에서 최소 범위 수정
+
+## 1. 작업 목표
+- `ScheduleDialog` 내부의 `parseCronExpression`를 컴포넌트 외부로 이동
+- 렌더링마다 함수가 재생성되지 않도록 구조 정리
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/moneylog/src/components/ScheduleDialog.tsx`
+  - `docs/CHANGELOG_2026-02-14.md`
+- 현재 로직 요약
+  - `parseCronExpression`가 컴포넌트 내부에 선언되어 있고 `handleEditClick`에서 호출됨
+- 문제 원인
+  - 함수가 상태/props 비의존 순수 함수임에도 컴포넌트 내부 선언으로 불필요한 재생성 발생
+
+## 3. 변경 예정 파일 목록
+- `src/moneylog/src/components/ScheduleDialog.tsx`
+- `docs/CHANGELOG_2026-02-14.md`
+
+## 4. 변경 전략
+- `parseCronExpression` 타입 별칭(`ParsedCronExpression`)과 함께 컴포넌트 외부(파일 상단)로 이동
+- 내부 호출부(`handleEditClick`)는 기존 함수명 그대로 재사용
+- 대안
+  - 별도 유틸 파일 분리: 재사용성은 높지만 현재 요구(최소 범위) 대비 변경폭 증가
+
+## 5. 예상 영향 범위
+- 프론트 컴포넌트 내부 구조/가독성에만 영향
+- API/인증/DB/외부연동/빌드 설정 영향 없음
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 타입 누락 또는 함수 스코프 이동 중 참조 오류
+- 롤백 방법
+  - `ScheduleDialog.tsx`의 해당 이동 변경만 되돌리면 즉시 복구 가능
+
+## 7. 테스트 계획
+- 최소 검증: 프로젝트 루트에서 `./gradlew`
+- 추가 테스트 코드 작성 없음 (기능 로직 불변 리팩터링)
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "지금 브랜치에서 최소 범위로 수장가자")
+- 승인 시간: 23:54
+
+## [TIME] 23:54 (KST) — [START] parseCronExpression 외부 분리 구현 시작
+
+### PRE-FLIGHT
+- 현재 브랜치: `feature/schedule-api-frontend-connect`
+- 현재 워크트리: 기존 변경 다수 존재, 요청 파일 최소 범위 수정 원칙 적용
+
+## [TIME] 23:54 (KST) — [IMPLEMENT] ScheduleDialog 순수 함수 외부 이동
+
+### 수행 내용
+- `src/moneylog/src/components/ScheduleDialog.tsx`
+  - `ParsedCronExpression` 타입 별칭 추가
+  - `parseCronExpression`를 컴포넌트 바깥으로 이동
+  - 컴포넌트 내부 중복 선언 제거
+  - `handleEditClick` 호출 로직은 동일하게 유지
+
+### 영향 범위
+- `ScheduleDialog` 파일 내부 구조 개선(함수 재생성 방지/가독성 향상)
+- 동작 로직 변화 없음
+
+### VERIFY
+- 루트에서 `./gradlew` 실행
+  - 결과: 성공 (`:help`, `BUILD SUCCESSFUL`)
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획과 동일하게 `ScheduleDialog.tsx` 단일 파일만 코드 수정함.
+
+## 추가 발생 이슈
+- 없음.
+
+## 계획 외 수정 사항
+- 없음.

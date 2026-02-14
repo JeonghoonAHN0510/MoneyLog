@@ -26,6 +26,52 @@ interface ScheduleDialogProps {
     onOpenChange: (open: boolean) => void;
 }
 
+type ParsedCronExpression = {
+    frequency: ScheduleFrequency;
+    time: string;
+    dayOfWeek: string;
+    dayOfMonth: string;
+};
+
+const parseCronExpression = (cronExpression: string): ParsedCronExpression => {
+    const parts = cronExpression.trim().split(/\s+/);
+    if (parts.length < 6) {
+        return { frequency: 'DAILY', time: '03:00', dayOfWeek: '1', dayOfMonth: '1' };
+    }
+
+    const minute = Number(parts[1]);
+    const hour = Number(parts[2]);
+    const dayOfMonthPart = parts[3];
+    const dayOfWeekPart = parts[5];
+
+    const parsedTime = Number.isInteger(hour) && Number.isInteger(minute)
+        ? `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+        : '03:00';
+
+    if (dayOfMonthPart !== '?' && dayOfMonthPart !== '*') {
+        const monthlyDay = Number(dayOfMonthPart);
+        return {
+            frequency: 'MONTHLY',
+            time: parsedTime,
+            dayOfWeek: '1',
+            dayOfMonth: Number.isInteger(monthlyDay) ? String(monthlyDay) : '1',
+        };
+    }
+
+    if (dayOfWeekPart !== '?' && dayOfWeekPart !== '*') {
+        const quartzDay = Number(dayOfWeekPart);
+        const frontendDay = Number.isInteger(quartzDay) ? (quartzDay === 1 ? 7 : quartzDay - 1) : 1;
+        return {
+            frequency: 'WEEKLY',
+            time: parsedTime,
+            dayOfWeek: String(frontendDay),
+            dayOfMonth: '1',
+        };
+    }
+
+    return { frequency: 'DAILY', time: parsedTime, dayOfWeek: '1', dayOfMonth: '1' };
+};
+
 export function ScheduleDialog({ open, onOpenChange }: ScheduleDialogProps) {
     const { data: schedules = [], isLoading } = useSchedules();
     const updateScheduleMut = useUpdateSchedule();
@@ -37,50 +83,6 @@ export function ScheduleDialog({ open, onOpenChange }: ScheduleDialogProps) {
     const [time, setTime] = useState('00:00');
     const [dayOfWeek, setDayOfWeek] = useState<string>('1'); // 1(Mon)~7(Sun)
     const [dayOfMonth, setDayOfMonth] = useState<string>('1');
-
-    const parseCronExpression = (cronExpression: string): {
-        frequency: ScheduleFrequency;
-        time: string;
-        dayOfWeek: string;
-        dayOfMonth: string;
-    } => {
-        const parts = cronExpression.trim().split(/\s+/);
-        if (parts.length < 6) {
-            return { frequency: 'DAILY', time: '03:00', dayOfWeek: '1', dayOfMonth: '1' };
-        }
-
-        const minute = Number(parts[1]);
-        const hour = Number(parts[2]);
-        const dayOfMonthPart = parts[3];
-        const dayOfWeekPart = parts[5];
-
-        const parsedTime = Number.isInteger(hour) && Number.isInteger(minute)
-            ? `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
-            : '03:00';
-
-        if (dayOfMonthPart !== '?' && dayOfMonthPart !== '*') {
-            const monthlyDay = Number(dayOfMonthPart);
-            return {
-                frequency: 'MONTHLY',
-                time: parsedTime,
-                dayOfWeek: '1',
-                dayOfMonth: Number.isInteger(monthlyDay) ? String(monthlyDay) : '1',
-            };
-        }
-
-        if (dayOfWeekPart !== '?' && dayOfWeekPart !== '*') {
-            const quartzDay = Number(dayOfWeekPart);
-            const frontendDay = Number.isInteger(quartzDay) ? (quartzDay === 1 ? 7 : quartzDay - 1) : 1;
-            return {
-                frequency: 'WEEKLY',
-                time: parsedTime,
-                dayOfWeek: String(frontendDay),
-                dayOfMonth: '1',
-            };
-        }
-
-        return { frequency: 'DAILY', time: parsedTime, dayOfWeek: '1', dayOfMonth: '1' };
-    };
 
     const handleEditClick = (schedule: Schedule) => {
         setEditingJob(schedule);
@@ -104,10 +106,6 @@ export function ScheduleDialog({ open, onOpenChange }: ScheduleDialogProps) {
             dayOfMonth: frequency === 'MONTHLY' ? parsedMonthDay : undefined,
         };
 
-        if (frequency === 'WEEKLY' && (Number.isNaN(parsedWeekday) || parsedWeekday < 1 || parsedWeekday > 7)) {
-            toast.error('요일 값을 확인해주세요.');
-            return;
-        }
         if (frequency === 'MONTHLY' && (Number.isNaN(parsedMonthDay) || parsedMonthDay < 1 || parsedMonthDay > 31)) {
             toast.error('매월 실행일은 1~31 사이여야 합니다.');
             return;
