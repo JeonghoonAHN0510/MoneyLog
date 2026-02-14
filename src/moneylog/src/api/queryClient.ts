@@ -17,6 +17,7 @@ export const queryKeys = {
     categories: ['categories'] as const,
     payments: ['payments'] as const,
     accounts: ['accounts'] as const,
+    schedules: ['schedules'] as const,
     transactions: ['transactions'] as const,
     budgets: ['budgets'] as const,
     userInfo: ['userInfo'] as const,

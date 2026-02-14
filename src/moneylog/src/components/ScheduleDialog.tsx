@@ -18,13 +18,59 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Loader2, Settings } from 'lucide-react';
 import { useSchedules, useUpdateSchedule } from '../api/queries';
-import { Schedule, ScheduleReqDto } from '../types/schedule';
+import { Schedule, ScheduleFrequency, ScheduleReqDto } from '../types/schedule';
 import { toast } from 'sonner';
 
 interface ScheduleDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }
+
+type ParsedCronExpression = {
+    frequency: ScheduleFrequency;
+    time: string;
+    dayOfWeek: string;
+    dayOfMonth: string;
+};
+
+const parseCronExpression = (cronExpression: string): ParsedCronExpression => {
+    const parts = cronExpression.trim().split(/\s+/);
+    if (parts.length < 6) {
+        return { frequency: 'DAILY', time: '03:00', dayOfWeek: '1', dayOfMonth: '1' };
+    }
+
+    const minute = Number(parts[1]);
+    const hour = Number(parts[2]);
+    const dayOfMonthPart = parts[3];
+    const dayOfWeekPart = parts[5];
+
+    const parsedTime = Number.isInteger(hour) && Number.isInteger(minute)
+        ? `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+        : '03:00';
+
+    if (dayOfMonthPart !== '?' && dayOfMonthPart !== '*') {
+        const monthlyDay = Number(dayOfMonthPart);
+        return {
+            frequency: 'MONTHLY',
+            time: parsedTime,
+            dayOfWeek: '1',
+            dayOfMonth: Number.isInteger(monthlyDay) ? String(monthlyDay) : '1',
+        };
+    }
+
+    if (dayOfWeekPart !== '?' && dayOfWeekPart !== '*') {
+        const quartzDay = Number(dayOfWeekPart);
+        const frontendDay = Number.isInteger(quartzDay) ? (quartzDay === 1 ? 7 : quartzDay - 1) : 1;
+        return {
+            frequency: 'WEEKLY',
+            time: parsedTime,
+            dayOfWeek: String(frontendDay),
+            dayOfMonth: '1',
+        };
+    }
+
+    return { frequency: 'DAILY', time: parsedTime, dayOfWeek: '1', dayOfMonth: '1' };
+};
 
 export function ScheduleDialog({ open, onOpenChange }: ScheduleDialogProps) {
     const { data: schedules = [], isLoading } = useSchedules();
@@ -33,36 +79,37 @@ export function ScheduleDialog({ open, onOpenChange }: ScheduleDialogProps) {
     const [editingJob, setEditingJob] = useState<Schedule | null>(null);
 
     // 편집 상태
-    const [frequency, setFrequency] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('DAILY');
+    const [frequency, setFrequency] = useState<ScheduleFrequency>('DAILY');
     const [time, setTime] = useState('00:00');
     const [dayOfWeek, setDayOfWeek] = useState<string>('1'); // 1(Mon)~7(Sun)
     const [dayOfMonth, setDayOfMonth] = useState<string>('1');
 
     const handleEditClick = (schedule: Schedule) => {
         setEditingJob(schedule);
-        // Parse cron or set default if possible. 
-        // Cron parsing on frontend is complex. Instead, we can just reset inputs or try to guess.
-        // For now, let's just default to DAILY 03:00 (since we don't have a parser)
-        // Or we could rely on Backend to send structured data if we updated ResDto. 
-        // We only added List endpoint, which returns ScheduleResDto. 
-        // ScheduleResDto has cronExpression only.
-        // Let's set default values for User Input.
-        setFrequency('DAILY');
-        setTime('03:00');
-        setDayOfWeek('1');
-        setDayOfMonth('1');
+        const parsed = parseCronExpression(schedule.cronExpression);
+        setFrequency(parsed.frequency);
+        setTime(parsed.time);
+        setDayOfWeek(parsed.dayOfWeek);
+        setDayOfMonth(parsed.dayOfMonth);
     };
 
     const handleSave = async () => {
         if (!editingJob) return;
+        const parsedWeekday = parseInt(dayOfWeek, 10);
+        const parsedMonthDay = parseInt(dayOfMonth, 10);
 
         const dto: ScheduleReqDto = {
             jobName: editingJob.jobName,
             frequency,
             time,
-            dayOfWeek: frequency === 'WEEKLY' ? parseInt(dayOfWeek) : undefined,
-            dayOfMonth: frequency === 'MONTHLY' ? parseInt(dayOfMonth) : undefined,
+            dayOfWeek: frequency === 'WEEKLY' ? parsedWeekday : undefined,
+            dayOfMonth: frequency === 'MONTHLY' ? parsedMonthDay : undefined,
         };
+
+        if (frequency === 'MONTHLY' && (Number.isNaN(parsedMonthDay) || parsedMonthDay < 1 || parsedMonthDay > 31)) {
+            toast.error('매월 실행일은 1~31 사이여야 합니다.');
+            return;
+        }
 
         try {
             await updateScheduleMut.mutateAsync(dto);
@@ -98,7 +145,7 @@ export function ScheduleDialog({ open, onOpenChange }: ScheduleDialogProps) {
 
                                 <div className="grid gap-2">
                                     <Label>실행 주기</Label>
-                                    <Select value={frequency} onValueChange={(v: any) => setFrequency(v)}>
+                                    <Select value={frequency} onValueChange={(v: ScheduleFrequency) => setFrequency(v)}>
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>

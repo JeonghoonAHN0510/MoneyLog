@@ -127,14 +127,10 @@ export function useCalendar(year: number, month: number) {
 // =============================================
 export const useSchedules = () => {
     return useQuery<Schedule[]>({
-        queryKey: ['schedules'],
+        queryKey: queryKeys.schedules,
         queryFn: async () => {
-            const res = await api.get('/account/schedule/list'); // Controller path 확인 필요. /api/account 아님. /api/admin/schedule임.
-            // ScheduleController path: /api/admin/schedule
-            // 사용자 권한 문제로 /api/admin/schedule/list 가 403 뜰 수도 있음.
-            // 하지만 일단 구현하고, 안되면 Path 변경.
-            const { data } = await api.get('/admin/schedule/list');
-            return data;
+            const res = await api.get('/admin/schedule/list');
+            return res.data;
         },
         staleTime: 0,
     });
@@ -147,7 +143,7 @@ export const useUpdateSchedule = () => {
             await api.post('/admin/schedule/update', dto);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['schedules'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.schedules });
         },
     });
 };
