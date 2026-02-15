@@ -8,6 +8,7 @@ import { Wallet, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../api/axiosConfig';
 import useUserStore from '../stores/authStore';
+import { getApiErrorMessage } from '../utils/error';
 import '../styles/pages/LoginPage.css';
 
 export default function LoginPage() {
@@ -41,12 +42,9 @@ export default function LoginPage() {
         navigate('/finance');
       }
     } catch (error: any) {
-      if (error.response && error.response.status === 401) {
-        setError('아이디 또는 비밀번호가 일치하지 않습니다.');
-      } else {
-        setError('로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-      }
-      toast.error('로그인에 실패했습니다.');
+      const errorMessage = getApiErrorMessage(error, '로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

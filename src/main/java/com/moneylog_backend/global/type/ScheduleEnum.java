@@ -5,6 +5,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.moneylog_backend.global.constant.ErrorMessageConstants;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -20,7 +22,9 @@ public enum ScheduleEnum {
     WEEKLY("WEEKLY", "매주") {
         @Override
         public String toCron(int minute, int hour, Integer dayOfWeek, Integer dayOfMonth) {
-            if (dayOfWeek == null) throw new IllegalArgumentException("WEEKLY requires dayOfWeek (1-7)");
+            if (dayOfWeek == null) {
+                throw new IllegalArgumentException(ErrorMessageConstants.SCHEDULE_WEEKLY_DAY_OF_WEEK_REQUIRED);
+            }
             // Quartz mapping: 1(MON)->2, ..., 7(SUN)->1
             int quartzDay = (dayOfWeek % 7) + 1;
             return String.format("0 %d %d ? * %d", minute, hour, quartzDay);
@@ -29,7 +33,9 @@ public enum ScheduleEnum {
     MONTHLY("MONTHLY", "매월") {
         @Override
         public String toCron(int minute, int hour, Integer dayOfWeek, Integer dayOfMonth) {
-            if (dayOfMonth == null) throw new IllegalArgumentException("MONTHLY requires dayOfMonth (1-31)");
+            if (dayOfMonth == null) {
+                throw new IllegalArgumentException(ErrorMessageConstants.SCHEDULE_MONTHLY_DAY_OF_MONTH_REQUIRED);
+            }
             return String.format("0 %d %d %d * ?", minute, hour, dayOfMonth);
         }
     };
@@ -49,11 +55,11 @@ public enum ScheduleEnum {
     // 문자열을 Enum으로 안전하게 변환하는 helper 메소드
     public static ScheduleEnum fromCode(String code) {
         if (code == null) {
-            throw new IllegalArgumentException("Unknown frequency: null");
+            throw new IllegalArgumentException(ErrorMessageConstants.unknownFrequency(null));
         }
         ScheduleEnum result = CODE_MAP.get(code.toUpperCase(Locale.ROOT));
         if (result == null) {
-            throw new IllegalArgumentException("Unknown frequency: " + code);
+            throw new IllegalArgumentException(ErrorMessageConstants.unknownFrequency(code));
         }
         return result;
     }
