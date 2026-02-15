@@ -182,37 +182,37 @@ public class GlobalExceptionHandler {
         }
 
         return switch (constraintCode) {
-            case "NotBlank", "NotNull" -> field + "필수 입력값이 누락되었습니다.";
-            case "Email", "Pattern" -> field + "입력 형식이 올바르지 않습니다.";
+            case "NotBlank", "NotNull" -> field + " 항목은 필수입니다.";
+            case "Email", "Pattern" -> field + " 형식이 올바르지 않습니다.";
             case "Size" -> {
                 Number min = getNumberArgument(arguments, 2);
                 Number max = getNumberArgument(arguments, 1);
                 if (min != null && max != null) {
-                    yield String.format("입력 길이는 %d에서 %d 사이여야 합니다.", min.longValue(), max.longValue());
+                    yield String.format("%s 길이는 %d에서 %d 사이여야 합니다.", field, min.longValue(), max.longValue());
                 }
-                yield "입력 길이가 허용 범위를 벗어났습니다.";
+                yield field + " 길이가 허용 범위를 벗어났습니다.";
             }
             case "Min" -> {
                 Number min = getNumberArgument(arguments, 1);
                 if (min != null) {
-                    yield String.format("%d 이상의 값이어야 합니다.", min.longValue());
+                    yield String.format("%s 값은 %d 이상이어야 합니다.", field, min.longValue());
                 }
-                yield "허용된 최소값보다 작습니다.";
+                yield field + " 값이 허용된 최소값보다 작습니다.";
             }
             case "Max" -> {
                 Number max = getNumberArgument(arguments, 1);
                 if (max != null) {
-                    yield String.format("%d 이하의 값이어야 합니다.", max.longValue());
+                    yield String.format("%s 값은 %d 이하의 값이어야 합니다.", field, max.longValue());
                 }
-                yield "허용된 최대값보다 큽니다.";
+                yield field + " 값이 허용된 최대값보다 큽니다.";
             }
             case "Range" -> {
                 Number min = getNumberArgument(arguments, 2);
                 Number max = getNumberArgument(arguments, 1);
                 if (min != null && max != null) {
-                    yield String.format("%d에서 %d 사이의 값이어야 합니다.", min.longValue(), max.longValue());
+                    yield String.format("%s 값은 %d에서 %d 사이여야 합니다.", field, min.longValue(), max.longValue());
                 }
-                yield "허용된 범위를 벗어난 값입니다.";
+                yield field + " 값이 허용된 범위를 벗어났습니다.";
             }
             default -> field + " 값이 올바르지 않습니다.";
         };
