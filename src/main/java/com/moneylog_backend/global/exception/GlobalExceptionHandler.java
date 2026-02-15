@@ -1,5 +1,8 @@
 package com.moneylog_backend.global.exception;
 
+import java.util.Map;
+import java.util.Set;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -18,6 +21,15 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private static final Set<String> KNOWN_CONSTRAINT_CODE_PREFIXES = Set.of(
+        "NotBlank", "NotNull", "Email", "Pattern", "Size", "Min", "Max"
+    );
+    private static final Map<String, String> FIELD_SPECIFIC_MESSAGES = Map.of(
+        "balance", "잔액은 0원 이상이어야 합니다.",
+        "amount", "금액은 1원 이상이어야 합니다.",
+        "dayOfWeek", "요일은 1~7 사이여야 합니다.",
+        "dayOfMonth", "실행일은 1~31 사이여야 합니다."
+    );
 
     // 1. @Valid 유효성 검사 실패 (@NotNull, @Range, @NotBlank 등 모두 여기서 처리)
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -48,17 +60,10 @@ public class GlobalExceptionHandler {
             return false;
         }
         for (String code : codes) {
-            if (code == null) {
-                continue;
-            }
-            if (code.startsWith("NotBlank")
-                || code.startsWith("NotNull")
-                || code.startsWith("Email")
-                || code.startsWith("Pattern")
-                || code.startsWith("Size")
-                || code.startsWith("Min")
-                || code.startsWith("Max")) {
-                return true;
+            if (code != null) {
+                if (KNOWN_CONSTRAINT_CODE_PREFIXES.stream().anyMatch(code::startsWith)) {
+                    return true;
+                }
             }
         }
         return false;
@@ -66,15 +71,9 @@ public class GlobalExceptionHandler {
 
     private String getFieldSpecificValidationMessage(FieldError fieldError) {
         String field = fieldError.getField();
-        switch (field) {
-            case "balance":
-                return "잔액은 0원 이상이어야 합니다.";
-            case "amount":
-                return "금액은 1원 이상이어야 합니다.";
-            case "dayOfWeek":
-                return "요일은 1~7 사이여야 합니다.";
-            case "dayOfMonth":
-                return "실행일은 1~31 사이여야 합니다.";
+        String specificMessage = FIELD_SPECIFIC_MESSAGES.get(field);
+        if (specificMessage != null) {
+            return specificMessage;
         }
 
         String code = fieldError.getCode();
