@@ -9,6 +9,7 @@ import { Wallet, Eye, EyeOff, User, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../api/axiosConfig';
 import { useBanks } from '../api/queries';
+import { getApiErrorMessage } from '../utils/error';
 import '../styles/pages/SignUpPage.css';
 
 export default function SignUpPage() {
@@ -117,12 +118,9 @@ export default function SignUpPage() {
       }
 
     } catch (error: any) {
-      if (error.response && error.response.status === 409) {
-        setError('이미 사용 중인 아이디 또는 이메일입니다.');
-      } else {
-        setError('회원가입 중 오류가 발생했습니다. 입력을 확인해주세요.');
-      }
-      toast.error('회원가입에 실패했습니다.');
+      const errorMessage = getApiErrorMessage(error, '회원가입 중 오류가 발생했습니다. 입력을 확인해주세요.');
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

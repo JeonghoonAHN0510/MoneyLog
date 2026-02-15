@@ -5,6 +5,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.moneylog_backend.global.constant.ErrorMessageConstants;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -24,11 +26,11 @@ public enum CategoryEnum {
 
     public static CategoryEnum fromCode(String code) {
         if (code == null) {
-            throw new IllegalArgumentException("Unknown category type: null");
+            throw new IllegalArgumentException(ErrorMessageConstants.unknownCategoryType(null));
         }
         CategoryEnum result = CODE_MAP.get(code.toUpperCase(Locale.ROOT));
         if (result == null) {
-            throw new IllegalArgumentException("Unknown category type: " + code);
+            throw new IllegalArgumentException(ErrorMessageConstants.unknownCategoryType(code));
         }
         return result;
     }

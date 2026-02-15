@@ -118,10 +118,10 @@ public class UserService {
 
     private void checkIdOrEmailValidity (UserDto userDto) {
         if (userRepository.existsByLoginId(userDto.getId())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 가입된 아이디입니다.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, ErrorMessageConstants.DUPLICATE_LOGIN_ID);
         }
         if (userRepository.existsByEmail(userDto.getEmail())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 가입된 이메일입니다.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, ErrorMessageConstants.DUPLICATE_EMAIL);
         }
     }
 

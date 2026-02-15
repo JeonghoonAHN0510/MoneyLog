@@ -14,6 +14,7 @@ import org.quartz.TriggerKey;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.type.ScheduleEnum;
 import com.moneylog_backend.moneylog.schedule.dto.ScheduleReqDto;
 import com.moneylog_backend.moneylog.schedule.dto.ScheduleResDto;
@@ -79,7 +80,8 @@ public class ScheduleService {
             String jobName = reqDto.getJobName();
             JobMetaEntity meta = scheduleRepository.findById(jobName)
                                                    .orElseThrow(
-                                                       () -> new RuntimeException("Job not found: " + jobName));
+                                                       () -> new RuntimeException(
+                                                           ErrorMessageConstants.scheduleJobNotFound(jobName)));
 
             String newCron = generateCronExpression(reqDto);
 
@@ -105,7 +107,7 @@ public class ScheduleService {
 
         } catch (SchedulerException e) {
             log.error("Failed to reschedule job", e);
-            throw new RuntimeException("Reschedule failed");
+            throw new RuntimeException(ErrorMessageConstants.SCHEDULE_RESCHEDULE_FAILED);
         }
     }
 

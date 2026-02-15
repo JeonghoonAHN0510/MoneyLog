@@ -5,6 +5,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.moneylog_backend.global.constant.ErrorMessageConstants;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -25,11 +27,11 @@ public enum StatusEnum {
 
     public static StatusEnum fromCode(String code) {
         if (code == null) {
-            throw new IllegalArgumentException("Unknown status: null");
+            throw new IllegalArgumentException(ErrorMessageConstants.unknownStatus(null));
         }
         StatusEnum result = CODE_MAP.get(code.toUpperCase(Locale.ROOT));
         if (result == null) {
-            throw new IllegalArgumentException("Unknown status: " + code);
+            throw new IllegalArgumentException(ErrorMessageConstants.unknownStatus(code));
         }
         return result;
     }

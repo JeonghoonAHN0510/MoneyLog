@@ -46,6 +46,7 @@ import {
     useUpdatePayment,
     useDeletePayment,
 } from '../api/queries';
+import { getApiErrorMessage } from '../utils/error';
 import '../styles/pages/FinancePage.css';
 
 export default function FinancePage() {
@@ -124,7 +125,7 @@ export default function FinancePage() {
             await addTransactionMut.mutateAsync(transaction);
             toast.success("거래 내역이 추가되었습니다.");
         } catch (e) {
-            toast.error("거래 내역 추가에 실패하였습니다.");
+            toast.error(getApiErrorMessage(e, "거래 내역 추가에 실패하였습니다."));
         }
     };
 
@@ -133,7 +134,7 @@ export default function FinancePage() {
             await addFixedMut.mutateAsync(fixed);
             toast.success("고정 거래 내역이 추가되었습니다.");
         } catch (e) {
-            toast.error("고정 거래 내역 추가에 실패하였습니다.");
+            toast.error(getApiErrorMessage(e, "고정 거래 내역 추가에 실패하였습니다."));
         }
     };
 
@@ -142,7 +143,7 @@ export default function FinancePage() {
             await updateTransactionMut.mutateAsync(transaction);
             toast.success("거래 내역이 수정되었습니다.");
         } catch (e) {
-            toast.error("거래 내역 수정 실패");
+            toast.error(getApiErrorMessage(e, "거래 내역 수정 실패"));
         }
     };
 
@@ -151,7 +152,7 @@ export default function FinancePage() {
             await deleteTransactionMut.mutateAsync(transactionId);
             toast.success("거래 내역이 삭제되었습니다.");
         } catch (e) {
-            toast.error("거래 내역 삭제에 실패하였습니다.");
+            toast.error(getApiErrorMessage(e, "거래 내역 삭제에 실패하였습니다."));
         }
     };
 
@@ -166,7 +167,7 @@ export default function FinancePage() {
             await addBudgetMut.mutateAsync(budget);
             toast.success("예산이 설정되었습니다.");
         } catch (e) {
-            toast.error("예산 설정에 실패하였습니다.");
+            toast.error(getApiErrorMessage(e, "예산 설정에 실패하였습니다."));
         }
     };
 
@@ -175,7 +176,7 @@ export default function FinancePage() {
             await updateBudgetMut.mutateAsync(budget);
             toast.success("예산이 수정되었습니다.");
         } catch (e) {
-            toast.error("예산 수정에 실패하였습니다.");
+            toast.error(getApiErrorMessage(e, "예산 수정에 실패하였습니다."));
         }
     };
 
@@ -184,7 +185,7 @@ export default function FinancePage() {
             await deleteBudgetMut.mutateAsync(budgetId);
             toast.success("예산이 삭제되었습니다.");
         } catch (e) {
-            toast.error("예산 삭제에 실패하였습니다.");
+            toast.error(getApiErrorMessage(e, "예산 삭제에 실패하였습니다."));
         }
     };
 
@@ -194,7 +195,7 @@ export default function FinancePage() {
             await addAccountMut.mutateAsync(account);
             toast.success("계좌가 추가되었습니다.");
         } catch (e) {
-            toast.error("계좌 추가에 실패하였습니다.");
+            toast.error(getApiErrorMessage(e, "계좌 추가에 실패하였습니다."));
         }
     };
 
@@ -203,7 +204,7 @@ export default function FinancePage() {
             await updateAccountMut.mutateAsync(account);
             toast.success("계좌가 수정되었습니다.");
         } catch (e) {
-            toast.error("계좌 수정에 실패하였습니다.");
+            toast.error(getApiErrorMessage(e, "계좌 수정에 실패하였습니다."));
         }
     };
 
@@ -212,7 +213,7 @@ export default function FinancePage() {
             await deleteAccountMut.mutateAsync(accountId);
             toast.success("계좌가 삭제되었습니다.");
         } catch (e) {
-            toast.error("계좌 삭제에 실패하였습니다.");
+            toast.error(getApiErrorMessage(e, "계좌 삭제에 실패하였습니다."));
         }
     };
 
@@ -222,7 +223,7 @@ export default function FinancePage() {
             await addCategoryMut.mutateAsync(category);
             toast.success("카테고리가 추가되었습니다.");
         } catch (e) {
-            toast.error("카테고리 추가에 실패하였습니다.");
+            toast.error(getApiErrorMessage(e, "카테고리 추가에 실패하였습니다."));
         }
     };
 
@@ -231,7 +232,7 @@ export default function FinancePage() {
             await updateCategoryMut.mutateAsync(category);
             toast.success("카테고리가 수정되었습니다.");
         } catch (e) {
-            toast.error("카테고리 수정에 실패하였습니다.");
+            toast.error(getApiErrorMessage(e, "카테고리 수정에 실패하였습니다."));
         }
     };
 
@@ -240,7 +241,7 @@ export default function FinancePage() {
             await deleteCategoryMut.mutateAsync(categoryId);
             toast.success("카테고리가 삭제되었습니다.");
         } catch (e) {
-            toast.error("카테고리 삭제에 실패하였습니다.");
+            toast.error(getApiErrorMessage(e, "카테고리 삭제에 실패하였습니다."));
         }
     };
 
@@ -250,7 +251,7 @@ export default function FinancePage() {
             await addPaymentMut.mutateAsync(payment);
             toast.success("결제수단이 추가되었습니다.");
         } catch (e) {
-            toast.error("결제수단 추가에 실패하였습니다.");
+            toast.error(getApiErrorMessage(e, "결제수단 추가에 실패하였습니다."));
         }
     };
 
@@ -259,7 +260,7 @@ export default function FinancePage() {
             await updatePaymentMut.mutateAsync(payment);
             toast.success("결제수단이 수정되었습니다.");
         } catch (e) {
-            toast.error("결제수단 수정에 실패하였습니다.");
+            toast.error(getApiErrorMessage(e, "결제수단 수정에 실패하였습니다."));
         }
     };
 
@@ -268,7 +269,7 @@ export default function FinancePage() {
             await deletePaymentMut.mutateAsync(paymentId);
             toast.success("결제수단이 삭제되었습니다.");
         } catch (e) {
-            toast.error("결제수단 삭제에 실패하였습니다.");
+            toast.error(getApiErrorMessage(e, "결제수단 삭제에 실패하였습니다."));
         }
     };
 
@@ -278,7 +279,7 @@ export default function FinancePage() {
             await transferMut.mutateAsync(transfer);
             toast.success("이체가 완료되었습니다.");
         } catch (e) {
-            toast.error("이체에 실패하였습니다.");
+            toast.error(getApiErrorMessage(e, "이체에 실패하였습니다."));
         }
     };
 

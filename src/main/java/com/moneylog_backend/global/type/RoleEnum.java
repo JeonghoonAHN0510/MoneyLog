@@ -5,6 +5,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.moneylog_backend.global.constant.ErrorMessageConstants;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -24,11 +26,11 @@ public enum RoleEnum {
 
     public static RoleEnum fromCode(String code) {
         if (code == null) {
-            throw new IllegalArgumentException("Unknown role: null");
+            throw new IllegalArgumentException(ErrorMessageConstants.unknownRole(null));
         }
         RoleEnum result = CODE_MAP.get(code.toUpperCase(Locale.ROOT));
         if (result == null) {
-            throw new IllegalArgumentException("Unknown role: " + code);
+            throw new IllegalArgumentException(ErrorMessageConstants.unknownRole(code));
         }
         return result;
     }

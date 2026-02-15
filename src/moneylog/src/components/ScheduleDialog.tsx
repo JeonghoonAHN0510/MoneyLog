@@ -20,6 +20,7 @@ import { Loader2, Settings } from 'lucide-react';
 import { useSchedules, useUpdateSchedule } from '../api/queries';
 import { Schedule, ScheduleFrequency, ScheduleReqDto } from '../types/schedule';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '../utils/error';
 
 interface ScheduleDialogProps {
     open: boolean;
@@ -116,7 +117,7 @@ export function ScheduleDialog({ open, onOpenChange }: ScheduleDialogProps) {
             toast.success('스케줄이 업데이트되었습니다.');
             setEditingJob(null);
         } catch (e) {
-            toast.error('스케줄 업데이트 실패');
+            toast.error(getApiErrorMessage(e, '스케줄 업데이트 실패'));
         }
     };
 
