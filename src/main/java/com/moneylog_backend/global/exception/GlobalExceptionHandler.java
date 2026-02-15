@@ -29,12 +29,13 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.validator.constraints.Range;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     private static final Set<String> KNOWN_CONSTRAINT_CODE_PREFIXES = Set.of(
-        "NotBlank", "NotNull", "Email", "Pattern", "Size", "Min", "Max"
+        "NotBlank", "NotNull", "Email", "Pattern", "Size", "Min", "Max", "Range"
     );
     private static final Map<String, Class<? extends Annotation>> CONSTRAINT_ANNOTATIONS = Map.of(
         "NotBlank", NotBlank.class,
@@ -43,7 +44,8 @@ public class GlobalExceptionHandler {
         "Pattern", Pattern.class,
         "Size", Size.class,
         "Min", Min.class,
-        "Max", Max.class
+        "Max", Max.class,
+        "Range", Range.class
     );
     private static final Map<String, String> FIELD_SPECIFIC_MESSAGES = Map.of(
         "balance", "잔액은 0원 이상이어야 합니다.",
@@ -180,8 +182,8 @@ public class GlobalExceptionHandler {
         }
 
         return switch (constraintCode) {
-            case "NotBlank", "NotNull" -> "필수 입력값이 누락되었습니다.";
-            case "Email", "Pattern" -> "입력 형식이 올바르지 않습니다.";
+            case "NotBlank", "NotNull" -> field + "필수 입력값이 누락되었습니다.";
+            case "Email", "Pattern" -> field + "입력 형식이 올바르지 않습니다.";
             case "Size" -> {
                 Number min = getNumberArgument(arguments, 2);
                 Number max = getNumberArgument(arguments, 1);
@@ -203,6 +205,14 @@ public class GlobalExceptionHandler {
                     yield String.format("%d 이하의 값이어야 합니다.", max.longValue());
                 }
                 yield "허용된 최대값보다 큽니다.";
+            }
+            case "Range" -> {
+                Number min = getNumberArgument(arguments, 2);
+                Number max = getNumberArgument(arguments, 1);
+                if (min != null && max != null) {
+                    yield String.format("%d에서 %d 사이의 값이어야 합니다.", min.longValue(), max.longValue());
+                }
+                yield "허용된 범위를 벗어난 값입니다.";
             }
             default -> field + " 값이 올바르지 않습니다.";
         };

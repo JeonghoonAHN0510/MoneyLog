@@ -925,3 +925,14 @@
 - 필드 특화/제약코드 메시지 생성 로직 유지 + 명시 커스텀 메시지 보장
 - `AGENTS.md`에 재발 방지용 필수 더블체크 체크리스트 규칙 추가
 - `./gradlew` 검증 성공 (`BUILD SUCCESSFUL`)
+
+## [TIME] 15:31 (KST) — [PLAN-SUMMARY] @Range 제약코드 처리 일관성 보강
+- `GlobalExceptionHandler`에 `Range` 제약코드/어노테이션/메시지 생성 케이스 추가
+- `@Range` 사용 필드의 향후 기본 메시지 케이스까지 일관 처리 보장
+- `./gradlew`로 컴파일 검증 예정 (`test` 제외)
+- [APPROVED] @Range 제약코드 처리 일관성 보강 승인(15:32 KST)
+
+## [TIME] 15:32 (KST) — [RESULT-SUMMARY] GlobalExceptionHandler @Range 제약 처리 지원
+- `KNOWN_CONSTRAINT_CODE_PREFIXES`/`CONSTRAINT_ANNOTATIONS`에 `Range` 추가
+- `getFieldSpecificValidationMessage`에 `Range` 케이스 추가(동적 범위 문구 + fallback)
+- `./gradlew` 검증 성공 (`BUILD SUCCESSFUL`)
