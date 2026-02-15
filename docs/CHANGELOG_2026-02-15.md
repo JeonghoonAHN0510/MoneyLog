@@ -820,3 +820,96 @@
 
 ## 계획 외 수정 사항
 - 없음
+
+## [TIME] 15:02 (KST) — [PLAN] AGENTS.md 변경 로그 작성 원칙 개선 (요약/상세 분리)
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- 현재 브랜치 유지: `fix/validation-error-message-format`
+- 문서 정책 변경만 수행하므로 추가 브랜치 생성 없이 진행
+
+## 1. 작업 목표
+- `CHANGELOG`를 버전/작업별 핵심 요약 중심으로 유지하도록 규칙 명확화
+- 실행 과정 상세 기록은 별도 `WORKLOG` 문서로 분리하는 운영 규칙 추가
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `AGENTS.md`
+- 현재 로직 요약
+  - `CHANGELOG_YYYY-MM-DD.md`에 PLAN/승인/START/IMPLEMENT/VERIFY/비교까지 모두 상세 기록하도록 강제
+  - 결과적으로 changelog가 운영일지 형태로 비대해짐
+- 문제 원인
+  - changelog와 작업일지의 역할 분리가 규칙에 정의되어 있지 않음
+
+## 3. 변경 예정 파일 목록
+- `AGENTS.md`
+- `docs/CHANGELOG_2026-02-15.md`
+
+## 4. 변경 전략
+- `AGENTS.md`에 문서 역할 분리 섹션 추가
+  - `CHANGELOG`: 최종 변경사항/영향/검증 결과 요약만 기록
+  - `WORKLOG`: 승인·계획·중간 수행 내역 등 상세 기록
+- 기존 절차 문구에서 상세 기록 강제 문장을 요약 기록 중심으로 수정
+- 기존 승인 기반 프로세스는 유지
+
+## 5. 예상 영향 범위
+- 영향 있음: 작업 기록 방식(문서 작성 규칙)
+- 영향 없음: 코드/DB/API/빌드
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 규칙 전환 초기 혼선(어느 문서에 무엇을 적는지)
+- 완화
+  - AGENTS.md에 항목별 기록 기준을 표 형태/불릿으로 명확히 명시
+- 롤백 방법
+  - AGENTS.md 문서 변경분 원복
+
+## 7. 테스트 계획
+- 문서 변경 작업으로 빌드/테스트 실행 생략
+- 변경 후 AGENTS.md 내 규칙 간 충돌 여부 수동 점검
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "진행해")
+- 승인 시간: 15:04
+
+## [TIME] 15:04 (KST) — [START] AGENTS.md 기록 정책(CHANGELOG/WORKLOG 분리) 개정 시작
+
+## [TIME] 15:05 (KST) — [IMPLEMENT] AGENTS.md 문서 역할 분리 규칙 개정
+
+### 수행 내용 요약
+- `AGENTS.md`에 `CHANGELOG/WORKLOG 역할 분리` 규칙 추가
+- PLAN/승인/START/IMPLEMENT/VERIFY 상세 기록의 기본 위치를 `WORKLOG`로 변경
+- `CHANGELOG`는 최종 결과 요약 중심으로 기록하도록 절차 문구 전면 정리
+- 당일 `WORKLOG` 파일이 없으면 생성하도록 규칙 보강
+
+### 영향 범위
+- 작업 문서 작성 절차(운영 규칙) 개선
+- 코드/빌드/실행 로직 영향 없음
+
+### VERIFY
+- 문서 규칙 변경 작업으로 빌드/테스트 실행 생략
+- AGENTS.md 내 규칙 충돌 수동 점검 완료
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획과 동일하게 `AGENTS.md` 단일 파일 정책 개정으로 완료
+
+## 추가 발생 이슈
+- 없음
+
+## 계획 외 수정 사항
+- 없음
+
+## [TIME] 15:06 (KST) — [PLAN-SUMMARY] Validation 커스텀 메시지 우선순위 회귀 수정
+- 대상: `GlobalExceptionHandler.resolveValidationMessage`
+- 목표: 애노테이션 커스텀 메시지 우선 유지, 기본 메시지만 선택적으로 변환
+- 범위: 예외 메시지 선택 로직 단일 파일 수정 + `./gradlew` 검증
+- [APPROVED] Validation 커스텀 메시지 우선순위 회귀 수정 진행 승인(15:07 KST)
+
+## [TIME] 15:08 (KST) — [RESULT-SUMMARY] Validation 커스텀 메시지 우선순위 회귀 수정
+- `GlobalExceptionHandler.resolveValidationMessage`를 커스텀 메시지 우선 반환으로 수정
+- 애노테이션 명시 메시지(`@... message="..."`) 유지 보장
+- `./gradlew` 검증 성공 (`BUILD SUCCESSFUL`)

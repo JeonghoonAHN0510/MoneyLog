@@ -43,13 +43,12 @@ public class GlobalExceptionHandler {
     }
 
     private String resolveValidationMessage(FieldError fieldError) {
-        if (isKnownConstraintCode(fieldError)) {
-            return getFieldSpecificValidationMessage(fieldError);
-        }
-
         String defaultMessage = fieldError.getDefaultMessage();
         if (defaultMessage != null && !defaultMessage.isBlank()) {
             return defaultMessage;
+        }
+        if (isKnownConstraintCode(fieldError)) {
+            return getFieldSpecificValidationMessage(fieldError);
         }
         return fieldError.getField() + " 값이 올바르지 않습니다.";
     }
