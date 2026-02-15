@@ -649,3 +649,174 @@
 
 ## 계획 외 수정 사항
 - 없음
+
+## [TIME] 14:43 (KST) — [PLAN] Validation 메시지 파서 안전성 보완 (null/assert 제거 + 타입 방어)
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- 현재 브랜치 유지: `fix/validation-error-message-format`
+
+## 1. 작업 목표
+- `getFieldSpecificValidationMessage`의 런타임 안정성 보강
+- `assert code != null` 제거 및 null-safe 처리
+- `arguments` 인덱스 접근 시 타입/길이 검증 추가
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+- 현재 로직 요약
+  - field switch 후 code switch로 제약별 메시지 생성
+  - `assert code != null` 사용
+  - `arguments[1]`, `arguments[2]`를 바로 문자열 포맷에 사용
+- 문제 원인
+  - assert는 운영 환경에서 비활성화 가능
+  - arguments 타입/구조 변경 시 부정확 메시지 또는 예외 가능
+
+## 3. 변경 예정 파일 목록
+- `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+- `docs/CHANGELOG_2026-02-15.md`
+
+## 4. 변경 전략
+- 1차: `code == null`이면 안전 fallback 반환
+- 2차: `Size/Min/Max`의 동적 메시지 생성 시 숫자 타입(`Number`) 검증 후 포맷
+- 3차: 동적 추출 실패 시 기존 fallback 문구 유지
+
+## 5. 예상 영향 범위
+- 영향 있음: validation 메시지 생성 안정성
+- 영향 없음: 비즈니스 로직/DB/API 스펙
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 없음에 가깝고, 실패 시 fallback 문구로 안전 복귀
+- 롤백 방법
+  - `GlobalExceptionHandler` 해당 메서드 원복
+
+## 7. 테스트 계획
+- `./gradlew`만 실행 (`./gradlew test` 제외)
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "진행해")
+- 승인 시간: 14:44
+
+## [TIME] 14:44 (KST) — [START] Validation 메시지 파서 안전성 보완 구현 시작
+
+## [TIME] 14:44 (KST) — [IMPLEMENT] Validation 메시지 파서 null/type 방어 보완
+
+### 수행 내용
+- 파일: `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+- 변경 사항
+  - `assert code != null` 제거
+  - `code == null`일 때 안전 fallback(`{field} 값이 올바르지 않습니다.`) 반환
+  - `Size/Min/Max` 동적 메시지 생성 시 인자 타입/길이 검증 추가
+    - 헬퍼 메서드 `getNumberArgument(Object[] arguments, int index)` 도입
+    - 숫자(`Number`) 인자일 때만 동적 문구 생성
+    - 추출 실패 시 기존 fallback 문구 유지
+
+### 영향 범위
+- Validation 메시지 생성 안정성 개선
+- 기능/비즈니스 로직/응답 스키마 영향 없음
+
+### VERIFY
+- 루트에서 `./gradlew` 실행
+  - 결과: 성공 (`BUILD SUCCESSFUL`)
+- 사용자 요청에 따라 `./gradlew test`는 실행하지 않음
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획과 동일하게 1개 파일 최소 수정으로 완료
+
+## 추가 발생 이슈
+- 없음
+
+## 계획 외 수정 사항
+- 없음
+
+## [TIME] 14:48 (KST) — [PLAN] Validation 기본 메시지 판별 로직 개선 (영문 하드코딩 제거)
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- 현재 브랜치 유지: `fix/validation-error-message-format`
+
+## 1. 작업 목표
+- `isFrameworkDefaultMessage`의 영문 substring 하드코딩 제거
+- 로케일/프레임워크 버전 의존도를 낮추고, 제약코드 기반으로 안정적으로 메시지 분기
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+- 현재 로직 요약
+  - `defaultMessage`가 있고, 영문 기본 메시지 패턴이 아니면 그대로 노출
+  - 기본 메시지 판별을 문자열 포함 여부로 판단
+- 문제 원인
+  - 문자열 기반 판별이 locale/version/custom message에 취약
+
+## 3. 변경 예정 파일 목록
+- `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+- `docs/CHANGELOG_2026-02-15.md`
+
+## 4. 변경 전략
+- 1차: `isFrameworkDefaultMessage` 제거
+- 2차: `fieldError.getCode()`/`fieldError.getCodes()` 기반으로
+  - 제약코드가 알려진 케이스(NotBlank/NotNull/Email/Pattern/Size/Min/Max)면 커스텀 메시지 생성 경로로 처리
+  - 그 외 케이스는 `defaultMessage` 우선, 없으면 fallback
+- 3차: 기존 필드별 고정 메시지(`balance`, `amount`, `dayOfWeek`, `dayOfMonth`) 우선 정책 유지
+
+## 5. 예상 영향 범위
+- 영향 있음: `MethodArgumentNotValidException`의 메시지 선택 로직
+- 영향 없음: HTTP 상태코드/에러코드/비즈니스 로직
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 일부 제약에서 `code`가 예상과 다르면 `defaultMessage` 경로로 흘러갈 수 있음
+- 완화
+  - `getCodes()`까지 확인해 매칭 안정성 보강
+  - 미매칭 시 기존 fallback 유지
+- 롤백 방법
+  - `GlobalExceptionHandler` 해당 메서드 원복
+
+## 7. 테스트 계획
+- `./gradlew` 실행 (`./gradlew test` 제외)
+- 수동 확인: `@Min/@Max/@Size/@NotBlank` 실패 시 서비스형 문구 유지 확인
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "진행해줘")
+- 승인 시간: 14:50
+
+## [TIME] 14:50 (KST) — [START] Validation 메시지 분기 로직(제약코드 기반) 개선 구현 시작
+
+## [TIME] 14:50 (KST) — [IMPLEMENT] Validation 기본 메시지 판별 로직 개선 (문자열 매칭 제거)
+
+### 수행 내용
+- 파일: `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+- 변경 사항
+  - `resolveValidationMessage`를 제약코드 기반 분기로 변경
+    - `isKnownConstraintCode(fieldError)`가 true면 `getFieldSpecificValidationMessage` 사용
+    - 그 외는 `defaultMessage` 우선, 없으면 field fallback
+  - 영문 substring 기반 판별 메서드(`isFrameworkDefaultMessage`) 제거
+  - 신규 `isKnownConstraintCode(FieldError)` 추가
+    - `fieldError.getCodes()`를 순회하며 `NotBlank/NotNull/Email/Pattern/Size/Min/Max` prefix 매칭
+
+### 영향 범위
+- Validation 메시지 선택 로직의 안정성 향상
+- 로케일/프레임워크 기본 메시지 텍스트 변화에 대한 의존 제거
+
+### VERIFY
+- 루트에서 `./gradlew` 실행
+  - 결과: 성공 (`BUILD SUCCESSFUL`)
+- 사용자 요청에 따라 `./gradlew test`는 실행하지 않음
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획과 동일하게 단일 파일(`GlobalExceptionHandler`)만 최소 수정
+
+## 추가 발생 이슈
+- 없음
+
+## 계획 외 수정 사항
+- 없음

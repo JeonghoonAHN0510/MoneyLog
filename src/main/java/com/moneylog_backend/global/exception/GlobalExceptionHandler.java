@@ -31,56 +31,97 @@ public class GlobalExceptionHandler {
     }
 
     private String resolveValidationMessage(FieldError fieldError) {
+        if (isKnownConstraintCode(fieldError)) {
+            return getFieldSpecificValidationMessage(fieldError);
+        }
+
         String defaultMessage = fieldError.getDefaultMessage();
-        if (defaultMessage != null && !defaultMessage.isBlank() && !isFrameworkDefaultMessage(defaultMessage)) {
+        if (defaultMessage != null && !defaultMessage.isBlank()) {
             return defaultMessage;
         }
-        return getFieldSpecificValidationMessage(fieldError);
+        return fieldError.getField() + " 값이 올바르지 않습니다.";
     }
 
-    private boolean isFrameworkDefaultMessage(String message) {
-        return message.contains("must not be null")
-            || message.contains("must not be blank")
-            || message.contains("must be greater than or equal to")
-            || message.contains("must be less than or equal to")
-            || message.contains("must match")
-            || message.contains("size must be between")
-            || message.contains("must be a well-formed email address");
+    private boolean isKnownConstraintCode(FieldError fieldError) {
+        String[] codes = fieldError.getCodes();
+        if (codes == null) {
+            return false;
+        }
+        for (String code : codes) {
+            if (code == null) {
+                continue;
+            }
+            if (code.startsWith("NotBlank")
+                || code.startsWith("NotNull")
+                || code.startsWith("Email")
+                || code.startsWith("Pattern")
+                || code.startsWith("Size")
+                || code.startsWith("Min")
+                || code.startsWith("Max")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String getFieldSpecificValidationMessage(FieldError fieldError) {
         String field = fieldError.getField();
+        switch (field) {
+            case "balance":
+                return "잔액은 0원 이상이어야 합니다.";
+            case "amount":
+                return "금액은 1원 이상이어야 합니다.";
+            case "dayOfWeek":
+                return "요일은 1~7 사이여야 합니다.";
+            case "dayOfMonth":
+                return "실행일은 1~31 사이여야 합니다.";
+        }
+
         String code = fieldError.getCode();
+        Object[] arguments = fieldError.getArguments();
 
-        if ("balance".equals(field)) {
-            return "잔액은 0원 이상이어야 합니다.";
-        }
-        if ("amount".equals(field)) {
-            return "금액은 1원 이상이어야 합니다.";
-        }
-        if ("dayOfWeek".equals(field)) {
-            return "요일은 1~7 사이여야 합니다.";
-        }
-        if ("dayOfMonth".equals(field)) {
-            return "실행일은 1~31 사이여야 합니다.";
+        if (code == null) {
+            return field + " 값이 올바르지 않습니다.";
         }
 
-        if ("NotBlank".equals(code) || "NotNull".equals(code)) {
-            return "필수 입력값이 누락되었습니다.";
+        return switch (code) {
+            case "NotBlank", "NotNull" -> "필수 입력값이 누락되었습니다.";
+            case "Email", "Pattern" -> "입력 형식이 올바르지 않습니다.";
+            case "Size" -> {
+                Number min = getNumberArgument(arguments, 2);
+                Number max = getNumberArgument(arguments, 1);
+                if (min != null && max != null) {
+                    yield String.format("입력 길이는 %d에서 %d 사이여야 합니다.", min.longValue(), max.longValue());
+                }
+                yield "입력 길이가 허용 범위를 벗어났습니다.";
+            }
+            case "Min" -> {
+                Number min = getNumberArgument(arguments, 1);
+                if (min != null) {
+                    yield String.format("%d 이상의 값이어야 합니다.", min.longValue());
+                }
+                yield "허용된 최소값보다 작습니다.";
+            }
+            case "Max" -> {
+                Number max = getNumberArgument(arguments, 1);
+                if (max != null) {
+                    yield String.format("%d 이하의 값이어야 합니다.", max.longValue());
+                }
+                yield "허용된 최대값보다 큽니다.";
+            }
+            default -> field + " 값이 올바르지 않습니다.";
+        };
+    }
+
+    private Number getNumberArgument(Object[] arguments, int index) {
+        if (arguments == null || arguments.length <= index) {
+            return null;
         }
-        if ("Email".equals(code) || "Pattern".equals(code)) {
-            return "입력 형식이 올바르지 않습니다.";
+        Object argument = arguments[index];
+        if (argument instanceof Number number) {
+            return number;
         }
-        if ("Size".equals(code)) {
-            return "입력 길이가 허용 범위를 벗어났습니다.";
-        }
-        if ("Min".equals(code)) {
-            return "허용된 최소값보다 작습니다.";
-        }
-        if ("Max".equals(code)) {
-            return "허용된 최대값보다 큽니다.";
-        }
-        return field + " 값이 올바르지 않습니다.";
+        return null;
     }
 
     // 2. JSON 파싱 에러 (예: Integer 필드에 "abc" 문자열을 보낸 경우)
