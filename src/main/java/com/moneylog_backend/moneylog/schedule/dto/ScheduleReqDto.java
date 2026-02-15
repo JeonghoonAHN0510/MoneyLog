@@ -27,9 +27,11 @@ public class ScheduleReqDto {
     @Pattern(regexp = "^([01]?[0-9]|2[0-3]):[0-5][0-9]$", message = "HH:mm 형식이어야 합니다")
     private String time;
 
-    @Min(1) @Max(7)
+    @Min(value = 1, message = "요일은 1~7 사이여야 합니다.")
+    @Max(value = 7, message = "요일은 1~7 사이여야 합니다.")
     private Integer dayOfWeek; // 1(Mon) ~ 7(Sun)
 
-    @Min(1) @Max(31)
+    @Min(value = 1, message = "실행일은 1~31 사이여야 합니다.")
+    @Max(value = 31, message = "실행일은 1~31 사이여야 합니다.")
     private Integer dayOfMonth;
 }

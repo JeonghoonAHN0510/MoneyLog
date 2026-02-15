@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -22,10 +23,64 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
         String errorMessage = ex.getBindingResult().getFieldErrors().stream()
-                                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                                .map(this::resolveValidationMessage)
+                                .distinct()
                                 .collect(java.util.stream.Collectors.joining(", "));
         ErrorResponse response = new ErrorResponse("INVALID_INPUT", errorMessage);
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    private String resolveValidationMessage(FieldError fieldError) {
+        String defaultMessage = fieldError.getDefaultMessage();
+        if (defaultMessage != null && !defaultMessage.isBlank() && !isFrameworkDefaultMessage(defaultMessage)) {
+            return defaultMessage;
+        }
+        return getFieldSpecificValidationMessage(fieldError);
+    }
+
+    private boolean isFrameworkDefaultMessage(String message) {
+        return message.contains("must not be null")
+            || message.contains("must not be blank")
+            || message.contains("must be greater than or equal to")
+            || message.contains("must be less than or equal to")
+            || message.contains("must match")
+            || message.contains("size must be between")
+            || message.contains("must be a well-formed email address");
+    }
+
+    private String getFieldSpecificValidationMessage(FieldError fieldError) {
+        String field = fieldError.getField();
+        String code = fieldError.getCode();
+
+        if ("balance".equals(field)) {
+            return "잔액은 0원 이상이어야 합니다.";
+        }
+        if ("amount".equals(field)) {
+            return "금액은 1원 이상이어야 합니다.";
+        }
+        if ("dayOfWeek".equals(field)) {
+            return "요일은 1~7 사이여야 합니다.";
+        }
+        if ("dayOfMonth".equals(field)) {
+            return "실행일은 1~31 사이여야 합니다.";
+        }
+
+        if ("NotBlank".equals(code) || "NotNull".equals(code)) {
+            return "필수 입력값이 누락되었습니다.";
+        }
+        if ("Email".equals(code) || "Pattern".equals(code)) {
+            return "입력 형식이 올바르지 않습니다.";
+        }
+        if ("Size".equals(code)) {
+            return "입력 길이가 허용 범위를 벗어났습니다.";
+        }
+        if ("Min".equals(code)) {
+            return "허용된 최소값보다 작습니다.";
+        }
+        if ("Max".equals(code)) {
+            return "허용된 최대값보다 큽니다.";
+        }
+        return field + " 값이 올바르지 않습니다.";
     }
 
     // 2. JSON 파싱 에러 (예: Integer 필드에 "abc" 문자열을 보낸 경우)
