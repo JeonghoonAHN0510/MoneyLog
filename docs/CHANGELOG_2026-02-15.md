@@ -913,3 +913,15 @@
 - `GlobalExceptionHandler.resolveValidationMessage`를 커스텀 메시지 우선 반환으로 수정
 - 애노테이션 명시 메시지(`@... message="..."`) 유지 보장
 - `./gradlew` 검증 성공 (`BUILD SUCCESSFUL`)
+
+## [TIME] 15:20 (KST) — [PLAN-SUMMARY] Validation 메시지 우선순위 재설계 및 더블체크 규칙 반영
+- `GlobalExceptionHandler` 메시지 분기 우선순위를 필드 특화/커스텀 우선으로 재정렬
+- 기본 영문 메시지는 제약코드 기반 커스텀 메시지로 변환
+- `AGENTS.md`에 회귀 방지 더블체크 규칙 추가
+- [APPROVED] Validation 우선순위 재설계 및 AGENTS 더블체크 규칙 적용 승인(15:23 KST)
+
+## [TIME] 15:24 (KST) — [RESULT-SUMMARY] Validation 우선순위 재설계 및 더블체크 규칙 적용
+- `GlobalExceptionHandler`에서 커스텀 메시지 우선순위를 회귀 없이 재설계
+- 필드 특화/제약코드 메시지 생성 로직 유지 + 명시 커스텀 메시지 보장
+- `AGENTS.md`에 재발 방지용 필수 더블체크 체크리스트 규칙 추가
+- `./gradlew` 검증 성공 (`BUILD SUCCESSFUL`)
