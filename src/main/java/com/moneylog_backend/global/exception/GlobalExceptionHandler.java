@@ -75,14 +75,29 @@ public class GlobalExceptionHandler {
             return specificMessage;
         }
 
-        String code = fieldError.getCode();
+        String[] codes = fieldError.getCodes();
         Object[] arguments = fieldError.getArguments();
+        String constraintCode = null;
 
-        if (code == null) {
+        if (codes != null) {
+            for (String code : codes) {
+                if (code == null) continue;
+                String foundPrefix = KNOWN_CONSTRAINT_CODE_PREFIXES.stream()
+                                                                   .filter(code::startsWith)
+                                                                   .findFirst()
+                                                                   .orElse(null);
+                if (foundPrefix != null) {
+                    constraintCode = foundPrefix;
+                    break;
+                }
+            }
+        }
+
+        if (constraintCode == null) {
             return field + " 값이 올바르지 않습니다.";
         }
 
-        return switch (code) {
+        return switch (constraintCode) {
             case "NotBlank", "NotNull" -> "필수 입력값이 누락되었습니다.";
             case "Email", "Pattern" -> "입력 형식이 올바르지 않습니다.";
             case "Size" -> {
