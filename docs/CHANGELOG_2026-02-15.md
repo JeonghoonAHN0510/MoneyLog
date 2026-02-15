@@ -359,3 +359,580 @@
 
 ## 계획 외 수정 사항
 - 없음
+
+## [TIME] 14:06 (KST) — [PLAN] ResponseStatusException 전 도메인 점검 및 표준화 (신규 브랜치)
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- 기준 브랜치: `master`
+- 이동 예정 브랜치: `audit/response-status-exception-standardization`
+- 브랜치 생성 절차: `git checkout master` -> (필요 시 `git pull`) -> `git checkout -b audit/response-status-exception-standardization`
+
+## 1. 작업 목표
+- 백엔드 전 도메인에서 `ResponseStatusException` 사용 지점을 점검
+- 표준 에러 응답(`ErrorResponse`) 일관성에 어긋나는 지점이 있으면 수정
+- 중복/하드코딩 reason 문구는 상수화 규칙으로 정리
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+  - `src/main/java/com/moneylog_backend/global/constant/ErrorMessageConstants.java`
+  - `src/main/java/com/moneylog_backend/**` 전역 검색 대상
+- 현재 로직 요약
+  - `GlobalExceptionHandler`에는 `ResponseStatusException` 핸들러가 이미 존재
+  - 현재 검색 기준으로는 `UserService`만 `ResponseStatusException` 사용
+- 문제 원인(가능성)
+  - 다른 도메인에서 향후 직접 `ResponseStatusException`을 추가할 때 상수화/표준화 누락 가능
+
+## 3. 변경 예정 파일 목록
+- 기본 점검 대상
+  - `src/main/java/com/moneylog_backend/**` (검색/점검)
+- 수정 필요 시
+  - `src/main/java/com/moneylog_backend/global/constant/ErrorMessageConstants.java`
+  - 해당 도메인 서비스 파일(발견 시)
+  - `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java` (필요 시 보완)
+- 로그
+  - `docs/CHANGELOG_2026-02-15.md`
+
+## 4. 변경 전략
+- 1차: 새 브랜치 생성 후 `ResponseStatusException` 전수 검색
+- 2차: 발견 지점별로
+  - reason 상수화 여부
+  - 상태코드/메시지가 프론트 파싱 규약(`errorMessage`)에 맞는지 확인
+- 3차: 누락 지점만 최소 수정
+- 4차: `./gradlew` 검증
+
+## 5. 예상 영향 범위
+- 영향 있음: 예외 응답 메시지 텍스트 및 상수 참조 구조
+- 영향 없음: DB 스키마, 인증 로직 본체, 외부 API, 빌드 설정
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 광범위 리팩토링 시 기존 문구 의존 테스트/화면과 충돌 가능
+- 완화
+  - 실제 수정은 발견 지점 최소 범위로 제한
+- 롤백 방법
+  - 변경 파일 단위 원복
+
+## 7. 테스트 계획
+- `./gradlew`
+- 가능 시 `./gradlew test`
+- 수동 확인: 중복가입(409) 포함 `ResponseStatusException` 경로의 `errorMessage` 응답 확인
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "./gradlew test는 제외하고 진행해줘")
+- 승인 시간: 14:07
+
+## [TIME] 14:08 (KST) — [START] 신규 브랜치에서 ResponseStatusException 전 도메인 점검 시작
+
+## [TIME] 14:09 (KST) — [IMPLEMENT] ResponseStatusException 전수 점검 결과 반영
+
+### 수행 내용
+- 브랜치 생성/이동
+  - 기준 브랜치: `master`
+  - 작업 브랜치: `audit/response-status-exception-standardization`
+- 백엔드 전수 점검
+  - 검색 패턴: `throw new ResponseStatusException`, `ResponseStatusException(`, `@ResponseStatus`
+  - 점검 범위: `src/main/java/com/moneylog_backend/**`
+- 점검 결과
+  - `ResponseStatusException` 사용 지점은 `UserService` 2건만 존재
+  - 두 지점 모두 상수(`ErrorMessageConstants.DUPLICATE_LOGIN_ID`, `DUPLICATE_EMAIL`) 사용 중
+  - `GlobalExceptionHandler`에 `ResponseStatusException` 전용 핸들러가 존재하여 `ErrorResponse` 표준 포맷 보장
+  - 추가 수정 필요 지점 없음 (코드 추가 변경 없음)
+
+### 영향 범위
+- 코드 동작 변경 없음
+- 표준화 점검 결과의 문서 기록만 반영
+
+### VERIFY
+- 루트에서 `./gradlew` 실행
+  - 결과: (아래 기록)
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획 대비 코드 수정 단계는 "수정 필요 지점 없음"으로 종료
+
+## 추가 발생 이슈
+- 없음
+
+## 계획 외 수정 사항
+- 없음
+- 검증 결과: `BUILD SUCCESSFUL`
+
+## [TIME] 14:09 (KST) — [PLAN] Validation 오류 메시지(field prefix 제거) 서비스형 파싱 적용
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- 기준 브랜치: `master`
+- 이동 예정 브랜치: `fix/validation-error-message-format`
+- 승인 후 `master` 기준으로 브랜치 생성 예정
+
+## 1. 작업 목표
+- `@Min`, `@NotNull` 등 `@Valid` 실패 시 `balance: ...` 형태 대신 실제 서비스 문구 중심으로 반환
+- 프론트에서 그대로 표시해도 자연스러운 단문 메시지 형태로 정리
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+  - `src/main/java/com/moneylog_backend/moneylog/**/dto/*.java`
+- 현재 로직 요약
+  - `handleValidationExceptions`에서 `field + ": " + defaultMessage`를 조합하여 반환
+  - 결과적으로 `balance: 잔액은 0 이상이어야 합니다` 형태가 노출됨
+- 문제 원인
+  - 백엔드 응답 생성 단계에서 필드명을 강제 prefix로 붙임
+
+## 3. 변경 예정 파일 목록
+- `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+- `docs/CHANGELOG_2026-02-15.md`
+
+## 4. 변경 전략
+- 1차(필수): Validation 에러 메시지 조합 로직을 `field prefix 제거` 방식으로 변경
+  - 우선순위: `defaultMessage`만 추출해서 join
+- 2차(보완): `defaultMessage`가 비어 있는 경우만 필드명 fallback 사용
+- 3차(검증): `./gradlew` 실행으로 컴파일/기본 동작 확인
+
+## 5. 예상 영향 범위
+- 영향 있음: `INVALID_INPUT`의 `errorMessage` 문자열 포맷
+- 영향 없음: 비즈니스 로직/DB/인증/외부연동
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 프론트가 `field:` prefix 포맷을 파싱하고 있으면 표시 로직 영향 가능
+- 완화
+  - 현재 프론트는 문자열 전체 표시 중심이라 영향 낮음
+- 롤백 방법
+  - `GlobalExceptionHandler` 해당 메서드 원복
+
+## 7. 테스트 계획
+- `./gradlew`만 실행 (`./gradlew test` 제외)
+- 수동 확인 포인트
+  - `@Min` 실패 시 `balance:` 없이 메시지만 오는지
+  - 다중 필드 실패 시 메시지 조합이 자연스러운지
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "진행해줘")
+- 승인 시간: 14:09
+
+## [TIME] 14:10 (KST) — [START] Validation 오류 메시지 포맷 개선 구현 시작
+
+## [TIME] 14:10 (KST) — [IMPLEMENT] Validation 에러 메시지 field prefix 제거 파싱 적용
+
+### 수행 내용
+- 파일: `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+- 변경: `handleValidationExceptions` 메시지 조합 로직 수정
+  - 기존: `field + ": " + defaultMessage`
+  - 변경: `defaultMessage` 우선 반환
+  - 보완: `defaultMessage`가 비어 있는 경우에만 `"{field} 값이 올바르지 않습니다."` fallback
+- 효과: `@Min` 실패 시 `balance: 잔액은 0 이상이어야 합니다`가 아니라 `잔액은 0 이상이어야 합니다` 형태로 응답
+
+### 영향 범위
+- `MethodArgumentNotValidException` 기반 `INVALID_INPUT` 메시지 포맷
+- 비즈니스 로직/상태코드/에러코드 영향 없음
+
+### VERIFY
+- 루트에서 `./gradlew` 실행
+  - 결과: 성공 (`BUILD SUCCESSFUL`)
+- 사용자 요청에 따라 `./gradlew test`는 실행하지 않음
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획과 동일하게 `GlobalExceptionHandler` 1개 파일만 최소 수정
+
+## 추가 발생 이슈
+- 없음
+
+## 계획 외 수정 사항
+- 없음
+
+## [TIME] 14:11 (KST) — [PLAN] @Valid 필드별 커스텀 메시지 정교화
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- 현재 브랜치 유지: `fix/validation-error-message-format`
+- 추가 브랜치 생성 없이 동일 브랜치에서 연속 작업
+
+## 1. 작업 목표
+- `@Valid` 실패 메시지를 필드/제약별 서비스 톤으로 정교화
+- 특히 annotation 기본 영어 메시지가 나오는 케이스를 한글 커스텀 문구로 치환
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+  - `src/main/java/com/moneylog_backend/moneylog/schedule/dto/ScheduleReqDto.java`
+  - 기타 DTO 검증 어노테이션 선언부
+- 현재 로직 요약
+  - `defaultMessage`가 있으면 그대로 사용, 없으면 `{field} 값이 올바르지 않습니다.` fallback
+  - 대부분 DTO는 `message`가 있으나 `ScheduleReqDto.dayOfWeek/dayOfMonth`의 `@Min/@Max`는 message 미지정이라 기본 메시지(영어) 가능
+- 문제 원인
+  - 필드/제약 타입별 커스텀 매핑 로직 부재
+  - 일부 어노테이션 메시지 미지정
+
+## 3. 변경 예정 파일 목록
+- `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+- `src/main/java/com/moneylog_backend/moneylog/schedule/dto/ScheduleReqDto.java`
+- `docs/CHANGELOG_2026-02-15.md`
+
+## 4. 변경 전략
+- 1차: `ScheduleReqDto`의 `@Min/@Max`에 서비스 문구 직접 지정
+  - `dayOfWeek`: "요일은 1~7 사이여야 합니다."
+  - `dayOfMonth`: "실행일은 1~31 사이여야 합니다."
+- 2차: `GlobalExceptionHandler`에 필드/제약 코드 기반 fallback 커스텀 매퍼 추가
+  - `defaultMessage`가 없거나 기본 메시지 형태일 때 커스텀 매핑 적용
+- 3차: 다중 에러 조합 시 중복 메시지 제거(필요 시)로 사용자 가독성 개선
+
+## 5. 예상 영향 범위
+- 영향 있음: `INVALID_INPUT.errorMessage` 문구 품질/일관성
+- 영향 없음: 비즈니스 로직, DB, 인증/권한, API 스펙(필드 구조)
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 과도한 일반화 매핑 시 의도와 다른 문구가 나올 수 있음
+- 완화
+  - 우선 빈도 높은 필드(`dayOfWeek`, `dayOfMonth`, `balance`, `amount`) 중심 최소 매핑
+  - DTO 직접 메시지와 충돌하지 않도록 `defaultMessage` 우선 정책 유지
+- 롤백 방법
+  - `GlobalExceptionHandler`, `ScheduleReqDto` 변경만 원복
+
+## 7. 테스트 계획
+- `./gradlew`만 실행 (`./gradlew test` 제외)
+- 수동 확인
+  - `balance`/`amount`/`dayOfWeek`/`dayOfMonth` 검증 실패 시 메시지 톤 확인
+  - 다중 필드 실패 시 메시지 조합 확인
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "구현해줘.")
+- 승인 시간: 14:14
+
+## [TIME] 14:14 (KST) — [START] @Valid 필드별 커스텀 메시지 정교화 구현 시작
+
+## [TIME] 14:14 (KST) — [IMPLEMENT] @Valid 필드별 커스텀 문구 적용
+
+### 수행 내용
+- `src/main/java/com/moneylog_backend/moneylog/schedule/dto/ScheduleReqDto.java`
+  - `dayOfWeek`의 `@Min/@Max`에 동일 커스텀 메시지 지정: `요일은 1~7 사이여야 합니다.`
+  - `dayOfMonth`의 `@Min/@Max`에 동일 커스텀 메시지 지정: `실행일은 1~31 사이여야 합니다.`
+- `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+  - `handleValidationExceptions`를 `resolveValidationMessage` 기반으로 변경
+  - 기본(프레임워크) 영어 메시지 패턴 감지 후 필드/제약 코드 기반 커스텀 메시지로 치환
+  - 필드 특화 메시지 추가
+    - `balance` -> `잔액은 0원 이상이어야 합니다.`
+    - `amount` -> `금액은 1원 이상이어야 합니다.`
+    - `dayOfWeek` -> `요일은 1~7 사이여야 합니다.`
+    - `dayOfMonth` -> `실행일은 1~31 사이여야 합니다.`
+  - 제약 코드 fallback 메시지 추가 (`NotNull/NotBlank/Pattern/Email/Size/Min/Max`)
+  - 다중 에러 조합 시 중복 메시지 제거(`distinct`) 적용
+
+### 영향 범위
+- `MethodArgumentNotValidException` 기반 `INVALID_INPUT.errorMessage` 품질 개선
+- 상태코드/에러코드 및 비즈니스 로직 영향 없음
+
+### VERIFY
+- 루트에서 `./gradlew` 실행
+  - 결과: 성공 (`BUILD SUCCESSFUL`)
+- 사용자 요청에 따라 `./gradlew test`는 실행하지 않음
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획한 2개 파일(`GlobalExceptionHandler`, `ScheduleReqDto`)에 한정해 동일 전략으로 수행
+
+## 추가 발생 이슈
+- 없음
+
+## 계획 외 수정 사항
+- 없음
+
+## [TIME] 14:43 (KST) — [PLAN] Validation 메시지 파서 안전성 보완 (null/assert 제거 + 타입 방어)
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- 현재 브랜치 유지: `fix/validation-error-message-format`
+
+## 1. 작업 목표
+- `getFieldSpecificValidationMessage`의 런타임 안정성 보강
+- `assert code != null` 제거 및 null-safe 처리
+- `arguments` 인덱스 접근 시 타입/길이 검증 추가
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+- 현재 로직 요약
+  - field switch 후 code switch로 제약별 메시지 생성
+  - `assert code != null` 사용
+  - `arguments[1]`, `arguments[2]`를 바로 문자열 포맷에 사용
+- 문제 원인
+  - assert는 운영 환경에서 비활성화 가능
+  - arguments 타입/구조 변경 시 부정확 메시지 또는 예외 가능
+
+## 3. 변경 예정 파일 목록
+- `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+- `docs/CHANGELOG_2026-02-15.md`
+
+## 4. 변경 전략
+- 1차: `code == null`이면 안전 fallback 반환
+- 2차: `Size/Min/Max`의 동적 메시지 생성 시 숫자 타입(`Number`) 검증 후 포맷
+- 3차: 동적 추출 실패 시 기존 fallback 문구 유지
+
+## 5. 예상 영향 범위
+- 영향 있음: validation 메시지 생성 안정성
+- 영향 없음: 비즈니스 로직/DB/API 스펙
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 없음에 가깝고, 실패 시 fallback 문구로 안전 복귀
+- 롤백 방법
+  - `GlobalExceptionHandler` 해당 메서드 원복
+
+## 7. 테스트 계획
+- `./gradlew`만 실행 (`./gradlew test` 제외)
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "진행해")
+- 승인 시간: 14:44
+
+## [TIME] 14:44 (KST) — [START] Validation 메시지 파서 안전성 보완 구현 시작
+
+## [TIME] 14:44 (KST) — [IMPLEMENT] Validation 메시지 파서 null/type 방어 보완
+
+### 수행 내용
+- 파일: `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+- 변경 사항
+  - `assert code != null` 제거
+  - `code == null`일 때 안전 fallback(`{field} 값이 올바르지 않습니다.`) 반환
+  - `Size/Min/Max` 동적 메시지 생성 시 인자 타입/길이 검증 추가
+    - 헬퍼 메서드 `getNumberArgument(Object[] arguments, int index)` 도입
+    - 숫자(`Number`) 인자일 때만 동적 문구 생성
+    - 추출 실패 시 기존 fallback 문구 유지
+
+### 영향 범위
+- Validation 메시지 생성 안정성 개선
+- 기능/비즈니스 로직/응답 스키마 영향 없음
+
+### VERIFY
+- 루트에서 `./gradlew` 실행
+  - 결과: 성공 (`BUILD SUCCESSFUL`)
+- 사용자 요청에 따라 `./gradlew test`는 실행하지 않음
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획과 동일하게 1개 파일 최소 수정으로 완료
+
+## 추가 발생 이슈
+- 없음
+
+## 계획 외 수정 사항
+- 없음
+
+## [TIME] 14:48 (KST) — [PLAN] Validation 기본 메시지 판별 로직 개선 (영문 하드코딩 제거)
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- 현재 브랜치 유지: `fix/validation-error-message-format`
+
+## 1. 작업 목표
+- `isFrameworkDefaultMessage`의 영문 substring 하드코딩 제거
+- 로케일/프레임워크 버전 의존도를 낮추고, 제약코드 기반으로 안정적으로 메시지 분기
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+- 현재 로직 요약
+  - `defaultMessage`가 있고, 영문 기본 메시지 패턴이 아니면 그대로 노출
+  - 기본 메시지 판별을 문자열 포함 여부로 판단
+- 문제 원인
+  - 문자열 기반 판별이 locale/version/custom message에 취약
+
+## 3. 변경 예정 파일 목록
+- `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+- `docs/CHANGELOG_2026-02-15.md`
+
+## 4. 변경 전략
+- 1차: `isFrameworkDefaultMessage` 제거
+- 2차: `fieldError.getCode()`/`fieldError.getCodes()` 기반으로
+  - 제약코드가 알려진 케이스(NotBlank/NotNull/Email/Pattern/Size/Min/Max)면 커스텀 메시지 생성 경로로 처리
+  - 그 외 케이스는 `defaultMessage` 우선, 없으면 fallback
+- 3차: 기존 필드별 고정 메시지(`balance`, `amount`, `dayOfWeek`, `dayOfMonth`) 우선 정책 유지
+
+## 5. 예상 영향 범위
+- 영향 있음: `MethodArgumentNotValidException`의 메시지 선택 로직
+- 영향 없음: HTTP 상태코드/에러코드/비즈니스 로직
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 일부 제약에서 `code`가 예상과 다르면 `defaultMessage` 경로로 흘러갈 수 있음
+- 완화
+  - `getCodes()`까지 확인해 매칭 안정성 보강
+  - 미매칭 시 기존 fallback 유지
+- 롤백 방법
+  - `GlobalExceptionHandler` 해당 메서드 원복
+
+## 7. 테스트 계획
+- `./gradlew` 실행 (`./gradlew test` 제외)
+- 수동 확인: `@Min/@Max/@Size/@NotBlank` 실패 시 서비스형 문구 유지 확인
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "진행해줘")
+- 승인 시간: 14:50
+
+## [TIME] 14:50 (KST) — [START] Validation 메시지 분기 로직(제약코드 기반) 개선 구현 시작
+
+## [TIME] 14:50 (KST) — [IMPLEMENT] Validation 기본 메시지 판별 로직 개선 (문자열 매칭 제거)
+
+### 수행 내용
+- 파일: `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+- 변경 사항
+  - `resolveValidationMessage`를 제약코드 기반 분기로 변경
+    - `isKnownConstraintCode(fieldError)`가 true면 `getFieldSpecificValidationMessage` 사용
+    - 그 외는 `defaultMessage` 우선, 없으면 field fallback
+  - 영문 substring 기반 판별 메서드(`isFrameworkDefaultMessage`) 제거
+  - 신규 `isKnownConstraintCode(FieldError)` 추가
+    - `fieldError.getCodes()`를 순회하며 `NotBlank/NotNull/Email/Pattern/Size/Min/Max` prefix 매칭
+
+### 영향 범위
+- Validation 메시지 선택 로직의 안정성 향상
+- 로케일/프레임워크 기본 메시지 텍스트 변화에 대한 의존 제거
+
+### VERIFY
+- 루트에서 `./gradlew` 실행
+  - 결과: 성공 (`BUILD SUCCESSFUL`)
+- 사용자 요청에 따라 `./gradlew test`는 실행하지 않음
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획과 동일하게 단일 파일(`GlobalExceptionHandler`)만 최소 수정
+
+## 추가 발생 이슈
+- 없음
+
+## 계획 외 수정 사항
+- 없음
+
+## [TIME] 15:02 (KST) — [PLAN] AGENTS.md 변경 로그 작성 원칙 개선 (요약/상세 분리)
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- 현재 브랜치 유지: `fix/validation-error-message-format`
+- 문서 정책 변경만 수행하므로 추가 브랜치 생성 없이 진행
+
+## 1. 작업 목표
+- `CHANGELOG`를 버전/작업별 핵심 요약 중심으로 유지하도록 규칙 명확화
+- 실행 과정 상세 기록은 별도 `WORKLOG` 문서로 분리하는 운영 규칙 추가
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `AGENTS.md`
+- 현재 로직 요약
+  - `CHANGELOG_YYYY-MM-DD.md`에 PLAN/승인/START/IMPLEMENT/VERIFY/비교까지 모두 상세 기록하도록 강제
+  - 결과적으로 changelog가 운영일지 형태로 비대해짐
+- 문제 원인
+  - changelog와 작업일지의 역할 분리가 규칙에 정의되어 있지 않음
+
+## 3. 변경 예정 파일 목록
+- `AGENTS.md`
+- `docs/CHANGELOG_2026-02-15.md`
+
+## 4. 변경 전략
+- `AGENTS.md`에 문서 역할 분리 섹션 추가
+  - `CHANGELOG`: 최종 변경사항/영향/검증 결과 요약만 기록
+  - `WORKLOG`: 승인·계획·중간 수행 내역 등 상세 기록
+- 기존 절차 문구에서 상세 기록 강제 문장을 요약 기록 중심으로 수정
+- 기존 승인 기반 프로세스는 유지
+
+## 5. 예상 영향 범위
+- 영향 있음: 작업 기록 방식(문서 작성 규칙)
+- 영향 없음: 코드/DB/API/빌드
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 규칙 전환 초기 혼선(어느 문서에 무엇을 적는지)
+- 완화
+  - AGENTS.md에 항목별 기록 기준을 표 형태/불릿으로 명확히 명시
+- 롤백 방법
+  - AGENTS.md 문서 변경분 원복
+
+## 7. 테스트 계획
+- 문서 변경 작업으로 빌드/테스트 실행 생략
+- 변경 후 AGENTS.md 내 규칙 간 충돌 여부 수동 점검
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "진행해")
+- 승인 시간: 15:04
+
+## [TIME] 15:04 (KST) — [START] AGENTS.md 기록 정책(CHANGELOG/WORKLOG 분리) 개정 시작
+
+## [TIME] 15:05 (KST) — [IMPLEMENT] AGENTS.md 문서 역할 분리 규칙 개정
+
+### 수행 내용 요약
+- `AGENTS.md`에 `CHANGELOG/WORKLOG 역할 분리` 규칙 추가
+- PLAN/승인/START/IMPLEMENT/VERIFY 상세 기록의 기본 위치를 `WORKLOG`로 변경
+- `CHANGELOG`는 최종 결과 요약 중심으로 기록하도록 절차 문구 전면 정리
+- 당일 `WORKLOG` 파일이 없으면 생성하도록 규칙 보강
+
+### 영향 범위
+- 작업 문서 작성 절차(운영 규칙) 개선
+- 코드/빌드/실행 로직 영향 없음
+
+### VERIFY
+- 문서 규칙 변경 작업으로 빌드/테스트 실행 생략
+- AGENTS.md 내 규칙 충돌 수동 점검 완료
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획과 동일하게 `AGENTS.md` 단일 파일 정책 개정으로 완료
+
+## 추가 발생 이슈
+- 없음
+
+## 계획 외 수정 사항
+- 없음
+
+## [TIME] 15:06 (KST) — [PLAN-SUMMARY] Validation 커스텀 메시지 우선순위 회귀 수정
+- 대상: `GlobalExceptionHandler.resolveValidationMessage`
+- 목표: 애노테이션 커스텀 메시지 우선 유지, 기본 메시지만 선택적으로 변환
+- 범위: 예외 메시지 선택 로직 단일 파일 수정 + `./gradlew` 검증
+- [APPROVED] Validation 커스텀 메시지 우선순위 회귀 수정 진행 승인(15:07 KST)
+
+## [TIME] 15:08 (KST) — [RESULT-SUMMARY] Validation 커스텀 메시지 우선순위 회귀 수정
+- `GlobalExceptionHandler.resolveValidationMessage`를 커스텀 메시지 우선 반환으로 수정
+- 애노테이션 명시 메시지(`@... message="..."`) 유지 보장
+- `./gradlew` 검증 성공 (`BUILD SUCCESSFUL`)
+
+## [TIME] 15:20 (KST) — [PLAN-SUMMARY] Validation 메시지 우선순위 재설계 및 더블체크 규칙 반영
+- `GlobalExceptionHandler` 메시지 분기 우선순위를 필드 특화/커스텀 우선으로 재정렬
+- 기본 영문 메시지는 제약코드 기반 커스텀 메시지로 변환
+- `AGENTS.md`에 회귀 방지 더블체크 규칙 추가
+- [APPROVED] Validation 우선순위 재설계 및 AGENTS 더블체크 규칙 적용 승인(15:23 KST)
+
+## [TIME] 15:24 (KST) — [RESULT-SUMMARY] Validation 우선순위 재설계 및 더블체크 규칙 적용
+- `GlobalExceptionHandler`에서 커스텀 메시지 우선순위를 회귀 없이 재설계
+- 필드 특화/제약코드 메시지 생성 로직 유지 + 명시 커스텀 메시지 보장
+- `AGENTS.md`에 재발 방지용 필수 더블체크 체크리스트 규칙 추가
+- `./gradlew` 검증 성공 (`BUILD SUCCESSFUL`)
+
+## [TIME] 15:31 (KST) — [PLAN-SUMMARY] @Range 제약코드 처리 일관성 보강
+- `GlobalExceptionHandler`에 `Range` 제약코드/어노테이션/메시지 생성 케이스 추가
+- `@Range` 사용 필드의 향후 기본 메시지 케이스까지 일관 처리 보장
+- `./gradlew`로 컴파일 검증 예정 (`test` 제외)
+- [APPROVED] @Range 제약코드 처리 일관성 보강 승인(15:32 KST)
+
+## [TIME] 15:32 (KST) — [RESULT-SUMMARY] GlobalExceptionHandler @Range 제약 처리 지원
+- `KNOWN_CONSTRAINT_CODE_PREFIXES`/`CONSTRAINT_ANNOTATIONS`에 `Range` 추가
+- `getFieldSpecificValidationMessage`에 `Range` 케이스 추가(동적 범위 문구 + fallback)
+- `./gradlew` 검증 성공 (`BUILD SUCCESSFUL`)

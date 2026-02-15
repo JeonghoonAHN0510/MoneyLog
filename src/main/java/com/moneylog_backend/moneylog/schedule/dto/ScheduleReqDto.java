@@ -1,5 +1,7 @@
 package com.moneylog_backend.moneylog.schedule.dto;
 
+import org.hibernate.validator.constraints.Range;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -27,9 +29,9 @@ public class ScheduleReqDto {
     @Pattern(regexp = "^([01]?[0-9]|2[0-3]):[0-5][0-9]$", message = "HH:mm 형식이어야 합니다")
     private String time;
 
-    @Min(1) @Max(7)
+    @Range(min = 1, max = 7, message = "요일은 1~7 사이여야 합니다.")
     private Integer dayOfWeek; // 1(Mon) ~ 7(Sun)
 
-    @Min(1) @Max(31)
+    @Range(min = 1, max = 31, message = "실행일은 1~31 사이여야 합니다.")
     private Integer dayOfMonth;
 }
