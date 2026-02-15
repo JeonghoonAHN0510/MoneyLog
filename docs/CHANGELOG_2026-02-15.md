@@ -258,3 +258,104 @@
 
 ## 계획 외 수정 사항
 - `GlobalExceptionHandler`의 일부 기존 한글 하드코딩 메시지도 상수 참조로 교체하여 단일 관리 원칙을 강화
+
+## [TIME] 13:53 (KST) — [PLAN] ResponseStatusException 표준 응답화로 회원가입 409 메시지 회귀 근본 해결
+
+### 실행 계획
+# 🧠 실행 계획 보고
+
+## 0. 이동할 브랜치
+- 현재 브랜치 유지: `refactor/error-message`
+- 사용자 요청에 따라 브랜치 이동/생성 없이 현재 브랜치에서 작업
+
+## 1. 작업 목표
+- `ResponseStatusException`이 발생해도 프론트에서 항상 `errorMessage`를 안정적으로 수신하도록 백엔드 예외 처리 구조를 개선
+- 회원가입 409(CONFLICT)에서 중복 아이디/이메일 안내가 누락되지 않도록 보장
+
+## 2. 현재 상태 분석
+- 관련 파일
+  - `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+  - `src/main/java/com/moneylog_backend/moneylog/user/service/UserService.java`
+  - `src/main/java/com/moneylog_backend/global/constant/ErrorMessageConstants.java`
+- 현재 로직 요약
+  - `UserService.checkIdOrEmailValidity`는 `ResponseStatusException(HttpStatus.CONFLICT, "...")`를 발생시킴
+  - `GlobalExceptionHandler`에 `ResponseStatusException` 전용 핸들러가 없어 기본 스프링 에러 포맷으로 빠질 수 있음
+  - 이 경우 프론트 공통 파서가 `errorMessage`를 못 받아 fallback 문구로 하락할 가능성 존재
+- 문제 원인
+  - 예외 타입별 응답 표준화가 `IllegalArgumentException`, `ResourceNotFoundException` 중심으로만 구성됨
+
+## 3. 변경 예정 파일 목록
+- `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+- `src/main/java/com/moneylog_backend/global/constant/ErrorMessageConstants.java`
+- `src/main/java/com/moneylog_backend/moneylog/user/service/UserService.java`
+- `docs/CHANGELOG_2026-02-15.md`
+
+## 4. 변경 전략
+- 1차: `GlobalExceptionHandler`에 `ResponseStatusException` 핸들러 추가
+  - `status`/`reason`을 기반으로 `ErrorResponse(errorCode, errorMessage)`를 반환
+  - `reason`이 비어 있으면 상태코드별 기본 메시지 fallback 적용
+- 2차: 회원가입 중복 문구를 `ErrorMessageConstants`로 상수화하고 `UserService`에서 참조
+- 3차: `./gradlew` 실행으로 컴파일/기본 검증
+
+## 5. 예상 영향 범위
+- 영향 있음: `ResponseStatusException` 기반 API의 에러 응답 포맷(표준화)
+- 영향 없음: DB 스키마, 인증 플로우, 외부 API, 빌드 설정
+
+## 6. 리스크 분석
+- 실패 가능성
+  - 기존에 스프링 기본 에러 바디를 직접 기대하던 클라이언트가 있다면 응답 포맷 변화 영향 가능
+- 롤백 방법
+  - `GlobalExceptionHandler`의 신규 핸들러 및 상수/참조 변경 파일 단위 원복 가능
+
+## 7. 테스트 계획
+- `./gradlew` 실행
+- 가능 시 `./gradlew test` 실행
+- 수동 검증 포인트: `/user/signup` 중복 ID/이메일 요청 시 409 + `errorMessage` 반환 확인
+
+### 승인 여부
+- 승인 완료 (사용자 응답: "백엔드 구조를 개선해서 근본적으로 문제를 해결하자. 브랜치를 유지하고 작업 시작해줘.")
+- 승인 시간: 13:53
+
+## [TIME] 13:53 (KST) — [START] ResponseStatusException 표준 응답화 구현 시작
+
+## [TIME] 13:55 (KST) — [IMPLEMENT] ResponseStatusException 표준 에러 응답 구조 적용
+
+### 수행 내용
+- `GlobalExceptionHandler`에 `ResponseStatusException` 전용 핸들러 추가
+  - 파일: `src/main/java/com/moneylog_backend/global/exception/GlobalExceptionHandler.java`
+  - 처리 방식:
+    - `statusCode`를 `errorCode`로 변환 (`CONFLICT`, `BAD_REQUEST` 등)
+    - `reason`이 존재하면 `errorMessage`로 그대로 반환
+    - `reason`이 비어 있으면 상태코드별 기본 메시지 fallback 제공
+  - 결과: 스프링 기본 에러 바디 의존 없이 항상 `ErrorResponse(errorCode, errorMessage)` 포맷 보장
+- 상태코드 fallback/중복가입 문구 상수화
+  - 파일: `src/main/java/com/moneylog_backend/global/constant/ErrorMessageConstants.java`
+  - 추가 상수: `DUPLICATE_LOGIN_ID`, `DUPLICATE_EMAIL`, `BAD_REQUEST`, `CONFLICT`, `NOT_FOUND`
+- 회원가입 중복 예외 메시지 상수 참조로 통일
+  - 파일: `src/main/java/com/moneylog_backend/moneylog/user/service/UserService.java`
+  - 변경: `ResponseStatusException(HttpStatus.CONFLICT, ErrorMessageConstants.DUPLICATE_...)`
+
+### 영향 범위
+- `/user/signup`의 409 포함 `ResponseStatusException` 경로 전반
+- 프론트는 기존 공통 파서(`errorMessage`)로 충돌 사유 메시지 수신 가능
+
+### VERIFY
+- 루트에서 `./gradlew` 실행
+  - 결과: 성공 (`BUILD SUCCESSFUL`)
+- 루트에서 `./gradlew test` 실행
+  - 결과: 실패
+  - 실패 핵심 로그
+    - `MoneyLogApplicationTests > contextLoads() FAILED`
+    - `IllegalStateException -> BeanCreationException -> ServiceException -> HibernateException (DialectFactoryImpl.java:191)`
+  - 재현 방법: 프로젝트 루트에서 `./gradlew test`
+
+# 📊 계획 대비 수행 결과 비교
+
+## 계획 대비 차이
+- 계획한 파일 범위 내에서 동일 전략으로 수행, 추가적인 아키텍처 변경 없음
+
+## 추가 발생 이슈
+- 기존과 동일한 테스트 환경 이슈(`contextLoads`/Dialect 초기화 실패)로 `./gradlew test` 실패
+
+## 계획 외 수정 사항
+- 없음
