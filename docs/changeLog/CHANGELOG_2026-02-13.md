@@ -1,7 +1,7 @@
 # CHANGELOG 2026-02-13
 
 ## [MIGRATION-SUMMARY] CHANGELOG/WORKLOG 분리 적용
-- 기존 상세 실행 이력은 `docs/WORKLOG_2026-02-13.md`로 이관
+- 기존 상세 실행 이력은 `docs/workLog/WORKLOG_2026-02-13.md`로 이관
 - 본 문서는 최종 결과 요약만 유지
 
 ## [RESULT-SUMMARY] 주요 결과
@@ -12,4 +12,4 @@
 - 다수 리팩터링과 검증 결과를 바탕으로 작업 절차와 변경 이력 관리 기준 정비
 
 ## [RISK-SUMMARY]
-- 상세 변경 근거/실행 로그/검증 원문은 `docs/WORKLOG_2026-02-13.md` 참조
+- 상세 변경 근거/실행 로그/검증 원문은 `docs/workLog/WORKLOG_2026-02-13.md` 참조

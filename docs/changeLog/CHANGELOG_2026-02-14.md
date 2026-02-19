@@ -1,7 +1,7 @@
 # CHANGELOG 2026-02-14
 
 ## [MIGRATION-SUMMARY] CHANGELOG/WORKLOG 분리 적용
-- 기존 상세 실행 이력은 `docs/WORKLOG_2026-02-14.md`로 이관
+- 기존 상세 실행 이력은 `docs/workLog/WORKLOG_2026-02-14.md`로 이관
 - 본 문서는 최종 결과 요약만 유지
 
 ## [RESULT-SUMMARY] 주요 결과
@@ -15,4 +15,4 @@
 - `./gradlew build` 및 프론트 빌드 환경 이슈는 상세 로그에 기록
 
 ## [RISK-SUMMARY]
-- 상세 변경 근거/실행 로그/검증 원문은 `docs/WORKLOG_2026-02-14.md` 참조
+- 상세 변경 근거/실행 로그/검증 원문은 `docs/workLog/WORKLOG_2026-02-14.md` 참조

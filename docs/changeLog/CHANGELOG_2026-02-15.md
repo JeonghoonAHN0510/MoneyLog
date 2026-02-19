@@ -1,7 +1,7 @@
 # CHANGELOG 2026-02-15
 
 ## [MIGRATION-SUMMARY] CHANGELOG/WORKLOG 분리 적용
-- 기존 상세 실행 이력은 `docs/WORKLOG_2026-02-15.md`로 이관
+- 기존 상세 실행 이력은 `docs/workLog/WORKLOG_2026-02-15.md`로 이관
 - 본 문서는 최종 결과 요약과 승인/결과 스냅샷만 유지
 
 ## [PLAN-SUMMARY] 예외 메시지 체계 정비
@@ -24,7 +24,7 @@
   - CHANGELOG/WORKLOG 역할 분리
   - 최종 보고 전 필수 더블체크 체크리스트 도입
 - 문서 체계 정리
-  - `docs/WORKLOG_2026-02-13.md`, `docs/WORKLOG_2026-02-14.md` 신규 생성
+  - `docs/workLog/WORKLOG_2026-02-13.md`, `docs/workLog/WORKLOG_2026-02-14.md` 신규 생성
   - 기존 CHANGELOG 상세 원문을 WORKLOG로 이관
 
 ## [VERIFY-SUMMARY]
@@ -32,9 +32,9 @@
 - 요청 기준에 따라 `./gradlew test`는 다수 작업에서 제외
 
 ## [RISK-SUMMARY]
-- 일자별 세부 실행 로그, 실패 로그, 검증 원문은 `docs/WORKLOG_2026-02-15.md` 참조
+- 일자별 세부 실행 로그, 실패 로그, 검증 원문은 `docs/workLog/WORKLOG_2026-02-15.md` 참조
 
 ## [RESULT-SUMMARY] CHANGELOG/WORKLOG 전면 정리 완료
-- `docs/CHANGELOG_2026-02-13.md`, `docs/CHANGELOG_2026-02-14.md`, `docs/CHANGELOG_2026-02-15.md`를 요약 중심으로 재구성
-- 기존 상세 원문은 `docs/WORKLOG_2026-02-13.md`, `docs/WORKLOG_2026-02-14.md`, `docs/WORKLOG_2026-02-15.md`에 보존
+- `docs/changeLog/CHANGELOG_2026-02-13.md`, `docs/changeLog/CHANGELOG_2026-02-14.md`, `docs/changeLog/CHANGELOG_2026-02-15.md`를 요약 중심으로 재구성
+- 기존 상세 원문은 `docs/workLog/WORKLOG_2026-02-13.md`, `docs/workLog/WORKLOG_2026-02-14.md`, `docs/workLog/WORKLOG_2026-02-15.md`에 보존
 - `AGENTS.md`에 마이그레이션 절차(선이관/후축약) 및 필수 요약 섹션 규칙을 추가

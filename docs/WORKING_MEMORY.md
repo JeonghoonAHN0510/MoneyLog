@@ -67,7 +67,7 @@
 - 실행이 어려운 환경이면 "무엇을 검증했고 무엇을 못 했는지"를 결과에 명시
 
 ## 8. 작업 로그/문서 갱신 규칙
-- 작업 전 계획은 당일 변경 로그 파일(`docs/CHANGELOG_YYYY-MM-DD.md`)에 `[PLAN]`으로 기록
+- 작업 전 계획은 당일 변경 로그 파일(`docs/changeLog/CHANGELOG_YYYY-MM-DD.md`)에 `[PLAN]`으로 기록
 - 승인 기반 절차가 요구될 때는 승인 문구/시간을 로그에 남김
 - 작업 완료 시 "계획 대비 차이/추가 이슈/계획 외 수정"을 반드시 기록
 - 구조 변경이 발생하면 `project_flow.md`, `docs/PROJECT_KNOWLEDGE.md`, 본 문서를 함께 갱신
@@ -75,4 +75,4 @@
 ## 9. 참고 문서
 - 상세 지식 베이스: `docs/PROJECT_KNOWLEDGE.md`
 - 프로젝트 흐름도: `project_flow.md`
-- 변경 이력: `docs/CHANGELOG_2026-02-10.md`, `docs/CHANGELOG_2026-02-13.md`
+- 변경 이력: `docs/changeLog/CHANGELOG_2026-02-10.md`, `docs/changeLog/CHANGELOG_2026-02-13.md`
