@@ -199,8 +199,8 @@ export function DashboardView() {
                         stroke="hsl(var(--background))"
                         strokeWidth={3}
                       >
-                        {pieData.map((entry, index) => (
-                          <Cell key={`cell-${entry.name}-${index}`} fill={entry.color} />
+                        {pieData.map((entry) => (
+                          <Cell key={`cell-${entry.name}`} fill={entry.color} />
                         ))}
                       </Pie>
                       <Tooltip
