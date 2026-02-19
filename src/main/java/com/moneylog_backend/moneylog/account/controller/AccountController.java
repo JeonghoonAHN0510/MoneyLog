@@ -37,11 +37,6 @@ public class AccountController {
 
     @GetMapping
     public ResponseEntity<?> getAccount(@RequestParam int accountId, @LoginUser Integer userId) {
-        // todo 추후 계좌 늘어나면 생각해보기
-        if (accountId < 30000 || accountId > 40000) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-
         return ResponseEntity.ok(accountService.getAccount(accountId, userId));
     }
 

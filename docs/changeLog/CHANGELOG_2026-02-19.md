@@ -41,3 +41,44 @@
 ## [20:33] [VERIFY-SUMMARY]
 - 이관 파일 존재/구경로 참조 검색/상태 점검 완료
 - 코드 변경 없음으로 빌드/테스트는 미실행
+
+## [20:40] [PLAN-SUMMARY] AccountController accountId 검증 수정
+- 하드코딩 범위 체크 제거 예정
+- accountId 최소값을 @Min(30001)으로 검증 예정
+- 서비스의 존재/소유권 검증 책임은 유지
+
+## [20:40] [APPROVED]
+- 사용자 승인 문구 확인: "진행하자"
+
+## [20:40] [START-SUMMARY]
+- accountId 검증 로직 정리 작업 시작
+
+## [21:05] [RESULT-SUMMARY]
+- AccountController의 accountId 하드코딩 범위 체크 제거
+- `getAccount`, `deleteAccount`에 `@Min(30001)` 검증 추가
+- `@Validated` 적용으로 파라미터 검증 활성화
+- 대응 WORKLOG: `docs/workLog/WORKLOG_2026-02-19.md`
+
+## [21:05] [VERIFY-SUMMARY]
+- `./gradlew compileJava` 실행 성공(BUILD SUCCESSFUL)
+- 서비스 소유권 검증 로직 영향 없음
+
+## [21:09] [PLAN-SUMMARY] AccountController 검증 애노테이션 제거
+- @Min, @Validated 제거 예정
+- 서비스의 존재/소유권 검증 중심으로 유지
+
+## [21:09] [APPROVED]
+- 사용자 승인 문구 확인: "진행해"
+
+## [21:09] [START-SUMMARY]
+- 검증 애노테이션 제거 작업 시작
+
+## [21:09] [RESULT-SUMMARY]
+- AccountController의 `@Min(30001)`, `@Validated` 제거
+- getAccount/deleteAccount 파라미터를 기존 방식으로 복원
+- 검증 책임을 서비스(존재/소유권) 로직 중심으로 유지
+- 대응 WORKLOG: `docs/workLog/WORKLOG_2026-02-19.md`
+
+## [21:09] [VERIFY-SUMMARY]
+- `./gradlew compileJava` 실행 성공(BUILD SUCCESSFUL)
+- 컴파일 에러 및 컨트롤러 애노테이션 잔존 없음 확인
