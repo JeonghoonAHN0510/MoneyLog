@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, type ChangeEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Button } from '../components/ui/button';
@@ -10,6 +10,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from '../components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { CalendarView } from '../components/CalendarView';
 import { DashboardView } from '../components/DashboardView';
 import { TransactionList } from '../components/TransactionList';
@@ -22,12 +23,13 @@ import { BudgetManager } from '../components/BudgetManager';
 import { AccountManager } from '../components/AccountManager';
 import { CategoryManager } from '../components/CategoryManager';
 import { Budget, Category, Account, Transaction, Payment, Transfer, Fixed } from '../types/finance';
-import { Plus, Wallet, Calendar, ChartBar, Calculator, Target, List, User, LogOut } from 'lucide-react';
+import { Plus, Wallet, Calendar, ChartBar, Calculator, Target, List, LogOut, ImagePlus } from 'lucide-react';
 import { toast } from 'sonner';
 import useUserStore from '../stores/authStore';
 import api from '../api/axiosConfig';
 import {
     useUserInfo,
+    useUpdateProfileImage,
     useAddTransaction,
     useUpdateTransaction,
     useDeleteTransaction,
@@ -47,6 +49,7 @@ import {
     useDeletePayment,
 } from '../api/queries';
 import { getApiErrorMessage } from '../utils/error';
+import { buildProfileImageViewUrl, getProfileInitial } from '../utils/profileImage';
 import '../styles/pages/FinancePage.css';
 
 export default function FinancePage() {
@@ -60,6 +63,7 @@ export default function FinancePage() {
     const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
+    const profileImageInputRef = useRef<HTMLInputElement | null>(null);
 
     const [searchParams, setSearchParams] = useSearchParams();
     const currentTab = searchParams.get('tab') || 'dashboard';
@@ -118,6 +122,27 @@ export default function FinancePage() {
     const addPaymentMut = useAddPayment();
     const updatePaymentMut = useUpdatePayment();
     const deletePaymentMut = useDeletePayment();
+    const updateProfileImageMut = useUpdateProfileImage();
+
+    const openProfileImagePicker = () => {
+        profileImageInputRef.current?.click();
+    };
+
+    const handleProfileImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) {
+            return;
+        }
+
+        try {
+            await updateProfileImageMut.mutateAsync(file);
+            toast.success('프로필 이미지가 변경되었습니다.');
+        } catch (e) {
+            toast.error(getApiErrorMessage(e, '프로필 이미지 변경에 실패하였습니다.'));
+        } finally {
+            event.target.value = '';
+        }
+    };
 
     // --- [Transaction CRUD] ---
     const handleAddTransaction = async (transaction: Partial<Transaction>) => {
@@ -297,9 +322,18 @@ export default function FinancePage() {
 
     if (!isAuthenticated) return null;
 
+    const profileImageViewUrl = buildProfileImageViewUrl(userInfo.profileImageUrl);
+
     return (
         <div className="finance-page">
             <div className="finance-container">
+                <input
+                    ref={profileImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleProfileImageChange}
+                />
                 <div className="finance-header">
                     <div>
                         <h1 className="finance-title">
@@ -317,19 +351,45 @@ export default function FinancePage() {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="finance-user-btn">
-                                    <User className="finance-user-btn-icon" />
+                                    <Avatar className="finance-user-avatar">
+                                        {profileImageViewUrl && (
+                                            <AvatarImage src={profileImageViewUrl} alt={`${userInfo.name} profile`} />
+                                        )}
+                                        <AvatarFallback className="finance-user-avatar-fallback">
+                                            {getProfileInitial(userInfo.name)}
+                                        </AvatarFallback>
+                                    </Avatar>
                                     <span className="finance-user-name">{userInfo?.name}</span>
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="finance-dropdown-content">
                                 <DropdownMenuLabel>
                                     <div className="finance-dropdown-label-inner">
-                                        <p className="finance-dropdown-name">{userInfo?.name}</p>
-                                        <p className="finance-dropdown-email">
-                                            {userInfo?.email}
-                                        </p>
+                                        <Avatar className="finance-dropdown-avatar">
+                                            {profileImageViewUrl && (
+                                                <AvatarImage src={profileImageViewUrl} alt={`${userInfo.name} profile`} />
+                                            )}
+                                            <AvatarFallback className="finance-user-avatar-fallback">
+                                                {getProfileInitial(userInfo.name)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="finance-dropdown-userinfo">
+                                            <p className="finance-dropdown-name">{userInfo?.name}</p>
+                                            <p className="finance-dropdown-email">
+                                                {userInfo?.email}
+                                            </p>
+                                        </div>
                                     </div>
                                 </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    onClick={openProfileImagePicker}
+                                    className="cursor-pointer"
+                                    disabled={updateProfileImageMut.isPending}
+                                >
+                                    <ImagePlus className="mr-2 h-4 w-4" />
+                                    <span>프로필 이미지 변경</span>
+                                </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => setIsScheduleDialogOpen(true)} className="cursor-pointer">
                                     <Target className="mr-2 h-4 w-4" />

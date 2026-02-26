@@ -98,8 +98,10 @@ export interface Bank {
 
 export interface UserInfo {
   userId: number;
+  id: string;
   email: string;
   name: string;
+  profileImageUrl?: string | null;
 }
 
 export interface DailySummary {

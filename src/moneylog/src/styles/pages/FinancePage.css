@@ -45,8 +45,12 @@
     @apply gap-2;
 }
 
-.finance-user-btn-icon {
-    @apply size-4;
+.finance-user-avatar {
+    @apply size-6 border border-gray-200;
+}
+
+.finance-user-avatar-fallback {
+    @apply text-xs font-semibold;
 }
 
 .finance-user-name {
@@ -68,6 +72,14 @@
 }
 
 .finance-dropdown-label-inner {
+    @apply flex items-center gap-3;
+}
+
+.finance-dropdown-avatar {
+    @apply size-10 border border-gray-200;
+}
+
+.finance-dropdown-userinfo {
     @apply flex flex-col space-y-1;
 }
 

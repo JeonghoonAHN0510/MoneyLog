@@ -1,0 +1,44 @@
+package com.moneylog_backend.global.file;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+@Component
+@ConfigurationProperties(prefix = "app.file")
+public class FileProperties {
+    private Storage storage = new Storage();
+    private long maxSizeBytes = 10 * 1024 * 1024;
+    private List<String> allowedExtensions = new ArrayList<>(List.of("jpg", "jpeg", "png", "gif", "webp"));
+    private Local local = new Local();
+    private S3 s3 = new S3();
+
+    @Getter
+    @Setter
+    public static class Storage {
+        private FileStorageType type = FileStorageType.LOCAL;
+    }
+
+    @Getter
+    @Setter
+    public static class Local {
+        private String rootPath = System.getProperty("user.dir") + "/uploads";
+        private String baseUrl = "/uploads";
+    }
+
+    @Getter
+    @Setter
+    public static class S3 {
+        private String bucket = "";
+        private String region = "ap-northeast-2";
+        private String keyPrefix = "uploads";
+        private long presignExpirationSeconds = 300;
+    }
+}

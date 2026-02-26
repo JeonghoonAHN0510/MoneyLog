@@ -1,34 +1,48 @@
 package com.moneylog_backend.moneylog.file;
 
-import com.moneylog_backend.global.file.FileStore;
+import com.moneylog_backend.global.file.FileDownloadResult;
+import com.moneylog_backend.global.file.FileStorageService;
+import com.moneylog_backend.global.file.FileUploadResult;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriUtils;
 
-import java.net.MalformedURLException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
+import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/files")
 public class FileController {
-    private final FileStore fileStore;
+    private final FileStorageService fileStorageService;
+
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<FileUploadResult> upload(@RequestPart("file") MultipartFile file,
+                                                   @RequestParam(required = false) String dir) throws IOException {
+        return ResponseEntity.ok(fileStorageService.uploadFile(file, dir));
+    }
 
     // url 파라미터 예시: /api/files/download?fileUrl=/uploads/2024/01/01/abcd.jpg&originalName=내사진.jpg
     @GetMapping("/download")
-    public ResponseEntity<Resource> download (@RequestParam String fileUrl, @RequestParam String originalName) throws
-                                                                                                               MalformedURLException {
+    public ResponseEntity<?> download(@RequestParam String fileUrl, @RequestParam String originalName) {
+        FileDownloadResult downloadResult = fileStorageService.downloadFile(fileUrl, originalName);
+        if (downloadResult.isRedirect()) {
+            return ResponseEntity.status(HttpStatus.FOUND)
+                                 .location(URI.create(downloadResult.getRedirectUrl()))
+                                 .build();
+        }
 
-        // 실제 파일 경로 가져오기
-        Path path = fileStore.getFullPath(fileUrl);
-        UrlResource resource = new UrlResource("file:" + path.toString());
+        Resource resource = downloadResult.getResource();
 
         // 한글 파일명 깨짐 방지 인코딩
         String encodedUploadFileName = UriUtils.encode(originalName, StandardCharsets.UTF_8);
@@ -39,9 +53,28 @@ public class FileController {
         return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition).body(resource);
     }
 
+    @GetMapping("/view")
+    public ResponseEntity<?> view(@RequestParam String fileUrl) {
+        FileDownloadResult downloadResult = fileStorageService.downloadFile(fileUrl, null);
+        if (downloadResult.isRedirect()) {
+            return ResponseEntity.status(HttpStatus.FOUND)
+                                 .location(URI.create(downloadResult.getRedirectUrl()))
+                                 .build();
+        }
+
+        Resource resource = downloadResult.getResource();
+        MediaType mediaType = MediaTypeFactory.getMediaType(resource)
+                                              .orElse(MediaType.APPLICATION_OCTET_STREAM);
+
+        return ResponseEntity.ok()
+                             .contentType(mediaType)
+                             .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                             .body(resource);
+    }
+
     @DeleteMapping("/delete")
-    public String delete (@RequestParam String fileUrl) {
-        fileStore.deleteFile(fileUrl);
-        return "Deleted";
+    public ResponseEntity<String> delete(@RequestParam String fileUrl) {
+        fileStorageService.deleteFile(fileUrl);
+        return ResponseEntity.ok("Deleted");
     }
 }

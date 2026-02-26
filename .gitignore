@@ -40,3 +40,4 @@ out/
 /project_flow.md
 /.geminiignore
 /AGENTS.md
+/src/main/resources/application-local.yml

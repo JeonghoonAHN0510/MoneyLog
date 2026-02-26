@@ -3,7 +3,7 @@ package com.moneylog_backend.moneylog.user.service;
 import com.moneylog_backend.global.auth.jwt.JwtProvider;
 import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
-import com.moneylog_backend.global.file.FileStore;
+import com.moneylog_backend.global.file.FileStorageService;
 import com.moneylog_backend.global.type.AccountTypeEnum;
 import com.moneylog_backend.global.util.BankAccountNumberFormatter;
 import com.moneylog_backend.global.util.FormatUtils;
@@ -26,14 +26,17 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.time.Duration;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserService {
@@ -46,14 +49,14 @@ public class UserService {
     private final JwtProvider jwtProvider;
     private final FormatUtils formatUtils;
     private final UserMapper userMapper;
-    private final FileStore fileStore;
+    private final FileStorageService fileStorageService;
 
     @Transactional
     public int signup(UserDto userDto) throws IOException {
         checkIdOrEmailValidity(userDto);
 
         UserEntity userEntity = userDto.toEntity(formatUtils.toPhone(userDto.getPhone()),
-                                                 fileStore.storeFile(userDto.getUploadFile()),
+                                                 fileStorageService.storeFile(userDto.getUploadFile(), "profile"),
                                                  passwordEncoder.encode(userDto.getPassword()));
         userRepository.save(userEntity);
 
@@ -113,6 +116,31 @@ public class UserService {
         UserEntity userEntity = userRepository.findByLoginId(loginId)
                                               .orElseThrow(
                                                   () -> new ResourceNotFoundException(ErrorMessageConstants.USER_NOT_FOUND));
+        return userEntity.excludePassword();
+    }
+
+    @Transactional
+    public UserDto updateProfileImage(String loginId, MultipartFile file) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException(ErrorMessageConstants.FILE_REQUIRED);
+        }
+
+        UserEntity userEntity = userRepository.findByLoginId(loginId)
+                                              .orElseThrow(
+                                                  () -> new ResourceNotFoundException(ErrorMessageConstants.USER_NOT_FOUND));
+
+        String oldFileUrl = userEntity.getProfileImageUrl();
+        String newFileUrl = fileStorageService.storeFile(file, "profile");
+        userEntity.updateProfileImageUrl(newFileUrl);
+
+        if (oldFileUrl != null && !oldFileUrl.isBlank() && !oldFileUrl.equals(newFileUrl)) {
+            try {
+                fileStorageService.deleteFile(oldFileUrl);
+            } catch (RuntimeException ex) {
+                log.warn("기존 프로필 이미지 삭제 실패. userId={}, fileUrl={}", userEntity.getUserId(), oldFileUrl, ex);
+            }
+        }
+
         return userEntity.excludePassword();
     }
 

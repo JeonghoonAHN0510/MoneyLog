@@ -98,6 +98,26 @@ export function useUserInfo() {
     });
 }
 
+export function useUpdateProfileImage() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: async (file: File) => {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await api.put('/user/profile-image', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            return res.data as UserInfo;
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: queryKeys.userInfo });
+        },
+    });
+}
+
 // =============================================
 // Dashboard / Calendar Hooks
 // =============================================
