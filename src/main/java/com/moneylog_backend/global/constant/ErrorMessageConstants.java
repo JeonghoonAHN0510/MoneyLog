@@ -20,6 +20,17 @@ public final class ErrorMessageConstants {
     public static final String SCHEDULE_RESCHEDULE_FAILED = "스케줄 재등록에 실패했습니다.";
     public static final String SCHEDULE_WEEKLY_DAY_OF_WEEK_REQUIRED = "주간 스케줄은 요일(1~7)이 필요합니다.";
     public static final String SCHEDULE_MONTHLY_DAY_OF_MONTH_REQUIRED = "월간 스케줄은 실행일(1~31)이 필요합니다.";
+    public static final String FILE_NOT_FOUND = "파일을 찾을 수 없습니다.";
+    public static final String INVALID_FILE_URL = "올바르지 않은 파일 경로입니다.";
+    public static final String FILE_EXTENSION_REQUIRED = "파일 확장자는 필수입니다.";
+    public static final String FILE_EXTENSION_NOT_ALLOWED = "허용되지 않은 파일 확장자입니다.";
+    public static final String FILE_CONTENT_TYPE_REQUIRED = "파일 MIME 타입은 필수입니다.";
+    public static final String FILE_CONTENT_TYPE_NOT_ALLOWED = "허용되지 않은 파일 MIME 타입입니다.";
+    public static final String FILE_SIZE_EXCEEDED = "파일 크기가 허용 범위를 초과했습니다.";
+    public static final String FILE_REQUIRED = "업로드 파일은 필수입니다.";
+    public static final String INVALID_UPLOAD_DIRECTORY = "올바르지 않은 업로드 디렉터리입니다.";
+    public static final String FILE_DELETE_FAILED = "파일 삭제 중 오류가 발생했습니다.";
+    public static final String S3_STORAGE_NOT_ENABLED = "S3 저장소가 활성화되어 있지 않습니다.";
 
     private static final String UNKNOWN_STATUS_FORMAT = "알 수 없는 상태 코드입니다: %s";
     private static final String UNKNOWN_FREQUENCY_FORMAT = "알 수 없는 스케줄 빈도입니다: %s";

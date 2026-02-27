@@ -1,8 +1,10 @@
 import axios from 'axios';
 import authStore from '../stores/authStore.js';
 
+export const API_BASE_URL = 'http://localhost:8080/api';
+
 const api = axios.create({
-    baseURL: 'http://localhost:8080/api',
+    baseURL: API_BASE_URL,
     timeout: 5000,
     withCredentials: true, // 쿠키/인증 정보 포함
 });

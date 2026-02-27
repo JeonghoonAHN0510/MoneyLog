@@ -3,13 +3,11 @@ package com.moneylog_backend.moneylog.user.service;
 import com.moneylog_backend.global.auth.jwt.JwtProvider;
 import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
-import com.moneylog_backend.global.file.FileStore;
-import com.moneylog_backend.global.type.AccountTypeEnum;
+import com.moneylog_backend.global.file.FileStorageService;
+import com.moneylog_backend.global.file.cleanup.FileDeleteTaskService;
 import com.moneylog_backend.global.util.BankAccountNumberFormatter;
 import com.moneylog_backend.global.util.FormatUtils;
 import com.moneylog_backend.global.util.RedisService;
-import com.moneylog_backend.moneylog.account.entity.AccountEntity;
-import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.bank.entity.BankEntity;
 import com.moneylog_backend.moneylog.bank.repository.BankRepository;
 import com.moneylog_backend.moneylog.user.dto.LoginReqDto;
@@ -25,20 +23,27 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.time.Duration;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserService {
+    private static final String PROFILE_REPLACED_REASON = "PROFILE_IMAGE_REPLACED";
+    private static final String PROFILE_TX_ROLLBACK_REASON = "PROFILE_IMAGE_TX_ROLLBACK";
+    private static final String SIGNUP_TX_ROLLBACK_REASON = "SIGNUP_TX_ROLLBACK";
+
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
-    private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final BankRepository bankRepository;
@@ -46,34 +51,27 @@ public class UserService {
     private final JwtProvider jwtProvider;
     private final FormatUtils formatUtils;
     private final UserMapper userMapper;
-    private final FileStore fileStore;
+    private final FileStorageService fileStorageService;
+    private final UserWriteTxService userWriteTxService;
+    private final FileDeleteTaskService fileDeleteTaskService;
 
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public int signup(UserDto userDto) throws IOException {
         checkIdOrEmailValidity(userDto);
-
-        UserEntity userEntity = userDto.toEntity(formatUtils.toPhone(userDto.getPhone()),
-                                                 fileStore.storeFile(userDto.getUploadFile()),
-                                                 passwordEncoder.encode(userDto.getPassword()));
-        userRepository.save(userEntity);
 
         int bankId = userDto.getBankId();
         String bankName = getBankName(bankId);
         String regexAccountNumber = BankAccountNumberFormatter.format(bankName, userDto.getAccountNumber());
+        String profileImageUrl = fileStorageService.storeFile(userDto.getUploadFile(), "profile");
+        String regexPhone = formatUtils.toPhone(userDto.getPhone());
+        String encodedPassword = passwordEncoder.encode(userDto.getPassword());
 
-        AccountEntity accountEntity = AccountEntity.builder()
-                                                   .userId(userEntity.getUserId())
-                                                   .bankId(bankId)
-                                                   .nickname(userDto.getBankName())
-                                                   .balance(0)
-                                                   .accountNumber(regexAccountNumber)
-                                                   .type(AccountTypeEnum.BANK)
-                                                   .build();
-        accountRepository.save(accountEntity);
-
-        userEntity.setCreatedAccountId(accountEntity.getAccountId());
-
-        return userEntity.getUserId();
+        try {
+            return userWriteTxService.signup(userDto, regexPhone, profileImageUrl, encodedPassword, regexAccountNumber);
+        } catch (RuntimeException ex) {
+            fileDeleteTaskService.deleteNowOrEnqueue(profileImageUrl, SIGNUP_TX_ROLLBACK_REASON);
+            throw ex;
+        }
     }
 
     public TokenResponse login(LoginReqDto loginReqDto) {
@@ -114,6 +112,26 @@ public class UserService {
                                               .orElseThrow(
                                                   () -> new ResourceNotFoundException(ErrorMessageConstants.USER_NOT_FOUND));
         return userEntity.excludePassword();
+    }
+
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public UserDto updateProfileImage(String loginId, MultipartFile file) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException(ErrorMessageConstants.FILE_REQUIRED);
+        }
+
+        String newFileUrl = fileStorageService.storeFile(file, "profile");
+        try {
+            ProfileImageUpdateTxResult txResult = userWriteTxService.updateProfileImageUrl(loginId, newFileUrl);
+            String oldFileUrl = txResult.oldFileUrl();
+            if (oldFileUrl != null && !oldFileUrl.isBlank() && !oldFileUrl.equals(newFileUrl)) {
+                fileDeleteTaskService.enqueueDelete(oldFileUrl, PROFILE_REPLACED_REASON);
+            }
+            return txResult.userDto();
+        } catch (RuntimeException ex) {
+            fileDeleteTaskService.deleteNowOrEnqueue(newFileUrl, PROFILE_TX_ROLLBACK_REASON);
+            throw ex;
+        }
     }
 
     private void checkIdOrEmailValidity (UserDto userDto) {

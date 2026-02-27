@@ -60,6 +60,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     // [16] P6Spy - 추후 SQL 로깅을 위해서
     implementation 'p6spy:p6spy:3.9.1'
+    // [17] AWS S3
+    implementation 'software.amazon.awssdk:s3:2.31.12'
     // 개발 편의성 (서버 자동 재시작 등)
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     // 테스트 코드 작성용
