@@ -166,7 +166,22 @@ public class S3FileStorage implements FileStorage {
             throw new IllegalArgumentException(ErrorMessageConstants.INVALID_FILE_URL);
         }
 
-        return new S3ObjectRef(bucket, path.substring(1));
+        String expectedBucket = fileProperties.getS3().getBucket();
+        if (expectedBucket == null || expectedBucket.isBlank() || !bucket.equals(expectedBucket)) {
+            throw new IllegalArgumentException(ErrorMessageConstants.INVALID_FILE_URL);
+        }
+
+        String key = path.substring(1);
+        String normalizedKeyPrefix = normalizeKeyPrefix(fileProperties.getS3().getKeyPrefix());
+        if (!normalizedKeyPrefix.isBlank() && !isKeyWithinPrefix(key, normalizedKeyPrefix)) {
+            throw new IllegalArgumentException(ErrorMessageConstants.INVALID_FILE_URL);
+        }
+
+        return new S3ObjectRef(bucket, key);
+    }
+
+    private boolean isKeyWithinPrefix(String key, String keyPrefix) {
+        return key.equals(keyPrefix) || key.startsWith(keyPrefix + "/");
     }
 
     private String toContentDisposition(String originalName) {
