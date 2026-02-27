@@ -12,10 +12,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class FileStorageService {
+    private static final int FILE_DELETE_RETRY_ATTEMPTS = 3;
+
     private final FileProperties fileProperties;
     private final LocalFileStorage localFileStorage;
     private final Optional<S3FileStorage> s3FileStorage;
@@ -52,8 +56,30 @@ public class FileStorageService {
     }
 
     public String updateFile(String oldFileUrl, MultipartFile newFile, String dirHint) throws IOException {
-        deleteFile(oldFileUrl);
-        return storeFile(newFile, dirHint);
+        String newFileUrl = storeFile(newFile, dirHint);
+
+        if (oldFileUrl == null || oldFileUrl.isBlank() || oldFileUrl.equals(newFileUrl)) {
+            return newFileUrl;
+        }
+
+        deleteFileWithRetry(oldFileUrl);
+        return newFileUrl;
+    }
+
+    private void deleteFileWithRetry(String fileUrl) {
+        RuntimeException lastException = null;
+
+        for (int attempt = 1; attempt <= FILE_DELETE_RETRY_ATTEMPTS; attempt++) {
+            try {
+                deleteFile(fileUrl);
+                return;
+            } catch (RuntimeException ex) {
+                lastException = ex;
+                log.warn("파일 삭제 재시도 실패. fileUrl={}, attempt={}/{}", fileUrl, attempt, FILE_DELETE_RETRY_ATTEMPTS, ex);
+            }
+        }
+
+        log.warn("파일 삭제 재시도 종료. fileUrl={}, attempts={}", fileUrl, FILE_DELETE_RETRY_ATTEMPTS, lastException);
     }
 
     private FileStorage resolveStorage(String fileUrl) {

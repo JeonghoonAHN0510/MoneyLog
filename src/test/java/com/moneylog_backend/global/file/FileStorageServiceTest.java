@@ -15,10 +15,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.mockito.InOrder;
 
 class FileStorageServiceTest {
     private FileStorageService fileStorageService;
@@ -127,5 +131,41 @@ class FileStorageServiceTest {
                                                    () -> sizeLimitedService.storeFile(file, "profile"));
         assertEquals(ErrorMessageConstants.FILE_SIZE_EXCEEDED, ex.getMessage());
         verify(localFileStorage, never()).store(any(MultipartFile.class), any());
+    }
+
+    @Test
+    void updateFile에서_새파일_저장_실패시_기존파일을_삭제하지_않는다() throws IOException {
+        MultipartFile newFile = new MockMultipartFile("file", "new.jpg", "image/jpeg", "abc".getBytes(StandardCharsets.UTF_8));
+        when(localFileStorage.store(eq(newFile), eq("profile"))).thenThrow(new IOException("store fail"));
+
+        assertThrows(IOException.class, () -> fileStorageService.updateFile("/uploads/old.jpg", newFile, "profile"));
+        verify(localFileStorage, never()).delete(any());
+    }
+
+    @Test
+    void updateFile에서_새파일_저장성공후_기존파일_삭제를_시도한다() throws IOException {
+        MultipartFile newFile = new MockMultipartFile("file", "new.jpg", "image/jpeg", "abc".getBytes(StandardCharsets.UTF_8));
+        when(localFileStorage.store(eq(newFile), eq("profile"))).thenReturn("/uploads/new.jpg");
+        when(localFileStorage.supports("/uploads/old.jpg")).thenReturn(true);
+
+        String result = fileStorageService.updateFile("/uploads/old.jpg", newFile, "profile");
+
+        assertEquals("/uploads/new.jpg", result);
+        InOrder inOrder = inOrder(localFileStorage);
+        inOrder.verify(localFileStorage).store(eq(newFile), eq("profile"));
+        inOrder.verify(localFileStorage).delete("/uploads/old.jpg");
+    }
+
+    @Test
+    void updateFile에서_기존파일_삭제실패시_재시도후_성공을_유지한다() throws IOException {
+        MultipartFile newFile = new MockMultipartFile("file", "new.jpg", "image/jpeg", "abc".getBytes(StandardCharsets.UTF_8));
+        when(localFileStorage.store(eq(newFile), eq("profile"))).thenReturn("/uploads/new.jpg");
+        when(localFileStorage.supports("/uploads/old.jpg")).thenReturn(true);
+        doThrow(new RuntimeException("delete fail")).when(localFileStorage).delete("/uploads/old.jpg");
+
+        String result = fileStorageService.updateFile("/uploads/old.jpg", newFile, "profile");
+
+        assertEquals("/uploads/new.jpg", result);
+        verify(localFileStorage, times(3)).delete("/uploads/old.jpg");
     }
 }
