@@ -89,15 +89,32 @@ public class FileStorageService {
 
         Set<String> allowedExtensions = fileProperties.getAllowedExtensions()
                                                       .stream()
+                                                      .filter(ext -> ext != null && !ext.isBlank())
                                                       .map(ext -> ext.toLowerCase(Locale.ROOT))
                                                       .collect(Collectors.toSet());
-        if (allowedExtensions.isEmpty()) {
+        if (!allowedExtensions.isEmpty()) {
+            String extension = extractExt(multipartFile.getOriginalFilename());
+            if (!allowedExtensions.contains(extension)) {
+                throw new IllegalArgumentException(ErrorMessageConstants.FILE_EXTENSION_NOT_ALLOWED);
+            }
+        }
+
+        Set<String> allowedMimeTypes = fileProperties.getAllowedMimeTypes()
+                                                     .stream()
+                                                     .filter(contentType -> contentType != null && !contentType.isBlank())
+                                                     .map(this::normalizeContentType)
+                                                     .collect(Collectors.toSet());
+        if (allowedMimeTypes.isEmpty()) {
             return;
         }
 
-        String extension = extractExt(multipartFile.getOriginalFilename());
-        if (!allowedExtensions.contains(extension)) {
-            throw new IllegalArgumentException(ErrorMessageConstants.FILE_EXTENSION_NOT_ALLOWED);
+        String contentType = normalizeContentType(multipartFile.getContentType());
+        if (contentType.isBlank()) {
+            throw new IllegalArgumentException(ErrorMessageConstants.FILE_CONTENT_TYPE_REQUIRED);
+        }
+
+        if (!allowedMimeTypes.contains(contentType)) {
+            throw new IllegalArgumentException(ErrorMessageConstants.FILE_CONTENT_TYPE_NOT_ALLOWED);
         }
     }
 
@@ -111,5 +128,18 @@ public class FileStorageService {
             throw new IllegalArgumentException(ErrorMessageConstants.FILE_EXTENSION_REQUIRED);
         }
         return originalFilename.substring(position + 1).toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizeContentType(String contentType) {
+        if (contentType == null) {
+            return "";
+        }
+
+        String normalized = contentType.trim().toLowerCase(Locale.ROOT);
+        int separator = normalized.indexOf(';');
+        if (separator >= 0) {
+            normalized = normalized.substring(0, separator).trim();
+        }
+        return normalized;
     }
 }

@@ -24,6 +24,8 @@ public final class ErrorMessageConstants {
     public static final String INVALID_FILE_URL = "올바르지 않은 파일 경로입니다.";
     public static final String FILE_EXTENSION_REQUIRED = "파일 확장자는 필수입니다.";
     public static final String FILE_EXTENSION_NOT_ALLOWED = "허용되지 않은 파일 확장자입니다.";
+    public static final String FILE_CONTENT_TYPE_REQUIRED = "파일 MIME 타입은 필수입니다.";
+    public static final String FILE_CONTENT_TYPE_NOT_ALLOWED = "허용되지 않은 파일 MIME 타입입니다.";
     public static final String FILE_SIZE_EXCEEDED = "파일 크기가 허용 범위를 초과했습니다.";
     public static final String FILE_REQUIRED = "업로드 파일은 필수입니다.";
     public static final String INVALID_UPLOAD_DIRECTORY = "올바르지 않은 업로드 디렉터리입니다.";

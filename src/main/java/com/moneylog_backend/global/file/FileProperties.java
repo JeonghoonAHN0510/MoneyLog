@@ -17,6 +17,7 @@ public class FileProperties {
     private Storage storage = new Storage();
     private long maxSizeBytes = 10 * 1024 * 1024;
     private List<String> allowedExtensions = new ArrayList<>(List.of("jpg", "jpeg", "png", "gif", "webp"));
+    private List<String> allowedMimeTypes = new ArrayList<>(List.of("image/jpeg", "image/png", "image/gif", "image/webp"));
     private Local local = new Local();
     private S3 s3 = new S3();
 
