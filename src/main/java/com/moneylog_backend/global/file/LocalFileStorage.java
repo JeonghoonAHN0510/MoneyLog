@@ -13,13 +13,17 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class LocalFileStorage implements FileStorage {
     private static final String LEGACY_BASE_URL = "/uploads/";
@@ -51,7 +55,7 @@ public class LocalFileStorage implements FileStorage {
         String normalizedDirHint = normalizeDirHint(dirHint);
         String relativeDirectory = normalizedDirHint.isEmpty() ? datePath : normalizedDirHint + "/" + datePath;
 
-        Path rootPath = getRootPath();
+        Path rootPath = getPrimaryRootPath();
         Path saveDirectory = resolveSafePath(rootPath, relativeDirectory);
         Files.createDirectories(saveDirectory);
 
@@ -71,9 +75,15 @@ public class LocalFileStorage implements FileStorage {
             return;
         }
 
-        Path path = toFilePath(fileRef);
+        String relativePath = extractRelativePath(fileRef);
+        Path primaryPath = resolveSafePath(getPrimaryRootPath(), relativePath);
+        Optional<Path> legacyPath = getLegacyRootPath().map(rootPath -> resolveSafePath(rootPath, relativePath));
+
         try {
-            Files.deleteIfExists(path);
+            Files.deleteIfExists(primaryPath);
+            if (legacyPath.isPresent() && !legacyPath.get().equals(primaryPath)) {
+                Files.deleteIfExists(legacyPath.get());
+            }
         } catch (IOException e) {
             throw new IllegalStateException(ErrorMessageConstants.FILE_DELETE_FAILED, e);
         }
@@ -81,14 +91,25 @@ public class LocalFileStorage implements FileStorage {
 
     @Override
     public FileDownloadResult resolveDownload(String fileRef, String originalName) {
-        Path path = toFilePath(fileRef);
+        String relativePath = extractRelativePath(fileRef);
+        Path primaryPath = resolveSafePath(getPrimaryRootPath(), relativePath);
 
-        if (!Files.exists(path)) {
-            throw new ResourceNotFoundException(ErrorMessageConstants.FILE_NOT_FOUND);
+        Path resolvedPath = primaryPath;
+        if (!Files.exists(primaryPath)) {
+            Path legacyPath = getLegacyRootPath().map(rootPath -> resolveSafePath(rootPath, relativePath)).orElse(null);
+            if (legacyPath == null || !Files.exists(legacyPath)) {
+                throw new ResourceNotFoundException(ErrorMessageConstants.FILE_NOT_FOUND);
+            }
+
+            resolvedPath = legacyPath;
+            Path copiedPath = copyLegacyFileToPrimaryIfPossible(legacyPath, primaryPath);
+            if (copiedPath != null) {
+                resolvedPath = copiedPath;
+            }
         }
 
         try {
-            Resource resource = new UrlResource(path.toUri());
+            Resource resource = new UrlResource(resolvedPath.toUri());
             if (!resource.exists() || !resource.isReadable()) {
                 throw new ResourceNotFoundException(ErrorMessageConstants.FILE_NOT_FOUND);
             }
@@ -98,10 +119,18 @@ public class LocalFileStorage implements FileStorage {
         }
     }
 
-    private Path toFilePath(String fileRef) {
-        String relativePath = extractRelativePath(fileRef);
-        Path rootPath = getRootPath();
-        return resolveSafePath(rootPath, relativePath);
+    private Path copyLegacyFileToPrimaryIfPossible(Path legacyPath, Path primaryPath) {
+        try {
+            Path primaryParent = primaryPath.getParent();
+            if (primaryParent != null) {
+                Files.createDirectories(primaryParent);
+            }
+            Files.copy(legacyPath, primaryPath, StandardCopyOption.REPLACE_EXISTING);
+            return primaryPath;
+        } catch (IOException ex) {
+            log.warn("레거시 파일 자동 복사 실패. legacyPath={}, primaryPath={}", legacyPath, primaryPath, ex);
+            return null;
+        }
     }
 
     private String extractRelativePath(String fileRef) {
@@ -124,8 +153,16 @@ public class LocalFileStorage implements FileStorage {
         return resolvedPath;
     }
 
-    private Path getRootPath() {
+    private Path getPrimaryRootPath() {
         return Paths.get(fileProperties.getLocal().getRootPath()).toAbsolutePath().normalize();
+    }
+
+    private Optional<Path> getLegacyRootPath() {
+        String legacyRootPath = fileProperties.getLocal().getLegacyRootPath();
+        if (legacyRootPath == null || legacyRootPath.isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(Paths.get(legacyRootPath).toAbsolutePath().normalize());
     }
 
     private String normalizeDirHint(String dirHint) {

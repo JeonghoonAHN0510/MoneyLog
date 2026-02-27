@@ -32,6 +32,7 @@ public class FileProperties {
     @Setter
     public static class Local {
         private String rootPath = System.getProperty("user.dir") + "/uploads";
+        private String legacyRootPath = System.getProperty("user.dir") + "/build/resources/main/static/uploads";
         private String baseUrl = "/uploads";
     }
 
