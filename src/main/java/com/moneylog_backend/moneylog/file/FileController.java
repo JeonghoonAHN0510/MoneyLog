@@ -3,6 +3,8 @@ package com.moneylog_backend.moneylog.file;
 import com.moneylog_backend.global.file.FileDownloadResult;
 import com.moneylog_backend.global.file.FileStorageService;
 import com.moneylog_backend.global.file.FileUploadResult;
+import com.moneylog_backend.global.file.cleanup.DeleteDispatchResult;
+import com.moneylog_backend.global.file.cleanup.FileDeleteTaskService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,7 +26,10 @@ import java.io.IOException;
 @RequiredArgsConstructor
 @RequestMapping("/api/files")
 public class FileController {
+    private static final String MANUAL_DELETE_REASON = "MANUAL_DELETE_REQUEST";
+
     private final FileStorageService fileStorageService;
+    private final FileDeleteTaskService fileDeleteTaskService;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<FileUploadResult> upload(@RequestPart("file") MultipartFile file,
@@ -75,7 +80,10 @@ public class FileController {
 
     @DeleteMapping("/delete")
     public ResponseEntity<String> delete(@RequestParam String fileUrl) {
-        fileStorageService.deleteFile(fileUrl);
+        DeleteDispatchResult result = fileDeleteTaskService.deleteNowOrEnqueueWithResult(fileUrl, MANUAL_DELETE_REASON);
+        if (result == DeleteDispatchResult.ENQUEUED) {
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body("Queued for deletion");
+        }
         return ResponseEntity.ok("Deleted");
     }
 }

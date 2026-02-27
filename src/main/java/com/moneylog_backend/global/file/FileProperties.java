@@ -20,6 +20,7 @@ public class FileProperties {
     private List<String> allowedMimeTypes = new ArrayList<>(List.of("image/jpeg", "image/png", "image/gif", "image/webp"));
     private Local local = new Local();
     private S3 s3 = new S3();
+    private Cleanup cleanup = new Cleanup();
 
     @Getter
     @Setter
@@ -41,5 +42,15 @@ public class FileProperties {
         private String region = "ap-northeast-2";
         private String keyPrefix = "uploads";
         private long presignExpirationSeconds = 300;
+    }
+
+    @Getter
+    @Setter
+    public static class Cleanup {
+        private boolean enabled = true;
+        private long fixedDelayMs = 60000L;
+        private int batchSize = 50;
+        private int maxRetries = 20;
+        private long retryBackoffSeconds = 300L;
     }
 }
