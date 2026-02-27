@@ -100,6 +100,29 @@ class FileStorageServiceTest {
     }
 
     @Test
+    void uploadFile에서_null_파일이면_업로드를_거부한다() throws IOException {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                                                   () -> fileStorageService.uploadFile(null, "profile"));
+        assertEquals(ErrorMessageConstants.FILE_REQUIRED, ex.getMessage());
+        verify(localFileStorage, never()).store(any(MultipartFile.class), any());
+    }
+
+    @Test
+    void uploadFile에서_empty_파일이면_업로드를_거부한다() throws IOException {
+        MockMultipartFile file = new MockMultipartFile(
+            "file",
+            "empty.jpg",
+            "image/jpeg",
+            new byte[0]
+        );
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                                                   () -> fileStorageService.uploadFile(file, "profile"));
+        assertEquals(ErrorMessageConstants.FILE_REQUIRED, ex.getMessage());
+        verify(localFileStorage, never()).store(any(MultipartFile.class), any());
+    }
+
+    @Test
     void 확장자가_허용목록에_없으면_업로드를_거부한다() throws IOException {
         MockMultipartFile file = new MockMultipartFile(
             "file",

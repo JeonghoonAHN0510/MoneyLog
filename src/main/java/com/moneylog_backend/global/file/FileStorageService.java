@@ -34,6 +34,10 @@ public class FileStorageService {
     }
 
     public FileUploadResult uploadFile(MultipartFile multipartFile, String dirHint) throws IOException {
+        if (multipartFile == null || multipartFile.isEmpty()) {
+            throw new IllegalArgumentException(ErrorMessageConstants.FILE_REQUIRED);
+        }
+
         String fileUrl = storeFile(multipartFile, dirHint);
         return new FileUploadResult(
             fileUrl,
