@@ -7,6 +7,7 @@ import com.moneylog_backend.moneylog.user.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +35,10 @@ public class UserController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout (@RequestHeader("Authorization") String authHeader, Authentication authentication) {
+        if (isAnonymous(authentication)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 정보가 유효하지 않습니다. 다시 로그인해주세요.");
+        }
+
         if (authHeader != null) {
             String accessToken = authHeader.substring(7);
             String userId = authentication.getName();
@@ -47,7 +52,7 @@ public class UserController {
 
     @GetMapping("/info")
     public ResponseEntity<?> getUserInfo (Authentication authentication) {
-        if (authentication == null) {
+        if (isAnonymous(authentication)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 정보가 유효하지 않습니다. 다시 로그인해주세요.");
         }
         String loginId = authentication.getName();
@@ -57,11 +62,17 @@ public class UserController {
     @PutMapping(value = "/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateProfileImage(Authentication authentication,
                                                 @RequestPart("file") MultipartFile file) throws IOException {
-        if (authentication == null) {
+        if (isAnonymous(authentication)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 정보가 유효하지 않습니다. 다시 로그인해주세요.");
         }
 
         String loginId = authentication.getName();
         return ResponseEntity.ok(userService.updateProfileImage(loginId, file));
+    }
+
+    private boolean isAnonymous(Authentication authentication) {
+        return authentication == null
+            || !authentication.isAuthenticated()
+            || authentication instanceof AnonymousAuthenticationToken;
     }
 }

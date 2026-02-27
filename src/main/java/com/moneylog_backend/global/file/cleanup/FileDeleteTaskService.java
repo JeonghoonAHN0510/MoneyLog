@@ -44,6 +44,8 @@ public class FileDeleteTaskService {
         try {
             fileStorageService.deleteFile(fileUrl);
             return DeleteDispatchResult.DELETED_NOW;
+        } catch (IllegalArgumentException ex) {
+            throw ex;
         } catch (RuntimeException ex) {
             log.warn("즉시 파일 삭제 실패. 큐에 적재합니다. fileUrl={}, reason={}", fileUrl, reason, ex);
             enqueueDelete(fileUrl, reason);

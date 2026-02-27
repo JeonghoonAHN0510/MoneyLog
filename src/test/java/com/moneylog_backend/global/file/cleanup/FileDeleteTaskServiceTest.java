@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -60,6 +61,15 @@ class FileDeleteTaskServiceTest {
 
         assertEquals(DeleteDispatchResult.DELETED_NOW, result);
         verify(fileStorageService).deleteFile("/uploads/a.jpg");
+        verify(fileDeleteTaskRepository, never()).save(any(FileDeleteTaskEntity.class));
+    }
+
+    @Test
+    void 잘못된_URL이면_예외를_즉시_전파하고_큐에_적재하지_않는다() {
+        doThrow(new IllegalArgumentException("invalid file url")).when(fileStorageService).deleteFile("/uploads/invalid.jpg");
+
+        assertThrows(IllegalArgumentException.class,
+                     () -> fileDeleteTaskService.deleteNowOrEnqueueWithResult("/uploads/invalid.jpg", "TEST"));
         verify(fileDeleteTaskRepository, never()).save(any(FileDeleteTaskEntity.class));
     }
 

@@ -43,7 +43,11 @@ public class SecurityConfig {
             // 4. 세션 관리 정책 설정 : Stateless
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // 5. 요청별 권한 설정
-            .authorizeHttpRequests(auth -> auth.requestMatchers("/", "/api/user/**", "/api/bank", "/api/files/view")
+            .authorizeHttpRequests(auth -> auth.requestMatchers("/",
+                                                                "/api/user/signup",
+                                                                "/api/user/login",
+                                                                "/api/bank",
+                                                                "/api/files/view")
                                                .permitAll()
                                                .requestMatchers("/admin/**")
                                                .hasRole("ADMIN")
