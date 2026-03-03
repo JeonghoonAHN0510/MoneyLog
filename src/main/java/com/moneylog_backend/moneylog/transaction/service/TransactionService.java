@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.YearMonth;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -374,13 +373,20 @@ public class TransactionService {
     }
 
     private int calculateDueInstallmentCount (LocalDate firstTradingAt, int totalCount, LocalDate today) {
-        if (firstTradingAt == null || today.isBefore(firstTradingAt)) {
+        if (firstTradingAt == null || totalCount <= 0 || today.isBefore(firstTradingAt)) {
             return 0;
         }
 
-        long diffMonths = ChronoUnit.MONTHS.between(firstTradingAt, today);
-        int dueCount = (int) diffMonths + 1;
-        return Math.min(totalCount, dueCount);
+        int dueCount = 0;
+        for (int i = 0; i < totalCount; i++) {
+            LocalDate installmentTradingAt = firstTradingAt.plusMonths(i);
+            if (installmentTradingAt.isAfter(today)) {
+                break;
+            }
+            dueCount++;
+        }
+
+        return dueCount;
     }
 
     private int getActualInstallmentCount (Integer installmentPlanId) {
