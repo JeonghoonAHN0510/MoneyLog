@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Propagation;
 
+import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -165,7 +166,7 @@ public class TransactionSettlementService {
 
     private AccountEntity getAccountByIdAndValidateOwnership (Integer accountId, Integer userId) {
         AccountEntity accountEntity = accountRepository.findById(accountId)
-                                                     .orElseThrow(() -> new IllegalStateException("계좌를 찾을 수 없습니다."));
+                                                     .orElseThrow(() -> new ResourceNotFoundException("계좌를 찾을 수 없습니다."));
         OwnershipValidator.validateOwner(accountEntity.getUserId(), userId, "본인의 계좌가 아닙니다.");
 
         return accountEntity;

@@ -13,7 +13,7 @@ import com.moneylog_backend.moneylog.transaction.repository.TransactionRepositor
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class TransactionServiceTest {
+class TransactionSettlementServiceTest {
     private TransactionSettlementService transactionSettlementService;
 
     @BeforeEach
