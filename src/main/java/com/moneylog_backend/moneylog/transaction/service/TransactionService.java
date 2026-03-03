@@ -174,7 +174,7 @@ public class TransactionService {
         transactionRepository.delete(transactionEntity);
 
         if (installmentPlan != null) {
-            resyncInstallmentPlanProgress(installmentPlan);
+            transactionSettlementService.resyncInstallmentPlanProgress(installmentPlan);
         }
 
         return true;
@@ -325,33 +325,6 @@ public class TransactionService {
         int remainder = totalAmount % installmentCount;
 
         return baseAmount + (index < remainder ? 1 : 0);
-    }
-
-    private void resyncInstallmentPlanProgress (CardInstallmentPlanEntity plan) {
-        Integer planId = plan.getInstallmentPlanId();
-        int activeInstallmentCount = getActualInstallmentCount(planId);
-        int settledCount = getActualSettledInstallmentCount(planId);
-        LocalDateTime latestSettledAt = getLatestSettledAtByPlan(planId);
-
-        plan.resyncProgress(activeInstallmentCount, settledCount, latestSettledAt);
-    }
-
-    private int getActualInstallmentCount (Integer installmentPlanId) {
-        return Math.max(transactionRepository.countByInstallmentPlanId(installmentPlanId), 0);
-    }
-
-    private int getActualSettledInstallmentCount (Integer installmentPlanId) {
-        return Math.max(transactionRepository.countByInstallmentPlanIdAndIsSettledTrue(installmentPlanId), 0);
-    }
-
-    private LocalDateTime getLatestSettledAtByPlan (Integer installmentPlanId) {
-        TransactionEntity latestSettledTransaction = transactionRepository
-            .findFirstByInstallmentPlanIdAndIsSettledTrueOrderBySettledAtDesc(installmentPlanId);
-        if (latestSettledTransaction == null) {
-            return null;
-        }
-
-        return latestSettledTransaction.getSettledAt();
     }
 
     private void updateAccountBalance (AccountEntity account, CategoryEnum type, int amount, boolean isRevert) {

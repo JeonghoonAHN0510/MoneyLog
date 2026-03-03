@@ -142,7 +142,7 @@ public class TransactionSettlementService {
         return latestSettledTransaction.getSettledAt();
     }
 
-    private void resyncInstallmentPlanProgress (CardInstallmentPlanEntity plan) {
+    public void resyncInstallmentPlanProgress (CardInstallmentPlanEntity plan) {
         Integer planId = plan.getInstallmentPlanId();
         int activeInstallmentCount = getActualInstallmentCount(planId);
         int settledCount = getActualSettledInstallmentCount(planId);
