@@ -34,8 +34,9 @@ import com.moneylog_backend.moneylog.transaction.repository.TransactionRepositor
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import lombok.RequiredArgsConstructor;
 
@@ -54,6 +55,7 @@ public class TransactionService {
     private final CardInstallmentPlanRepository installmentPlanRepository;
     private final TransactionMapper transactionMapper;
     private final CategoryMapper categoryMapper;
+    private final TransactionSettlementService transactionSettlementService;
 
     @Transactional
     public int saveTransaction (TransactionReqDto transactionReqDto, Integer userId) {
@@ -210,18 +212,8 @@ public class TransactionService {
                               .build();
     }
 
-    @Transactional
-    public void settleTransaction (TransactionEntity transactionEntity, AccountEntity accountEntity) {
-        if (Boolean.TRUE.equals(transactionEntity.getIsSettled())) {
-            return;
-        }
-
-        updateAccountBalance(accountEntity, CategoryEnum.EXPENSE, transactionEntity.getAmount(), false);
-        transactionEntity.markAsSettled(nowDateTimeKst());
-    }
-
     @Scheduled(cron = "0 0 2 * * *", zone = "Asia/Seoul")
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED, readOnly = true)
     public void settleOverdueInstallments () {
         List<CardInstallmentPlanEntity> plans = installmentPlanRepository
             .findByIsActiveTrueAndIsCompletedFalseAndFirstTradingAtLessThanEqual(nowDateKst());
@@ -231,49 +223,11 @@ public class TransactionService {
 
         for (CardInstallmentPlanEntity plan : plans) {
             try {
-                settleInstallmentPlan(plan);
+                transactionSettlementService.settleInstallmentPlan(plan.getInstallmentPlanId());
             } catch (Exception e) {
                 log.error("할부 자동 정산 실패: installmentPlanId={}", plan.getInstallmentPlanId(), e);
             }
         }
-    }
-
-    @Transactional
-    public void settleInstallmentPlan (CardInstallmentPlanEntity plan) {
-        Integer planId = plan.getInstallmentPlanId();
-        resyncInstallmentPlanProgress(plan);
-
-        int currentSettledCount = plan.getSettledCount() == null ? 0 : plan.getSettledCount();
-        int plannedInstallmentCount = plan.getInstallmentCount() == null ? 0 : plan.getInstallmentCount();
-        int targetSettledCount = calculateDueInstallmentCount(plan.getFirstTradingAt(),
-                                                             plannedInstallmentCount,
-                                                             nowDateKst());
-
-        if (targetSettledCount <= currentSettledCount) {
-            return;
-        }
-
-        List<TransactionEntity> dueTransactions = getDueInstallmentTransactions(planId, currentSettledCount, targetSettledCount);
-        if (dueTransactions.isEmpty()) {
-            return;
-        }
-
-        AccountEntity accountEntity = getAccountByIdAndValidateOwnership(plan.getAccountId(), plan.getUserId());
-
-        int processed = 0;
-        for (TransactionEntity transactionEntity : dueTransactions) {
-            try {
-                settleTransaction(transactionEntity, accountEntity);
-                processed++;
-                log.info("할부 자동 정산 완료: transactionId={}, installmentPlanId={}, installmentNo={}",
-                         transactionEntity.getTransactionId(), planId, transactionEntity.getInstallmentNo());
-            } catch (Exception e) {
-                log.error("할부 항목 정산 실패: transactionId={}, installmentPlanId={}, installmentNo={}",
-                          transactionEntity.getTransactionId(), planId, transactionEntity.getInstallmentNo(), e);
-            }
-        }
-
-        resyncInstallmentPlanProgress(plan);
     }
 
     private int saveInstallmentTransactions (TransactionReqDto transactionReqDto, CategoryEntity categoryEntity,
@@ -372,21 +326,13 @@ public class TransactionService {
         return baseAmount + (index < remainder ? 1 : 0);
     }
 
-    private int calculateDueInstallmentCount (LocalDate firstTradingAt, int totalCount, LocalDate today) {
-        if (firstTradingAt == null || totalCount <= 0 || today.isBefore(firstTradingAt)) {
-            return 0;
-        }
+    private void resyncInstallmentPlanProgress (CardInstallmentPlanEntity plan) {
+        Integer planId = plan.getInstallmentPlanId();
+        int activeInstallmentCount = getActualInstallmentCount(planId);
+        int settledCount = getActualSettledInstallmentCount(planId);
+        LocalDateTime latestSettledAt = getLatestSettledAtByPlan(planId);
 
-        int dueCount = 0;
-        for (int i = 0; i < totalCount; i++) {
-            LocalDate installmentTradingAt = firstTradingAt.plusMonths(i);
-            if (installmentTradingAt.isAfter(today)) {
-                break;
-            }
-            dueCount++;
-        }
-
-        return dueCount;
+        plan.resyncProgress(activeInstallmentCount, settledCount, latestSettledAt);
     }
 
     private int getActualInstallmentCount (Integer installmentPlanId) {
@@ -405,29 +351,6 @@ public class TransactionService {
         }
 
         return latestSettledTransaction.getSettledAt();
-    }
-
-    private void resyncInstallmentPlanProgress (CardInstallmentPlanEntity plan) {
-        Integer planId = plan.getInstallmentPlanId();
-        int activeInstallmentCount = getActualInstallmentCount(planId);
-        int settledCount = getActualSettledInstallmentCount(planId);
-        LocalDateTime latestSettledAt = getLatestSettledAtByPlan(planId);
-
-        plan.resyncProgress(activeInstallmentCount, settledCount, latestSettledAt);
-    }
-
-    private List<TransactionEntity> getDueInstallmentTransactions (
-        Integer installmentPlanId,
-        Integer currentSettledCount,
-        Integer targetSettledCount
-    ) {
-        if (targetSettledCount <= currentSettledCount) {
-            return List.of();
-        }
-
-        int startNo = currentSettledCount + 1;
-        return transactionRepository.findByInstallmentPlanIdAndInstallmentNoBetweenAndIsSettledFalseOrderByInstallmentNoAsc(
-            installmentPlanId, startNo, targetSettledCount);
     }
 
     private void updateAccountBalance (AccountEntity account, CategoryEnum type, int amount, boolean isRevert) {
