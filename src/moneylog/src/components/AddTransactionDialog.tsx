@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { Checkbox } from './ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
@@ -37,6 +38,8 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onTransactionS
     const [accountId, setAccountId] = useState('');
     const [description, setDescription] = useState('');
     const [memo, setMemo] = useState('');
+    const [installmentCount, setInstallmentCount] = useState('');
+    const [isInterestFree, setIsInterestFree] = useState(false);
 
     const filteredCategories = categories.filter((cat) => cat.type === type);
 
@@ -61,6 +64,8 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onTransactionS
             amount: parseFloat(amount),
             title: description,
             memo,
+            installmentCount: installmentCount ? parseInt(installmentCount, 10) : undefined,
+            isInterestFree: installmentCount ? isInterestFree : undefined,
             tradingAt: date
         });
     };
@@ -77,6 +82,8 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onTransactionS
                         onClick={() => {
                             setType('EXPENSE');
                             setCategoryId('');
+                            setInstallmentCount('');
+                            setIsInterestFree(false);
                         }}
                     >
                         지출
@@ -88,6 +95,8 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onTransactionS
                         onClick={() => {
                             setType('INCOME');
                             setCategoryId('');
+                            setInstallmentCount('');
+                            setIsInterestFree(false);
                         }}
                     >
                         수입
@@ -166,6 +175,36 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onTransactionS
                     required
                 />
             </div>
+
+            {type === 'EXPENSE' && (
+                <div className="space-y-2">
+                    <Label htmlFor="installment-count">할부 개월 수 (선택)</Label>
+                    <Input
+                        id="installment-count"
+                        type="number"
+                        min={2}
+                        max={36}
+                        placeholder="2 이상 입력 시 할부 적용"
+                        value={installmentCount}
+                        onChange={(e) => {
+                            const nextValue = e.target.value;
+                            setInstallmentCount(nextValue);
+                            if (!nextValue) {
+                                setIsInterestFree(false);
+                            }
+                        }}
+                    />
+                    <div className="flex items-center gap-2">
+                        <Checkbox
+                            id="installment-interest-free"
+                            checked={isInterestFree}
+                            onCheckedChange={(checked) => setIsInterestFree(Boolean(checked))}
+                            disabled={installmentCount.length === 0}
+                        />
+                        <Label htmlFor="installment-interest-free">무이자</Label>
+                    </div>
+                </div>
+            )}
 
             <div className="space-y-2">
                 <Label htmlFor="memo">메모</Label>

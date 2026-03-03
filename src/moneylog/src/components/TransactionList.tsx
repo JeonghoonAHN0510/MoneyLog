@@ -68,6 +68,15 @@ const TransactionItem = ({ transaction, categoryColor, onEdit, onDeleteClick }: 
                             {transaction.categoryName}
                         </span>
                         {transaction.paymentName && <span>· {transaction.paymentName}</span>}
+                        {transaction.isInstallment && transaction.installmentNo && transaction.installmentTotalCount && (
+                            <span>· 할부 {transaction.installmentNo}/{transaction.installmentTotalCount}</span>
+                        )}
+                        {transaction.isInstallment && transaction.isInterestFree && (
+                            <span>· 무이자</span>
+                        )}
+                        {transaction.isInstallment && transaction.isSettled === false && (
+                            <span className="text-amber-600">· 미결제</span>
+                        )}
                     </div>
                 </div>
             </div>
