@@ -64,7 +64,6 @@ public class TransactionService {
         CategoryEntity categoryEntity = getCategoryByIdAndValidateOwnership(transactionReqDto.getCategoryId(), userId);
         CategoryEnum type = categoryEntity.getType();
 
-        Integer amount = transactionReqDto.getAmount();
         if (CategoryEnum.EXPENSE.equals(type)) {
             validatePaymentOwnership(transactionReqDto.getPaymentId(), userId);
 
@@ -73,27 +72,29 @@ public class TransactionService {
                 return saveInstallmentTransactions(transactionReqDto, categoryEntity, accountEntity);
             }
 
-            accountEntity.withdraw(amount);
-            TransactionEntity transactionEntity = transactionReqDto.toEntity(userId);
-            transactionEntity.initializeDefaultSingleSettlementState(nowDateTimeKst());
-            transactionRepository.save(transactionEntity);
-
-            return transactionEntity.getTransactionId();
+            return saveSingleTransaction(transactionReqDto, userId, accountEntity, type);
         }
 
         if (CategoryEnum.INCOME.equals(type)) {
             if (transactionReqDto.isInstallment()) {
                 throw new IllegalArgumentException("수입 카테고리에는 할부를 적용할 수 없습니다.");
             }
-            accountEntity.deposit(amount);
-            TransactionEntity transactionEntity = transactionReqDto.toEntity(userId);
-            transactionEntity.initializeDefaultSingleSettlementState(nowDateTimeKst());
-            transactionRepository.save(transactionEntity);
-
-            return transactionEntity.getTransactionId();
+            return saveSingleTransaction(transactionReqDto, userId, accountEntity, type);
         }
 
         throw new IllegalStateException("지원하지 않는 카테고리 타입입니다.");
+    }
+
+    private int saveSingleTransaction (TransactionReqDto transactionReqDto, Integer userId, AccountEntity accountEntity,
+                                       CategoryEnum type) {
+        Integer amount = transactionReqDto.getAmount();
+        updateAccountBalance(accountEntity, type, amount, false);
+
+        TransactionEntity transactionEntity = transactionReqDto.toEntity(userId);
+        transactionEntity.initializeDefaultSingleSettlementState(nowDateTimeKst());
+        transactionRepository.save(transactionEntity);
+
+        return transactionEntity.getTransactionId();
     }
 
     public List<TransactionResDto> getTransactionsByUserId (int userId) {
