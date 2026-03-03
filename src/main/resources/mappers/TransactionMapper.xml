@@ -38,6 +38,13 @@
             t.title,
             t.amount,
             t.memo,
+            t.installment_plan_id AS installmentPlanId,
+            t.installment_no AS installmentNo,
+            t.installment_total_count AS installmentTotalCount,
+            t.is_installment AS isInstallment,
+            t.is_interest_free AS isInterestFree,
+            t.is_settled AS isSettled,
+            t.settled_at AS settledAt,
             t.category_type AS categoryType,
             c.category_name AS categoryName,
             p.name AS paymentName,
@@ -87,6 +94,7 @@
         WHERE T.USER_ID = #{userId}
           AND T.TRADING_AT <![CDATA[ >= ]]> #{startDate}
           AND T.TRADING_AT <![CDATA[ <= ]]> #{endDate}
+          AND T.IS_SETTLED = 1
         GROUP BY T.TRADING_AT
         ORDER BY T.TRADING_AT
     </select>
@@ -99,6 +107,7 @@
         JOIN CATEGORY C ON T.CATEGORY_ID = C.CATEGORY_ID
         WHERE T.USER_ID = #{userId}
           AND C.TYPE = 'EXPENSE'
+          AND T.IS_SETTLED = 1
           AND T.TRADING_AT <![CDATA[ >= ]]> #{startDate}
           AND T.TRADING_AT <![CDATA[ <= ]]> #{endDate}
         GROUP BY C.CATEGORY_ID, C.NAME

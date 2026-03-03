@@ -212,11 +212,17 @@ export function EditTransactionDialog({
                         />
                     </div>
 
+                    {transaction?.isInstallment && (
+                        <div className="text-xs text-amber-600">
+                            할부 거래는 수정할 수 없습니다. 할부 거래는 삭제 후 새로 등록해 주세요.
+                        </div>
+                    )}
+
                     <div className="flex gap-2 pt-4">
                         <Button type="button" variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
                             취소
                         </Button>
-                        <Button type="submit" className="flex-1">
+                        <Button type="submit" className="flex-1" disabled={Boolean(transaction?.isInstallment)}>
                             수정
                         </Button>
                     </div>

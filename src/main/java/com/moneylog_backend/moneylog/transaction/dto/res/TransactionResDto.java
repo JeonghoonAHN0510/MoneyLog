@@ -25,6 +25,13 @@ public class TransactionResDto {
     private String title;
     private Integer amount;
     private String memo;
+    private Integer installmentPlanId;
+    private Integer installmentNo;
+    private Integer installmentTotalCount;
+    private Boolean isInstallment;
+    private Boolean isInterestFree;
+    private Boolean isSettled;
+    private LocalDateTime settledAt;
     private LocalDate tradingAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -43,12 +43,20 @@ export interface Transaction {
   title: string;
   amount: number;
   memo: string;
+  installmentCount?: number;
   categoryType: 'INCOME' | 'EXPENSE';
   categoryName: string;
   paymentName: string;
   tradingAt: string;
   createdAt: string;
   updatedAt: string;
+  installmentPlanId?: string;
+  installmentNo?: number;
+  installmentTotalCount?: number;
+  isInstallment?: boolean;
+  isInterestFree?: boolean;
+  isSettled?: boolean;
+  settledAt?: string;
 }
 
 export interface Payment {

@@ -6,6 +6,7 @@ import com.moneylog_backend.moneylog.transaction.dto.res.TransactionResDto;
 import org.hibernate.annotations.DynamicInsert;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -44,6 +45,20 @@ public class TransactionEntity extends BaseTime {
     private String memo;
     @Column(name = "trading_at", columnDefinition = "DATE NOT NULL")
     private LocalDate tradingAt;
+    @Column(name = "installment_plan_id", columnDefinition = "INT UNSIGNED")
+    private Integer installmentPlanId;
+    @Column(name = "installment_no", columnDefinition = "INT UNSIGNED")
+    private Integer installmentNo;
+    @Column(name = "installment_total_count", columnDefinition = "INT UNSIGNED")
+    private Integer installmentTotalCount;
+    @Column(name = "is_installment", columnDefinition = "TINYINT(1) NOT NULL DEFAULT 0")
+    private Boolean isInstallment;
+    @Column(name = "is_settled", columnDefinition = "TINYINT(1) NOT NULL DEFAULT 1")
+    private Boolean isSettled;
+    @Column(name = "is_interest_free", columnDefinition = "TINYINT(1) NOT NULL DEFAULT 0")
+    private Boolean isInterestFree;
+    @Column(name = "settled_at")
+    private LocalDateTime settledAt;
 
     public void update(Integer categoryId, Integer paymentId, Integer accountId,
                        String title, Integer amount, String memo, LocalDate tradingAt) {
@@ -65,6 +80,18 @@ public class TransactionEntity extends BaseTime {
         }
     }
 
+    public void markAsSettled (LocalDateTime settledAt) {
+        this.isSettled = true;
+        this.settledAt = settledAt;
+    }
+
+    public void initializeDefaultSingleSettlementState (LocalDateTime settledAt) {
+        this.isInstallment = false;
+        this.isInterestFree = false;
+        this.isSettled = true;
+        this.settledAt = settledAt;
+    }
+
     public TransactionResDto toDto() {
         return TransactionResDto.builder()
                              .transactionId(this.transactionId)
@@ -76,6 +103,13 @@ public class TransactionEntity extends BaseTime {
                              .title(this.title)
                              .amount(this.amount)
                              .memo(this.memo)
+                             .installmentPlanId(this.installmentPlanId)
+                             .installmentNo(this.installmentNo)
+                             .installmentTotalCount(this.installmentTotalCount)
+                             .isInstallment(this.isInstallment)
+                             .isInterestFree(this.isInterestFree)
+                             .isSettled(this.isSettled)
+                             .settledAt(this.settledAt)
                              .tradingAt(this.tradingAt)
                              .createdAt(this.getCreatedAt())
                              .updatedAt(this.getUpdatedAt())

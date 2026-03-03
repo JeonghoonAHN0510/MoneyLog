@@ -37,8 +37,16 @@ public class TransactionReqDto {
     @Size(max = 500, message = "메모는 500자 이내여야 합니다")
     private String memo;
 
+    @Min(value = 2, message = "할부 개월 수는 2 이상이어야 합니다")
+    private Integer installmentCount;
+    private Boolean isInterestFree;
+
     @NotNull(message = "거래일은 필수입니다")
     private LocalDate tradingAt;
+
+    public boolean isInstallment () {
+        return this.installmentCount != null && this.installmentCount >= 2;
+    }
 
     public TransactionEntity toEntity(Integer userId) {
         return TransactionEntity.builder()
@@ -50,6 +58,7 @@ public class TransactionReqDto {
                                 .title(this.title)
                                 .amount(this.amount)
                                 .memo(this.memo)
+                                .isInterestFree(this.isInterestFree)
                                 .tradingAt(this.tradingAt)
                                 .build();
     }

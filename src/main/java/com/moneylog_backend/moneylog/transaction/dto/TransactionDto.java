@@ -49,6 +49,13 @@ public class TransactionDto {
     private CategoryEnum categoryType;
     private String categoryName;
     private String paymentName;
+    private Integer installmentPlanId;
+    private Integer installmentNo;
+    private Integer installmentTotalCount;
+    private Boolean isInstallment;
+    private Boolean isInterestFree;
+    private Boolean isSettled;
+    private LocalDateTime settledAt;
 
     public TransactionEntity toEntity (Integer userId) {
         return TransactionEntity.builder()
@@ -60,6 +67,13 @@ public class TransactionDto {
                                 .title(this.title)
                                 .amount(this.amount)
                                 .memo(this.memo)
+                                .installmentPlanId(this.installmentPlanId)
+                                .installmentNo(this.installmentNo)
+                                .installmentTotalCount(this.installmentTotalCount)
+                                .isInstallment(this.isInstallment)
+                                .isInterestFree(this.isInterestFree)
+                                .isSettled(this.isSettled)
+                                .settledAt(this.settledAt)
                                 .tradingAt(this.tradingAt)
                                 .build();
     }
