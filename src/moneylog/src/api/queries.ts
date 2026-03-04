@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { queryKeys } from './queryClient';
 import api from './axiosConfig';
 import { Schedule, ScheduleReqDto } from '../types/schedule';
@@ -21,9 +21,16 @@ import {
 
 const transactionRelatedKeys = [
     queryKeys.transactions,
+    queryKeys.transactionsByDateRangeRoot,
     queryKeys.accounts,
     queryKeys.budgets,
 ];
+
+const invalidateTransactionCaches = (qc: QueryClient) => {
+    transactionRelatedKeys.forEach((key) => qc.invalidateQueries({ queryKey: key }));
+    qc.invalidateQueries({ queryKey: ['dashboard'] });
+    qc.invalidateQueries({ queryKey: ['calendar'] });
+};
 
 type TokenRefreshResponse = {
     grantType: string;
@@ -184,9 +191,7 @@ export function useTransactionImportCommit() {
             return res.data;
         },
         onSuccess: () => {
-            transactionRelatedKeys.forEach((key) => qc.invalidateQueries({ queryKey: key }));
-            qc.invalidateQueries({ queryKey: ['dashboard'] });
-            qc.invalidateQueries({ queryKey: ['calendar'] });
+            invalidateTransactionCaches(qc);
         },
     });
 }
@@ -251,10 +256,7 @@ export function useAddTransaction() {
     return useMutation({
         mutationFn: (data: Partial<Transaction>) => api.post('/transaction', data),
         onSuccess: () => {
-            transactionRelatedKeys.forEach((key) => qc.invalidateQueries({ queryKey: key }));
-            // 대시보드/캘린더도 갱신
-            qc.invalidateQueries({ queryKey: ['dashboard'] });
-            qc.invalidateQueries({ queryKey: ['calendar'] });
+            invalidateTransactionCaches(qc);
         },
     });
 }
@@ -265,9 +267,7 @@ export function useUpdateTransaction() {
     return useMutation({
         mutationFn: (data: Partial<Transaction>) => api.put('/transaction', data),
         onSuccess: () => {
-            transactionRelatedKeys.forEach((key) => qc.invalidateQueries({ queryKey: key }));
-            qc.invalidateQueries({ queryKey: ['dashboard'] });
-            qc.invalidateQueries({ queryKey: ['calendar'] });
+            invalidateTransactionCaches(qc);
         },
     });
 }
@@ -278,9 +278,7 @@ export function useDeleteTransaction() {
     return useMutation({
         mutationFn: (transactionId: string) => api.delete(`/transaction?transactionId=${transactionId}`),
         onSuccess: () => {
-            transactionRelatedKeys.forEach((key) => qc.invalidateQueries({ queryKey: key }));
-            qc.invalidateQueries({ queryKey: ['dashboard'] });
-            qc.invalidateQueries({ queryKey: ['calendar'] });
+            invalidateTransactionCaches(qc);
         },
     });
 }
