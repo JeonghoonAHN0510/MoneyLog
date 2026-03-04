@@ -130,3 +130,68 @@ export interface DashboardData {
   totalBalance: number;
   categoryStats: CategoryStats[];
 }
+
+export interface TransactionImportReference {
+  id: string;
+  name: string;
+  type?: 'INCOME' | 'EXPENSE' | 'ACCOUNT' | 'PAYMENT';
+}
+
+export interface TransactionImportPreviewRow {
+  rowIndex: number;
+  tradingAt: string;
+  title: string;
+  amount: number;
+  memo: string;
+  installmentCount?: number;
+  isInterestFree?: boolean;
+  accountName: string;
+  categoryName: string;
+  paymentName: string;
+  resolvedAccountId?: string;
+  resolvedCategoryId?: string;
+  resolvedPaymentId?: string;
+  unresolvedFields: string[];
+  errors: string[];
+}
+
+export interface TransactionImportSummary {
+  totalRows: number;
+  resolvedRows: number;
+  unresolvedRows: number;
+  invalidRows: number;
+}
+
+export interface TransactionImportPreviewResponse {
+  rows: TransactionImportPreviewRow[];
+  summary: TransactionImportSummary;
+  unresolvedAccounts: string[];
+  unresolvedCategories: string[];
+  unresolvedPayments: string[];
+  availableAccounts: TransactionImportReference[];
+  availableCategories: TransactionImportReference[];
+  availablePayments: TransactionImportReference[];
+}
+
+export interface TransactionImportCommitRow {
+  rowIndex: number;
+  tradingAt: string;
+  title: string;
+  amount: number;
+  memo?: string;
+  installmentCount?: number;
+  isInterestFree?: boolean;
+  accountId: string;
+  categoryId: string;
+  paymentId?: string;
+}
+
+export interface TransactionImportCommitRequest {
+  rows: TransactionImportCommitRow[];
+}
+
+export interface TransactionImportCommitResponse {
+  requestedCount: number;
+  importedCount: number;
+  transactionIds: string[];
+}

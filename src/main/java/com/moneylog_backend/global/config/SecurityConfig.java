@@ -44,10 +44,11 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // 5. 요청별 권한 설정
             .authorizeHttpRequests(auth -> auth.requestMatchers("/",
-                                                                "/api/user/signup",
-                                                                "/api/user/login",
-                                                                "/api/bank",
-                                                                "/api/files/view")
+                                               "/api/user/signup",
+                                               "/api/user/login",
+                                               "/api/user/refresh",
+                                               "/api/bank",
+                                               "/api/files/view")
                                                .permitAll()
                                                .requestMatchers("/admin/**")
                                                .hasRole("ADMIN")

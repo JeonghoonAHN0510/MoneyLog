@@ -13,8 +13,24 @@ import {
     Transfer,
     Bank,
     DashboardData,
-    DailySummary
+    DailySummary,
+    TransactionImportPreviewResponse,
+    TransactionImportCommitRequest,
+    TransactionImportCommitResponse
 } from '../types/finance';
+
+const transactionRelatedKeys = [
+    queryKeys.transactions,
+    queryKeys.accounts,
+    queryKeys.budgets,
+];
+
+type TokenRefreshResponse = {
+    grantType: string;
+    accessToken: string;
+    refreshToken: string;
+    accessTokenExpireTime: number;
+};
 
 // =============================================
 // Query Hooks (서버 데이터 조회)
@@ -98,6 +114,15 @@ export function useUserInfo() {
     });
 }
 
+export function useRefreshToken() {
+    return useMutation({
+        mutationFn: async ({ refreshToken }: { refreshToken: string }) => {
+            const res = await api.post('/user/refresh', { refreshToken });
+            return res.data as TokenRefreshResponse;
+        },
+    });
+}
+
 export function useUpdateProfileImage() {
     const qc = useQueryClient();
     return useMutation({
@@ -114,6 +139,37 @@ export function useUpdateProfileImage() {
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: queryKeys.userInfo });
+        },
+    });
+}
+
+export function useTransactionImportPreview() {
+    return useMutation<TransactionImportPreviewResponse, Error, File>({
+        mutationFn: async (file: File) => {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await api.post('/transaction/import/preview', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            return res.data;
+        },
+    });
+}
+
+export function useTransactionImportCommit() {
+    const qc = useQueryClient();
+    return useMutation<TransactionImportCommitResponse, Error, TransactionImportCommitRequest>({
+        mutationFn: async (payload: TransactionImportCommitRequest) => {
+            const res = await api.post('/transaction/import/commit', payload);
+            return res.data;
+        },
+        onSuccess: () => {
+            transactionRelatedKeys.forEach((key) => qc.invalidateQueries({ queryKey: key }));
+            qc.invalidateQueries({ queryKey: ['dashboard'] });
+            qc.invalidateQueries({ queryKey: ['calendar'] });
         },
     });
 }
@@ -171,13 +227,6 @@ export const useUpdateSchedule = () => {
 // =============================================
 // Mutation Hooks (서버 데이터 변경)
 // =============================================
-
-/** 거래 관련 mutations 후 invalidate할 쿼리들 */
-const transactionRelatedKeys = [
-    queryKeys.transactions,
-    queryKeys.accounts,
-    queryKeys.budgets,
-];
 
 /** 거래 추가 */
 export function useAddTransaction() {

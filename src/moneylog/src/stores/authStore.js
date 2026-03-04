@@ -6,16 +6,19 @@ const useUserStore = create(
     (set) => ({
       // 초기 상태
       accessToken: null,
+      refreshToken: null,
       isAuthenticated: false,
       userInfo: null,
 
-      login: (token) => set({
-        accessToken: token,
+      login: (accessToken, refreshToken) => set({
+        accessToken,
+        refreshToken,
         isAuthenticated: true
       }),
 
       logout: () => set({
         accessToken: null,
+        refreshToken: null,
         isAuthenticated: false,
         userInfo: null
       }),
@@ -26,6 +29,16 @@ const useUserStore = create(
 
       setAccessToken: (token) => set({
         accessToken: token
+      }),
+
+      setRefreshToken: (token) => set({
+        refreshToken: token
+      }),
+
+      setTokens: (accessToken, refreshToken) => set({
+        accessToken,
+        refreshToken,
+        isAuthenticated: true
       })
     }),
     {
