@@ -1,0 +1,82 @@
+{
+  "headerScanLimit": 40,
+  "headerMatchThreshold": 2,
+  "fieldMatchOrder": [
+    "tradingAt",
+    "tradingTime",
+    "title",
+    "amount",
+    "debitAmount",
+    "creditAmount",
+    "accountName",
+    "categoryName",
+    "paymentName",
+    "memo",
+    "installmentCount",
+    "isInterestFree"
+  ],
+  "aliases": {
+    "tradingAt": [
+      "거래일",
+      "거래일자",
+      "일자",
+      "날짜",
+      "date"
+    ],
+    "tradingTime": [
+      "거래시간",
+      "시간"
+    ],
+    "title": [
+      "title",
+      "제목",
+      "내용",
+      "적요"
+    ],
+    "amount": [
+      "amount",
+      "금액"
+    ],
+    "debitAmount": [
+      "출금",
+      "출금(원)",
+      "출금금액",
+      "출금금액(원)"
+    ],
+    "creditAmount": [
+      "입금",
+      "입금(원)",
+      "입금금액",
+      "입금금액(원)"
+    ],
+    "accountName": [
+      "account",
+      "계좌",
+      "계좌명"
+    ],
+    "categoryName": [
+      "category",
+      "카테고리"
+    ],
+    "paymentName": [
+      "payment",
+      "결제수단"
+    ],
+    "memo": [
+      "memo",
+      "메모",
+      "거래점"
+    ],
+    "installmentCount": [
+      "installmentcount",
+      "할부개월",
+      "할부",
+      "installment"
+    ],
+    "isInterestFree": [
+      "isinterestfree",
+      "면제",
+      "이자면제"
+    ]
+  }
+}

@@ -2,6 +2,7 @@ package com.moneylog_backend.moneylog.transaction.service;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -29,6 +31,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moneylog_backend.global.type.CategoryEnum;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
@@ -42,6 +46,7 @@ import com.moneylog_backend.moneylog.transaction.dto.res.TransactionImportCommit
 import com.moneylog_backend.moneylog.transaction.dto.res.TransactionImportPreviewResponse;
 import com.moneylog_backend.moneylog.transaction.dto.res.TransactionImportPreviewRowDto;
 import com.moneylog_backend.moneylog.transaction.dto.res.TransactionImportReferenceDto;
+import com.moneylog_backend.moneylog.transaction.dto.res.TransactionImportUnresolvedIssueDto;
 import com.moneylog_backend.moneylog.transaction.dto.res.TransactionImportSummaryDto;
 import com.moneylog_backend.moneylog.transaction.dto.req.TransactionReqDto;
 
@@ -63,18 +68,8 @@ public class TransactionImportService {
         DateTimeFormatter.ofPattern("MM/dd/yyyy"),
         DateTimeFormatter.ofPattern("MM.dd.yyyy")
     );
-    private static final int HEADER_SCAN_LIMIT = 40;
-    private static final int HEADER_MATCH_THRESHOLD = 2;
-    private static final Set<String> HEADER_TRADING_AT_TOKENS = Set.of("거래일", "거래일자", "일자", "날짜", "date");
-    private static final Set<String> HEADER_TRADING_TIME_TOKENS = Set.of("거래시간", "시간");
-    private static final Set<String> HEADER_TITLE_TOKENS = Set.of("title", "제목", "내용", "적요");
-    private static final Set<String> HEADER_AMOUNT_TOKENS = Set.of("amount", "금액", "출금", "출금(원)", "입금", "입금(원)");
-    private static final Set<String> HEADER_ACCOUNT_TOKENS = Set.of("account", "계좌", "계좌명");
-    private static final Set<String> HEADER_CATEGORY_TOKENS = Set.of("category", "카테고리");
-    private static final Set<String> HEADER_PAYMENT_TOKENS = Set.of("payment", "결제수단");
-    private static final Set<String> HEADER_MEMO_TOKENS = Set.of("memo", "메모");
-    private static final Set<String> HEADER_INSTALLMENT_TOKENS = Set.of("installmentcount", "할부개월", "할부", "installment");
-    private static final Set<String> HEADER_INTEREST_FREE_TOKENS = Set.of("isinterestfree", "면제", "이자면제");
+    private static final String HEADER_PROFILE_RESOURCE = "/transaction-import-header-profile.json";
+    private static final HeaderImportProfile HEADER_PROFILE = loadHeaderProfile();
     private static final Map<String, Integer> DEFAULT_COLUMN_ORDER = Map.of(
         "tradingAt", 0,
         "title", 1,
@@ -89,6 +84,13 @@ public class TransactionImportService {
     private static final Set<String> TRUE_TEXT = Set.of("y", "yes", "true", "1", "o", "예", "네");
     private static final Set<String> FALSE_TEXT = Set.of("n", "no", "false", "0", "아니오", "아니요", "미적용");
     private static final DataFormatter DATA_FORMATTER = new DataFormatter();
+    private static final String REASON_MISSING = "MISSING";
+    private static final String REASON_NOT_FOUND = "NOT_FOUND";
+    private static final String REASON_DUPLICATE = "DUPLICATE";
+    private static final String REASON_MISALIGNED_LIKELY = "MISALIGNED_LIKELY";
+    private static final String HINT_UNKNOWN = "UNKNOWN";
+    private static final String HINT_NAME_LIKE = "NAME_LIKE";
+    private static final String HINT_MONEY_LIKE = "MONEY_LIKE";
 
     private final AccountRepository accountRepository;
     private final CategoryRepository categoryRepository;
@@ -117,6 +119,9 @@ public class TransactionImportService {
 
         int headerRowIndex = resolveHeaderRowIndex(rawRows);
         Map<String, Integer> headerIndex = headerRowIndex >= 0 ? resolveHeaderIndex(rawRows.get(headerRowIndex)) : Map.of();
+        Map<String, String> headerLabelByField = headerRowIndex >= 0
+            ? resolveHeaderLabelByField(rawRows.get(headerRowIndex), headerIndex)
+            : Map.of();
         int startRow = headerRowIndex >= 0 ? headerRowIndex + 1 : 0;
 
         int totalRows = 0;
@@ -126,6 +131,7 @@ public class TransactionImportService {
         Set<String> unresolvedAccounts = new TreeSet<>();
         Set<String> unresolvedCategories = new TreeSet<>();
         Set<String> unresolvedPayments = new TreeSet<>();
+        List<TransactionImportUnresolvedIssueDto> unresolvedIssues = new ArrayList<>();
         List<TransactionImportPreviewRowDto> rows = new ArrayList<>();
 
         for (int i = startRow; i < rawRows.size(); i++) {
@@ -135,7 +141,7 @@ public class TransactionImportService {
             }
 
             TransactionImportPreviewRowDto previewRow = buildPreviewRow(
-                i + 1,
+                i - startRow + 1,
                 rawRow,
                 headerIndex,
                 accountLookup,
@@ -143,7 +149,9 @@ public class TransactionImportService {
                 paymentLookup,
                 unresolvedAccounts,
                 unresolvedCategories,
-                unresolvedPayments
+                unresolvedPayments,
+                headerLabelByField,
+                unresolvedIssues
             );
 
             totalRows++;
@@ -168,6 +176,7 @@ public class TransactionImportService {
                                               .unresolvedAccounts(unresolvedAccounts)
                                               .unresolvedCategories(unresolvedCategories)
                                               .unresolvedPayments(unresolvedPayments)
+                                              .unresolvedIssues(unresolvedIssues)
                                               .availableAccounts(toAccountReferenceList(accounts))
                                               .availableCategories(toCategoryReferenceList(categories))
                                               .availablePayments(toPaymentReferenceList(payments))
@@ -290,34 +299,9 @@ public class TransactionImportService {
             if (token.isBlank()) {
                 continue;
             }
-            if (isHeaderToken(token, HEADER_TRADING_AT_TOKENS)) {
-                found.put("tradingAt", i);
-            } else if (isHeaderToken(token, HEADER_TITLE_TOKENS)) {
-                found.put("title", i);
-            } else if (isHeaderToken(token, Set.of("출금(원)", "출금", "입금(원)", "입금", "amount", "금액"))) {
-                if (isHeaderToken(token, Set.of("출금(원)", "출금"))) {
-                    found.put("debitAmount", i);
-                } else if (isHeaderToken(token, Set.of("입금(원)", "입금"))) {
-                    found.put("creditAmount", i);
-                } else {
-                    found.put("amount", i);
-                }
-            } else if (isHeaderToken(token, HEADER_AMOUNT_TOKENS)) {
-                found.put("amount", i);
-            } else if (isHeaderToken(token, HEADER_ACCOUNT_TOKENS)) {
-                found.put("accountName", i);
-            } else if (isHeaderToken(token, HEADER_CATEGORY_TOKENS)) {
-                found.put("categoryName", i);
-            } else if (isHeaderToken(token, HEADER_PAYMENT_TOKENS)) {
-                found.put("paymentName", i);
-            } else if (isHeaderToken(token, HEADER_MEMO_TOKENS)) {
-                found.put("memo", i);
-            } else if (isHeaderToken(token, HEADER_INSTALLMENT_TOKENS)) {
-                found.put("installmentCount", i);
-            } else if (isHeaderToken(token, HEADER_INTEREST_FREE_TOKENS)) {
-                found.put("isInterestFree", i);
-            } else if (isHeaderToken(token, HEADER_TRADING_TIME_TOKENS)) {
-                found.put("tradingTime", i);
+            String field = detectHeaderField(token);
+            if (field != null) {
+                found.put(field, i);
             }
         }
         return found;
@@ -327,11 +311,11 @@ public class TransactionImportService {
         int bestRow = -1;
         int bestScore = 0;
 
-        int maxScan = Math.min(rawRows.size(), HEADER_SCAN_LIMIT);
+        int maxScan = Math.min(rawRows.size(), HEADER_PROFILE.headerScanLimit());
         for (int i = 0; i < maxScan; i++) {
             List<String> row = rawRows.get(i);
             int score = headerRowScore(row);
-            if (score >= HEADER_MATCH_THRESHOLD && score > bestScore) {
+            if (score >= HEADER_PROFILE.headerMatchThreshold() && score > bestScore) {
                 bestScore = score;
                 bestRow = i;
             }
@@ -347,34 +331,10 @@ public class TransactionImportService {
             if (token.isBlank()) {
                 continue;
             }
-            if (isHeaderToken(token, HEADER_TRADING_AT_TOKENS)) {
-                matchedFields.add("tradingAt");
-            } else if (isHeaderToken(token, HEADER_TRADING_TIME_TOKENS)) {
-                matchedFields.add("tradingTime");
-            } else if (isHeaderToken(token, HEADER_TITLE_TOKENS)) {
-                matchedFields.add("title");
-            } else if (isHeaderToken(token, HEADER_AMOUNT_TOKENS)) {
-                if (isHeaderToken(token, Set.of("출금(원)", "출금", "입금(원)", "입금"))) {
-                    matchedFields.add("amount");
-                } else {
-                    matchedFields.add("amount");
-                }
-            } else if (isHeaderToken(token, HEADER_ACCOUNT_TOKENS)) {
-                matchedFields.add("account");
-            } else if (isHeaderToken(token, HEADER_CATEGORY_TOKENS)) {
-                matchedFields.add("category");
-            } else if (isHeaderToken(token, HEADER_PAYMENT_TOKENS)) {
-                matchedFields.add("payment");
-            } else if (isHeaderToken(token, HEADER_MEMO_TOKENS)) {
-                matchedFields.add("memo");
-            } else if (isHeaderToken(token, HEADER_INSTALLMENT_TOKENS)) {
-                matchedFields.add("installment");
-            } else if (isHeaderToken(token, HEADER_INTEREST_FREE_TOKENS)) {
-                matchedFields.add("isInterestFree");
+            String field = detectHeaderField(token);
+            if (field != null) {
+                matchedFields.add(field);
             }
-        }
-        if (matchedFields.size() >= 2) {
-            return matchedFields.size();
         }
         return matchedFields.size();
     }
@@ -387,7 +347,9 @@ public class TransactionImportService {
                                                            Map<String, List<PaymentEntity>> paymentLookup,
                                                            Set<String> unresolvedAccounts,
                                                            Set<String> unresolvedCategories,
-                                                           Set<String> unresolvedPayments) {
+                                                           Set<String> unresolvedPayments,
+                                                           Map<String, String> headerLabelByField,
+                                                           List<TransactionImportUnresolvedIssueDto> unresolvedIssues) {
         int columnTradingAt = headerIndex.getOrDefault("tradingAt", DEFAULT_COLUMN_ORDER.get("tradingAt"));
         int columnTradingTime = headerIndex.getOrDefault("tradingTime", -1);
         int columnTitle = headerIndex.getOrDefault("title", DEFAULT_COLUMN_ORDER.get("title"));
@@ -398,7 +360,6 @@ public class TransactionImportService {
         int columnCategory = headerIndex.getOrDefault("categoryName", DEFAULT_COLUMN_ORDER.get("categoryName"));
         int columnPayment = headerIndex.getOrDefault("paymentName", DEFAULT_COLUMN_ORDER.get("paymentName"));
         int columnMemo = headerIndex.getOrDefault("memo", DEFAULT_COLUMN_ORDER.get("memo"));
-        int columnInstallmentCount = headerIndex.getOrDefault("installmentCount", DEFAULT_COLUMN_ORDER.get("installmentCount"));
         int columnIsInterestFree = headerIndex.getOrDefault("isInterestFree", DEFAULT_COLUMN_ORDER.get("isInterestFree"));
 
         String tradingAtRaw = getCell(rawRow, columnTradingAt);
@@ -412,7 +373,6 @@ public class TransactionImportService {
         String categoryName = getCell(rawRow, columnCategory);
         String paymentName = getCell(rawRow, columnPayment);
         String memo = getCell(rawRow, columnMemo);
-        String installmentCountRaw = getCell(rawRow, columnInstallmentCount);
         String isInterestFreeRaw = getCell(rawRow, columnIsInterestFree);
 
         List<String> unresolvedFields = new ArrayList<>();
@@ -427,16 +387,20 @@ public class TransactionImportService {
         }
 
         Integer amount = parsePositiveAmount(amountRaw);
+        String transactionDirection = null;
         if (amount == null) {
             Integer debitAmount = parsePositiveAmount(debitAmountRaw);
             Integer creditAmount = parsePositiveAmount(creditAmountRaw);
             if (debitAmount != null && creditAmount != null) {
                 errors.add("출금(원)과 입금(원) 값이 모두 있어 금액을 판별할 수 없습니다.");
                 amount = debitAmount;
+                transactionDirection = null;
             } else if (debitAmount != null) {
                 amount = debitAmount;
+                transactionDirection = "DEBIT";
             } else if (creditAmount != null) {
                 amount = creditAmount;
+                transactionDirection = "CREDIT";
             }
         }
         if (amount == null) {
@@ -446,10 +410,7 @@ public class TransactionImportService {
         if (title == null || title.isBlank()) {
             title = "거래";
         }
-        Integer installmentCount = parseNonNegativeInteger(installmentCountRaw);
-        if (installmentCountRaw != null && !installmentCountRaw.isBlank() && (installmentCount == null || installmentCount < 2)) {
-            errors.add("할부개월 수는 2 이상이어야 합니다.");
-        }
+        Integer installmentCount = null;
 
         Boolean isInterestFree = parseBoolean(isInterestFreeRaw);
 
@@ -457,14 +418,24 @@ public class TransactionImportService {
         if (accountName == null || accountName.isBlank()) {
             unresolvedFields.add("accountName");
             unresolvedAccounts.add(UNMAPPED_REFERENCE_LABEL);
+            addUnresolvedIssue(unresolvedIssues, rowIndex, "accountName", UNMAPPED_REFERENCE_LABEL,
+                               resolveHeaderLabel("accountName", columnAccount, headerLabelByField),
+                               REASON_MISSING, HINT_UNKNOWN);
         } else {
             List<AccountEntity> candidates = accountLookup.get(normalize(accountName));
             if (candidates == null || candidates.isEmpty()) {
                 unresolvedFields.add("accountName");
                 unresolvedAccounts.add(accountName);
+                addUnresolvedIssue(unresolvedIssues, rowIndex, "accountName", accountName,
+                                   resolveHeaderLabel("accountName", columnAccount, headerLabelByField),
+                                   classifyUnresolvedReason(accountName),
+                                   classifyValueHint(accountName));
             } else if (candidates.size() > 1) {
                 unresolvedFields.add("accountName");
                 unresolvedAccounts.add(accountName);
+                addUnresolvedIssue(unresolvedIssues, rowIndex, "accountName", accountName,
+                                   resolveHeaderLabel("accountName", columnAccount, headerLabelByField),
+                                   REASON_DUPLICATE, HINT_NAME_LIKE);
                 errors.add("동일한 계좌명이 중복되어 계정 매핑이 애매합니다.");
             } else {
                 resolvedAccountId = candidates.get(0).getAccountId();
@@ -477,14 +448,24 @@ public class TransactionImportService {
             unresolvedFields.add("categoryName");
             unresolvedCategories.add(UNMAPPED_REFERENCE_LABEL);
             errors.add("카테고리명은 필수입니다.");
+            addUnresolvedIssue(unresolvedIssues, rowIndex, "categoryName", UNMAPPED_REFERENCE_LABEL,
+                               resolveHeaderLabel("categoryName", columnCategory, headerLabelByField),
+                               REASON_MISSING, HINT_UNKNOWN);
         } else {
             List<CategoryEntity> candidates = categoryLookup.get(normalize(categoryName));
             if (candidates == null || candidates.isEmpty()) {
                 unresolvedFields.add("categoryName");
                 unresolvedCategories.add(categoryName);
+                addUnresolvedIssue(unresolvedIssues, rowIndex, "categoryName", categoryName,
+                                   resolveHeaderLabel("categoryName", columnCategory, headerLabelByField),
+                                   classifyUnresolvedReason(categoryName),
+                                   classifyValueHint(categoryName));
             } else if (candidates.size() > 1) {
                 unresolvedFields.add("categoryName");
                 unresolvedCategories.add(categoryName);
+                addUnresolvedIssue(unresolvedIssues, rowIndex, "categoryName", categoryName,
+                                   resolveHeaderLabel("categoryName", columnCategory, headerLabelByField),
+                                   REASON_DUPLICATE, HINT_NAME_LIKE);
                 errors.add("동일한 카테고리명이 중복되어 카테고리 매핑이 애매합니다.");
             } else {
                 CategoryEntity category = candidates.get(0);
@@ -498,15 +479,25 @@ public class TransactionImportService {
             if (paymentName == null || paymentName.isBlank()) {
                 unresolvedFields.add("paymentName");
                 unresolvedPayments.add(paymentName);
+                addUnresolvedIssue(unresolvedIssues, rowIndex, "paymentName", UNMAPPED_REFERENCE_LABEL,
+                                   resolveHeaderLabel("paymentName", columnPayment, headerLabelByField),
+                                   REASON_MISSING, HINT_UNKNOWN);
                 errors.add("비용 카테고리는 결제수단이 필요합니다.");
             } else {
                 List<PaymentEntity> candidates = paymentLookup.get(normalize(paymentName));
                 if (candidates == null || candidates.isEmpty()) {
                     unresolvedFields.add("paymentName");
                     unresolvedPayments.add(paymentName);
+                    addUnresolvedIssue(unresolvedIssues, rowIndex, "paymentName", paymentName,
+                                       resolveHeaderLabel("paymentName", columnPayment, headerLabelByField),
+                                       classifyUnresolvedReason(paymentName),
+                                       classifyValueHint(paymentName));
                 } else if (candidates.size() > 1) {
                     unresolvedFields.add("paymentName");
                     unresolvedPayments.add(paymentName);
+                    addUnresolvedIssue(unresolvedIssues, rowIndex, "paymentName", paymentName,
+                                       resolveHeaderLabel("paymentName", columnPayment, headerLabelByField),
+                                       REASON_DUPLICATE, HINT_NAME_LIKE);
                     errors.add("동일한 결제수단명이 중복되어 결제수단 매핑이 애매합니다.");
                 } else {
                     resolvedPaymentId = candidates.get(0).getPaymentId();
@@ -518,6 +509,7 @@ public class TransactionImportService {
                                             .rowIndex(rowIndex)
                                             .tradingAt(tradingAt)
                                             .title(title)
+                                            .transactionDirection(transactionDirection)
                                             .amount(amount)
                                             .memo(memo)
                                             .installmentCount(installmentCount)
@@ -531,6 +523,68 @@ public class TransactionImportService {
                                             .unresolvedFields(unresolvedFields)
                                             .errors(errors)
                                             .build();
+    }
+
+    private String classifyUnresolvedReason (String rawValue) {
+        if (isMoneyLikeValue(rawValue)) {
+            return REASON_MISALIGNED_LIKELY;
+        }
+        return REASON_NOT_FOUND;
+    }
+
+    private String classifyValueHint (String rawValue) {
+        if (isMoneyLikeValue(rawValue)) {
+            return HINT_MONEY_LIKE;
+        }
+        return HINT_NAME_LIKE;
+    }
+
+    private boolean isMoneyLikeValue (String raw) {
+        if (raw == null || raw.isBlank()) {
+            return false;
+        }
+        String normalized = raw.replaceAll(",", "").replaceAll("\\s+", "");
+        return normalized.matches("^[+-]?\\d{1,15}(\\.\\d+)?$");
+    }
+
+    private String resolveHeaderLabel (String field, int fallbackColumnIndex, Map<String, String> headerLabelByField) {
+        String headerLabel = headerLabelByField.get(field);
+        if (headerLabel == null || headerLabel.isBlank()) {
+            return "열#" + (fallbackColumnIndex + 1);
+        }
+        return headerLabel;
+    }
+
+    private Map<String, String> resolveHeaderLabelByField (List<String> headerRow, Map<String, Integer> headerIndex) {
+        Map<String, String> headers = new HashMap<>();
+        for (Map.Entry<String, Integer> entry : headerIndex.entrySet()) {
+            int columnIndex = entry.getValue();
+            if (columnIndex >= 0 && columnIndex < headerRow.size()) {
+                headers.put(entry.getKey(), headerRow.get(columnIndex).trim());
+            }
+        }
+        return headers;
+    }
+
+    private void addUnresolvedIssue (List<TransactionImportUnresolvedIssueDto> unresolvedIssues,
+                                    Integer rowIndex,
+                                    String field,
+                                    String rawValue,
+                                    String headerColumnLabel,
+                                    String reasonCode,
+                                    String valueHint) {
+        if (rawValue == null) {
+            rawValue = "";
+        }
+
+        unresolvedIssues.add(TransactionImportUnresolvedIssueDto.builder()
+                                                              .rowIndex(rowIndex)
+                                                              .field(field)
+                                                              .rawValue(rawValue)
+                                                              .headerColumnLabel(headerColumnLabel)
+                                                              .reasonCode(reasonCode)
+                                                              .valueHint(valueHint)
+                                                              .build());
     }
 
     private void validateCommitRow (TransactionImportCommitRowDto row, Integer userId) {
@@ -632,7 +686,17 @@ public class TransactionImportService {
         return value.replaceAll("\\s+", "");
     }
 
-    private boolean isHeaderToken (String normalizedToken, Set<String> candidateTokens) {
+    private String detectHeaderField (String normalizedToken) {
+        for (String field : HEADER_PROFILE.fieldMatchOrder()) {
+            Set<String> aliases = HEADER_PROFILE.aliasesFor(field);
+            if (matchesAnyAlias(normalizedToken, aliases)) {
+                return field;
+            }
+        }
+        return null;
+    }
+
+    private boolean matchesAnyAlias (String normalizedToken, Set<String> candidateTokens) {
         return candidateTokens.stream().anyMatch(token -> normalizedToken.contains(normalize(token)));
     }
 
@@ -686,19 +750,6 @@ public class TransactionImportService {
         }
     }
 
-    private Integer parseNonNegativeInteger (String raw) {
-        if (raw == null || raw.isBlank()) {
-            return null;
-        }
-        String normalized = raw.replaceAll(",", "").replaceAll("\\s+", "");
-        try {
-            Integer value = Integer.parseInt(normalized);
-            return value >= 0 ? value : null;
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
     private Boolean parseBoolean (String raw) {
         if (raw == null || raw.isBlank()) {
             return false;
@@ -715,5 +766,121 @@ public class TransactionImportService {
 
     private String safeFileName (String fileName) {
         return fileName == null ? "" : fileName.trim().toLowerCase();
+    }
+
+    private static HeaderImportProfile loadHeaderProfile () {
+        try (InputStream inputStream = TransactionImportService.class.getResourceAsStream(HEADER_PROFILE_RESOURCE)) {
+            if (inputStream == null) {
+                return HeaderImportProfile.createDefault();
+            }
+
+            JsonNode root = new ObjectMapper().readTree(inputStream);
+            int headerScanLimit = root.path("headerScanLimit").asInt(40);
+            int headerMatchThreshold = root.path("headerMatchThreshold").asInt(2);
+
+            Map<String, Set<String>> aliases = new HashMap<>();
+            JsonNode aliasesNode = root.path("aliases");
+            if (aliasesNode.isObject()) {
+                aliasesNode.fieldNames()
+                           .forEachRemaining(field -> aliases.put(field, parseAliasSet(aliasesNode.path(field))));
+            }
+
+            List<String> fieldMatchOrder = new ArrayList<>();
+            JsonNode orderNode = root.path("fieldMatchOrder");
+            if (orderNode.isArray()) {
+                for (JsonNode token : orderNode) {
+                    if (token.isTextual()) {
+                        fieldMatchOrder.add(token.asText());
+                    }
+                }
+            }
+            if (fieldMatchOrder.isEmpty()) {
+                fieldMatchOrder = List.of("tradingAt", "tradingTime", "title", "amount", "debitAmount", "creditAmount", "accountName",
+                                         "categoryName", "paymentName", "memo", "installmentCount", "isInterestFree");
+            }
+
+            return new HeaderImportProfile(
+                headerScanLimit,
+                headerMatchThreshold,
+                aliases,
+                fieldMatchOrder
+            );
+        } catch (Exception e) {
+            return HeaderImportProfile.createDefault();
+        }
+    }
+
+    private static Set<String> parseAliasSet (JsonNode node) {
+        Set<String> aliasSet = new HashSet<>();
+        if (!node.isArray()) {
+            return Set.of();
+        }
+        for (JsonNode element : node) {
+            if (element.isTextual()) {
+                String value = element.asText();
+                if (!value.isBlank()) {
+                    aliasSet.add(value);
+                }
+            }
+        }
+        return aliasSet;
+    }
+
+    private static class HeaderImportProfile {
+        private final int headerScanLimit;
+        private final int headerMatchThreshold;
+        private final Map<String, Set<String>> aliases;
+        private final List<String> fieldMatchOrder;
+
+        private HeaderImportProfile (int headerScanLimit,
+                                    int headerMatchThreshold,
+                                    Map<String, Set<String>> aliases,
+                                    List<String> fieldMatchOrder) {
+            this.headerScanLimit = headerScanLimit;
+            this.headerMatchThreshold = headerMatchThreshold;
+            this.aliases = aliases;
+            this.fieldMatchOrder = fieldMatchOrder;
+        }
+
+        private static HeaderImportProfile createDefault () {
+            Map<String, Set<String>> aliases = new HashMap<>();
+            aliases.put("tradingAt", Set.of("거래일", "거래일자", "일자", "날짜", "date"));
+            aliases.put("tradingTime", Set.of("거래시간", "시간"));
+            aliases.put("title", Set.of("title", "제목", "내용", "적요"));
+            aliases.put("amount", Set.of("amount", "금액"));
+            aliases.put("debitAmount", Set.of("출금", "출금(원)", "출금금액", "출금금액(원)"));
+            aliases.put("creditAmount", Set.of("입금", "입금(원)", "입금금액", "입금금액(원)"));
+            aliases.put("accountName", Set.of("account", "계좌", "계좌명"));
+            aliases.put("categoryName", Set.of("category", "카테고리"));
+            aliases.put("paymentName", Set.of("payment", "결제수단"));
+            aliases.put("memo", Set.of("memo", "메모", "거래점"));
+            aliases.put("installmentCount", Set.of("installmentcount", "할부개월", "할부", "installment"));
+            aliases.put("isInterestFree", Set.of("isinterestfree", "면제", "이자면제"));
+
+            return new HeaderImportProfile(
+                40,
+                2,
+                aliases,
+                List.of("tradingAt", "tradingTime", "title", "amount", "debitAmount", "creditAmount", "accountName",
+                        "categoryName", "paymentName", "memo", "installmentCount", "isInterestFree")
+            );
+        }
+
+        private int headerScanLimit () {
+            return headerScanLimit;
+        }
+
+        private int headerMatchThreshold () {
+            return headerMatchThreshold;
+        }
+
+        private Set<String> aliasesFor (String field) {
+            return Optional.ofNullable(aliases.get(field))
+                           .orElse(Set.of());
+        }
+
+        private List<String> fieldMatchOrder () {
+            return fieldMatchOrder;
+        }
     }
 }

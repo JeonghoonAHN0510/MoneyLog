@@ -18,6 +18,7 @@ public class TransactionImportPreviewRowDto {
     private String tradingAt;
     private String title;
     private Integer amount;
+    private String transactionDirection;
     private String memo;
     private Integer installmentCount;
     private Boolean isInterestFree;

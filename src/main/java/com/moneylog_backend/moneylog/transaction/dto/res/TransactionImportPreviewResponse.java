@@ -19,6 +19,7 @@ public class TransactionImportPreviewResponse {
     private Set<String> unresolvedAccounts;
     private Set<String> unresolvedCategories;
     private Set<String> unresolvedPayments;
+    private List<TransactionImportUnresolvedIssueDto> unresolvedIssues;
     private List<TransactionImportReferenceDto> availableAccounts;
     private List<TransactionImportReferenceDto> availableCategories;
     private List<TransactionImportReferenceDto> availablePayments;

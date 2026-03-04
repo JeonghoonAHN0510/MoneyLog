@@ -31,10 +31,89 @@ interface TransactionImportDialogProps {
     onOpenChange: (open: boolean) => void;
 }
 
+const normalizeDirectionType = (
+    previewDirection?: TransactionImportPreviewResponse['rows'][number]['transactionDirection'],
+    categoryType?: TransactionImportPreviewResponse['availableCategories'][number]['type']
+): 'INCOME' | 'EXPENSE' | 'UNKNOWN' => {
+    if (previewDirection === 'CREDIT') {
+        return 'INCOME';
+    }
+    if (previewDirection === 'DEBIT') {
+        return 'EXPENSE';
+    }
+    if (categoryType === 'INCOME' || categoryType === 'EXPENSE') {
+        return categoryType;
+    }
+    return 'UNKNOWN';
+};
+
+const getDirectionFilteredCategories = (
+    directionType: 'INCOME' | 'EXPENSE' | 'UNKNOWN',
+    categories: TransactionImportPreviewResponse['availableCategories']
+): TransactionImportPreviewResponse['availableCategories'] => {
+    if (directionType === 'INCOME' || directionType === 'EXPENSE') {
+        return categories.filter((category) => category.type === directionType);
+    }
+    return categories;
+};
+
+const directionAmountLabel = (directionType: 'INCOME' | 'EXPENSE' | 'UNKNOWN') => {
+    if (directionType === 'INCOME') {
+        return '입금';
+    }
+    if (directionType === 'EXPENSE') {
+        return '출금';
+    }
+    return '금액';
+};
+
+const directionAmountClass = (directionType: 'INCOME' | 'EXPENSE' | 'UNKNOWN') => {
+    if (directionType === 'INCOME') {
+        return 'text-green-600';
+    }
+    if (directionType === 'EXPENSE') {
+        return 'text-red-600';
+    }
+    return 'text-foreground';
+};
+
+const sanitizeCategoryName = (categoryName: string) => categoryName
+    .replace(/^\s*(수입|지출|입금|출금)\s*\/\s*/u, '')
+    .trim();
+
+const normalizeAmountLikeText = (value: string) => value
+    .replace(/,/g, '')
+    .replace(/\s+/g, '')
+    .trim();
+
+const isMoneyLikeValue = (value: string) => {
+    if (!value) {
+        return false;
+    }
+    const normalized = normalizeAmountLikeText(value);
+    return /^[-+]?\d{1,15}(\.\d+)?$/.test(normalized);
+};
+
+const isZeroLikeAmountValue = (value: string) => {
+    if (!value) {
+        return false;
+    }
+    const normalized = normalizeAmountLikeText(value).replace(/[^0-9.+-]/gu, '');
+    if (!normalized) {
+        return false;
+    }
+    if (!/^[-+]?\d+(\.\d+)?$/.test(normalized)) {
+        return false;
+    }
+    return Number(normalized) === 0;
+};
+
 export function TransactionImportDialog ({ open, onOpenChange }: TransactionImportDialogProps) {
     const importFileInputRef = useRef<HTMLInputElement | null>(null);
     const [importPreview, setImportPreview] = useState<TransactionImportPreviewResponse | null>(null);
     const [importRows, setImportRows] = useState<TransactionImportCommitRequest['rows']>([]);
+    const [showUnresolvedDetail, setShowUnresolvedDetail] = useState<boolean>(false);
+    const ISSUE_SUMMARY_LIMIT = 3;
 
     const importPreviewMut = useTransactionImportPreview();
     const importCommitMut = useTransactionImportCommit();
@@ -42,6 +121,7 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
     const clearImportState = () => {
         setImportPreview(null);
         setImportRows([]);
+        setShowUnresolvedDetail(false);
         if (importFileInputRef.current) {
             importFileInputRef.current.value = '';
         }
@@ -70,6 +150,22 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
         setImportRows((prev) => prev.map((row) => (row.rowIndex === rowIndex ? { ...row, [field]: value } : row)));
     };
 
+    const updateImportCategory = (rowIndex: number, categoryId: string) => {
+        if (!importPreview) {
+            return;
+        }
+        const selectedCategory = importPreview.availableCategories.find((category) => category.id === categoryId);
+        setImportRows((prev) => prev.map((row) => {
+            if (row.rowIndex !== rowIndex) {
+                return row;
+            }
+            if (selectedCategory?.type === 'INCOME') {
+                return { ...row, categoryId, paymentId: '' };
+            }
+            return { ...row, categoryId };
+        }));
+    };
+
     const getPreviewRow = (rowIndex: number) => importPreview?.rows.find((previewRow) => previewRow.rowIndex === rowIndex);
 
     const isImportRowReady = (commitRow: TransactionImportCommitRequest['rows'][number]) => {
@@ -85,7 +181,11 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
             return false;
         }
         const selectedCategory = importPreview.availableCategories.find((category) => category.id === commitRow.categoryId);
-        if (!selectedCategory || selectedCategory.type === 'EXPENSE') {
+        const rowDirectionType = normalizeDirectionType(previewRow.transactionDirection, selectedCategory?.type);
+        if (rowDirectionType !== 'UNKNOWN' && selectedCategory && selectedCategory.type !== rowDirectionType) {
+            return false;
+        }
+        if (rowDirectionType === 'EXPENSE') {
             if (!commitRow.paymentId) {
                 return false;
             }
@@ -94,7 +194,58 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
     };
 
     const unresolvedImportRows = importRows.filter((row) => !isImportRowReady(row));
+    const unresolvedIssues = importPreview?.unresolvedIssues ?? [];
+    const issueFieldLabels: Record<string, string> = {
+        accountName: '계좌',
+        categoryName: '카테고리',
+        paymentName: '결제수단',
+    };
+    const issueReasonLabels: Record<string, string> = {
+        MISSING: '미입력',
+        NOT_FOUND: '미매칭',
+        DUPLICATE: '중복',
+        MISALIGNED_LIKELY: '열 오정렬 의심',
+    };
+    const issueHintLabels: Record<string, string> = {
+        MONEY_LIKE: '금액형 값',
+        NAME_LIKE: '이름형 값',
+        UNKNOWN: '미확인 값',
+    };
+    const unresolvedIssueCountsByReason = unresolvedIssues.reduce<Record<string, number>>((acc, issue) => {
+        acc[issue.reasonCode] = (acc[issue.reasonCode] ?? 0) + 1;
+        return acc;
+    }, {});
+    const unresolvedIssueCountsByField = unresolvedIssues.reduce<Record<string, number>>((acc, issue) => {
+        const label = issueFieldLabels[issue.field] ?? issue.field;
+        acc[label] = (acc[label] ?? 0) + 1;
+        return acc;
+    }, {});
+    const issueSummaryByGroup = unresolvedIssues.reduce<Map<string, { count: number; field: string; reasonCode: string; valueHint: string; raw: string }>>((acc, issue) => {
+        const raw = issue.rawValue.trim() === '' ? '<공백>' : issue.rawValue;
+        const key = JSON.stringify({
+            field: issue.field,
+            reasonCode: issue.reasonCode,
+            valueHint: issue.valueHint,
+            raw,
+        });
 
+        const previous = acc.get(key);
+        if (previous) {
+            previous.count += 1;
+        } else {
+            acc.set(key, {
+                count: 1,
+                field: issue.field,
+                reasonCode: issue.reasonCode,
+                valueHint: issue.valueHint,
+                raw,
+            });
+        }
+        return acc;
+    }, new Map<string, { count: number; field: string; reasonCode: string; valueHint: string; raw: string }>());
+    const sortedIssueSummaryEntries = [...issueSummaryByGroup.values()]
+        .sort((a, b) => b.count - a.count || a.raw.localeCompare(b.raw))
+        .slice(0, ISSUE_SUMMARY_LIMIT);
     const canCommitImport = Boolean(
         importPreview &&
             importRows.length > 0 &&
@@ -233,6 +384,40 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
                                 {importPreview.unresolvedPayments.length > 0 && (
                                     <div>미해결 결제수단: [{importPreview.unresolvedPayments.join(', ')}]</div>
                                 )}
+                                {importPreview.unresolvedIssues.length > 0 && (
+                                    <div className="finance-import-unresolved-inline">
+                                        <div className="finance-import-unresolved-meta">
+                                            미해결 항목: {unresolvedIssues.length}건
+                                            {' / '}
+                                            {Object.entries(unresolvedIssueCountsByField).map(([field, count]) => `${field} ${count}건`).join(', ')}
+                                        </div>
+                                        <div className="finance-import-unresolved-meta">
+                                            {Object.entries(unresolvedIssueCountsByReason).map(([reason, count]) => `${issueReasonLabels[reason] ?? reason} ${count}건`).join(', ')}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="finance-import-unresolved-toggle"
+                                            onClick={() => setShowUnresolvedDetail(true)}
+                                        >
+                                            미해결 상세 보기
+                                        </button>
+                                        <div className="finance-import-unresolved-summary">
+                                            {sortedIssueSummaryEntries.map((entry) => {
+                                                const field = issueFieldLabels[entry.field] ?? entry.field;
+                                                const reason = issueReasonLabels[entry.reasonCode] ?? entry.reasonCode;
+                                                const hint = issueHintLabels[entry.valueHint] ?? entry.valueHint;
+                                                return (
+                                                    <div
+                                                        key={`${entry.field}-${entry.reasonCode}-${entry.valueHint}-${entry.raw}`}
+                                                        className="finance-import-unresolved-summary-item"
+                                                    >
+                                                        {`${field} / ${entry.raw} / ${reason} (${hint}) × ${entry.count}`}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -245,8 +430,21 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
                             if (!commitRow) {
                                 return null;
                             }
+                            const categoryLabel = sanitizeCategoryName(previewRow.categoryName);
+                            const isCategoryLikeAmount = isMoneyLikeValue(previewRow.categoryName)
+                                && typeof previewRow.amount === 'number'
+                                && normalizeAmountLikeText(previewRow.categoryName) === String(previewRow.amount);
+                            const isZeroCategory = isZeroLikeAmountValue(previewRow.categoryName);
+                            const safeCategoryLabel = isCategoryLikeAmount || isZeroCategory ? '' : categoryLabel;
                             const selectedCategory = importPreview.availableCategories.find((category) => category.id === commitRow.categoryId);
-                            const needPayment = !selectedCategory || selectedCategory.type === 'EXPENSE';
+                            const resolvedDirection = normalizeDirectionType(previewRow.transactionDirection, selectedCategory?.type);
+                            const needPayment = resolvedDirection === 'EXPENSE';
+                            const directionedCategories = getDirectionFilteredCategories(resolvedDirection, importPreview.availableCategories);
+                            const previewDirectionLabel = directionAmountLabel(resolvedDirection);
+                            const previewDirectionClass = directionAmountClass(resolvedDirection);
+                            const isCategoryMismatch = resolvedDirection !== 'UNKNOWN'
+                                && selectedCategory
+                                && selectedCategory.type !== resolvedDirection;
 
                             return (
                                 <div key={`import-preview-${previewRow.rowIndex}`} className="finance-import-card">
@@ -254,9 +452,10 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
                                         <span>{previewRow.rowIndex}행</span>
                                         <span>{previewRow.tradingAt}</span>
                                         <span>{previewRow.title}</span>
-                                        <span>
+                                        <span>{safeCategoryLabel}</span>
+                                        <span className={previewDirectionClass}>
                                             {typeof previewRow.amount === 'number'
-                                                ? `${previewRow.amount.toLocaleString()}원`
+                                                ? `${previewDirectionLabel} ${previewRow.amount.toLocaleString()}원`
                                                 : '-'}
                                         </span>
                                     </div>
@@ -281,19 +480,28 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
                                         </label>
                                         <label>
                                             카테고리
+                                            {isCategoryMismatch && (
+                                                <span className="text-[11px] text-amber-600 block">방향에 맞지 않는 카테고리라 재선택이 필요합니다.</span>
+                                            )}
                                             <Select
                                                 value={commitRow.categoryId}
-                                                onValueChange={(value) => updateImportRow(previewRow.rowIndex, 'categoryId', value)}
+                                                onValueChange={(value) => updateImportCategory(previewRow.rowIndex, value)}
                                             >
                                                 <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="카테고리 선택" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {importPreview.availableCategories.map((category) => (
-                                                        <SelectItem key={category.id} value={category.id}>
-                                                            {category.name} ({category.type})
+                                                    {directionedCategories.length === 0 ? (
+                                                        <SelectItem value="__EMPTY__" disabled>
+                                                            해당 방향의 카테고리가 없습니다
                                                         </SelectItem>
-                                                    ))}
+                                                    ) : (
+                                                        directionedCategories.map((category) => (
+                                                            <SelectItem key={category.id} value={category.id}>
+                                                                {category.name} ({category.type})
+                                                            </SelectItem>
+                                                        ))
+                                                    )}
                                                 </SelectContent>
                                             </Select>
                                         </label>
@@ -328,6 +536,49 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
                         })}
                     </div>
                 )}
+
+                <Dialog open={showUnresolvedDetail} onOpenChange={setShowUnresolvedDetail}>
+                    <DialogContent className="finance-import-unresolved-dialog">
+                        <DialogHeader>
+                            <DialogTitle>미해결 상세 목록</DialogTitle>
+                            <DialogDescription>매핑 실패/누락된 항목의 행 단위 상세 정보입니다.</DialogDescription>
+                        </DialogHeader>
+                        <div className="finance-import-unresolved-table-wrapper">
+                            <ul className="finance-import-unresolved-table">
+                                <li className="finance-import-unresolved-table-row finance-import-unresolved-table-header">
+                                    <span>행</span>
+                                    <span>필드</span>
+                                    <span>추출열</span>
+                                    <span>값</span>
+                                    <span>사유</span>
+                                    <span>값성격</span>
+                                </li>
+                                {importPreview?.unresolvedIssues.map((issue, index) => {
+                                    const reason = issueReasonLabels[issue.reasonCode] ?? issue.reasonCode;
+                                    const hint = issueHintLabels[issue.valueHint] ?? issue.valueHint;
+                                    const value = issue.rawValue.trim() === '' ? '<공백>' : issue.rawValue;
+                                    return (
+                                        <li key={`${issue.rowIndex}-${issue.field}-${index}`} className="finance-import-unresolved-table-row">
+                                            <span>{issue.rowIndex}</span>
+                                            <span>{issueFieldLabels[issue.field] ?? issue.field}</span>
+                                            <span>{issue.headerColumnLabel}</span>
+                                            <span title={value} className="finance-import-unresolved-value">
+                                                {value}
+                                            </span>
+                                            <span>{reason}</span>
+                                            <span>{hint}</span>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                        <div className="finance-import-unresolved-dialog-footer">
+                            <Button size="sm" variant="secondary" onClick={() => setShowUnresolvedDetail(false)}>
+                                닫기
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </DialogContent>
         </Dialog>
     );

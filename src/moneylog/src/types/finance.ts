@@ -44,6 +44,7 @@ export interface Transaction {
   amount: number;
   memo: string;
   installmentCount?: number;
+  flowDirection?: 'INCOME' | 'EXPENSE' | 'UNKNOWN';
   categoryType: 'INCOME' | 'EXPENSE';
   categoryName: string;
   paymentName: string;
@@ -137,11 +138,21 @@ export interface TransactionImportReference {
   type?: 'INCOME' | 'EXPENSE' | 'ACCOUNT' | 'PAYMENT';
 }
 
+export interface TransactionImportUnresolvedIssue {
+  rowIndex: number;
+  field: string;
+  rawValue: string;
+  headerColumnLabel: string;
+  reasonCode: string;
+  valueHint: string;
+}
+
 export interface TransactionImportPreviewRow {
   rowIndex: number;
   tradingAt: string;
   title: string;
   amount: number;
+  transactionDirection?: 'DEBIT' | 'CREDIT' | 'UNKNOWN';
   memo: string;
   installmentCount?: number;
   isInterestFree?: boolean;
@@ -168,6 +179,7 @@ export interface TransactionImportPreviewResponse {
   unresolvedAccounts: string[];
   unresolvedCategories: string[];
   unresolvedPayments: string[];
+  unresolvedIssues: TransactionImportUnresolvedIssue[];
   availableAccounts: TransactionImportReference[];
   availableCategories: TransactionImportReference[];
   availablePayments: TransactionImportReference[];

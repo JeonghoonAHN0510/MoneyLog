@@ -11,7 +11,7 @@
 }
 
 .finance-import-main {
-    @apply grid grid-cols-2 md:grid-cols-4 gap-2 text-sm;
+    @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2 text-sm;
 }
 
 .finance-import-row {
@@ -28,6 +28,54 @@
 
 .finance-import-unresolved {
     @apply text-xs text-amber-600 space-y-1;
+}
+
+.finance-import-unresolved-inline {
+    @apply border border-amber-200 bg-amber-50 rounded-md p-2 space-y-2;
+}
+
+.finance-import-unresolved-meta {
+    @apply text-[11px] text-amber-800;
+}
+
+.finance-import-unresolved-toggle {
+    @apply inline-flex items-center text-xs text-blue-700 border border-blue-200 rounded-full px-2 py-1 bg-blue-50 hover:bg-blue-100;
+}
+
+.finance-import-unresolved-summary {
+    @apply space-y-1 text-[11px] text-gray-700;
+}
+
+.finance-import-unresolved-summary-item {
+    @apply leading-snug;
+}
+
+.finance-import-unresolved-dialog {
+    @apply w-[min(72rem,86vw)] max-w-[86vw];
+}
+
+.finance-import-unresolved-table-wrapper {
+    @apply max-h-[52vh] overflow-auto;
+}
+
+.finance-import-unresolved-table {
+    @apply text-xs space-y-1;
+}
+
+.finance-import-unresolved-table-row {
+    @apply grid grid-cols-[1fr_1.1fr_1.2fr_2fr_1.2fr_1fr] gap-2 items-start text-left;
+}
+
+.finance-import-unresolved-table-header {
+    @apply font-semibold border-b border-gray-200 pb-1 mb-1 sticky top-0 bg-white z-10;
+}
+
+.finance-import-unresolved-value {
+    @apply text-gray-700 truncate;
+}
+
+.finance-import-unresolved-dialog-footer {
+    @apply flex justify-end;
 }
 
 .finance-import-rows {
