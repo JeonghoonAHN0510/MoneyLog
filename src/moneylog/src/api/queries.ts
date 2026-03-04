@@ -92,6 +92,23 @@ export function useTransactions() {
     });
 }
 
+/** 거래 내역 기간 조회 */
+export function useTransactionsByDateRange(startDate?: string, endDate?: string) {
+    return useQuery<Transaction[]>({
+        queryKey: queryKeys.transactionsByDateRange(startDate ?? '', endDate ?? ''),
+        queryFn: async () => {
+            const res = await api.get('/transaction/search', {
+                params: {
+                    startDate,
+                    endDate,
+                },
+            });
+            return res.data;
+        },
+        enabled: Boolean(startDate && endDate),
+    });
+}
+
 /** 예산 목록 */
 export function useBudgets() {
     return useQuery<Budget[]>({

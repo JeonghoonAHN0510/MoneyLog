@@ -14,7 +14,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "./ui/alert-dialog";
-import { useTransactions, useCategories } from '../api/queries';
+import { useTransactions, useTransactionsByDateRange, useCategories } from '../api/queries';
 import { formatKrw } from '../utils/currency';
 import { formatKoreanDate } from '../utils/date';
 
@@ -130,7 +130,16 @@ export function TransactionList({
     onEdit,
     onDelete,
 }: TransactionListProps) {
-    const { data: transactions = [] } = useTransactions();
+    const {
+        data: transactions = [],
+        isLoading: isTransactionsLoading,
+        isError: isTransactionsError,
+    } = useTransactions();
+    const {
+        data: dateTransactions = [],
+        isLoading: isDateTransactionsLoading,
+        isError: isDateTransactionsError,
+    } = useTransactionsByDateRange(selectedDate, selectedDate);
     const { data: categories = [] } = useCategories();
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
@@ -143,12 +152,10 @@ export function TransactionList({
         onDelete(deleteTargetId);
         setDeleteTargetId(null);
     };
-    const filteredTransactions = selectedDate
-        ? transactions.filter((transaction) => {
-            const datePart = transaction.tradingAt.split('T')[0];
-            return datePart === selectedDate;
-        })
-        : transactions;
+    const isDateMode = Boolean(selectedDate);
+    const isLoading = isDateMode ? isDateTransactionsLoading : isTransactionsLoading;
+    const isError = isDateMode ? isDateTransactionsError : isTransactionsError;
+    const filteredTransactions = isDateMode ? dateTransactions : transactions;
 
     const sortedTransactions = [...filteredTransactions].sort(
         (a, b) => new Date(b.tradingAt).getTime() - new Date(a.tradingAt).getTime()
@@ -184,7 +191,15 @@ export function TransactionList({
                 </CardTitle>
             </CardHeader>
             <CardContent className="px-0">
-                {sortedTransactions.length === 0 ? (
+                {isLoading ? (
+                    <div className="text-center text-muted-foreground py-12 border rounded-lg border-dashed">
+                        거래 내역을 불러오는 중입니다
+                    </div>
+                ) : isError ? (
+                    <div className="text-center text-red-600 py-12 border rounded-lg border-dashed">
+                        거래 내역 조회에 실패했습니다
+                    </div>
+                ) : sortedTransactions.length === 0 ? (
                     <div className="text-center text-muted-foreground py-12 border rounded-lg border-dashed">
                         거래 내역이 없습니다
                     </div>
