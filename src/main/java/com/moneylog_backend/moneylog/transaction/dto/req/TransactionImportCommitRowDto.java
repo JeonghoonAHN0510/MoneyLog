@@ -20,8 +20,6 @@ public class TransactionImportCommitRowDto {
     private String title;
     private Integer amount;
     private String memo;
-    private Integer installmentCount;
-    private Boolean isInterestFree;
     private Integer accountId;
     private Integer categoryId;
     private Integer paymentId;
@@ -32,8 +30,8 @@ public class TransactionImportCommitRowDto {
                                .title(this.title)
                                .amount(this.amount)
                                .memo(this.memo)
-                               .installmentCount(this.installmentCount)
-                               .isInterestFree(this.isInterestFree)
+                               .installmentCount(null)
+                               .isInterestFree(false)
                                .accountId(this.accountId)
                                .categoryId(this.categoryId)
                                .paymentId(this.paymentId)

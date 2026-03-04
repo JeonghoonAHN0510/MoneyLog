@@ -76,6 +76,9 @@ public class TransactionService {
         }
 
         if (CategoryEnum.INCOME.equals(type)) {
+            if (transactionReqDto.getPaymentId() != null) {
+                throw new IllegalArgumentException("수입 카테고리에는 결제수단을 지정할 수 없습니다.");
+            }
             if (transactionReqDto.isInstallment()) {
                 throw new IllegalArgumentException("수입 카테고리에는 할부를 적용할 수 없습니다.");
             }
@@ -141,7 +144,9 @@ public class TransactionService {
         if (CategoryEnum.EXPENSE.equals(newType)) {
             validatePaymentOwnership(newPaymentId, userId);
         } else {
-            newPaymentId = null;
+            if (newPaymentId != null) {
+                throw new IllegalArgumentException("수입 카테고리에는 결제수단을 지정할 수 없습니다.");
+            }
         }
 
         Integer newAmount = transactionReqDto.getAmount();

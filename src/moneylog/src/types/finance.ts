@@ -133,7 +133,7 @@ export interface DashboardData {
 }
 
 export interface TransactionImportReference {
-  id: string;
+  id: string | number;
   name: string;
   type?: 'INCOME' | 'EXPENSE' | 'ACCOUNT' | 'PAYMENT';
 }
@@ -154,8 +154,6 @@ export interface TransactionImportPreviewRow {
   amount: number;
   transactionDirection?: 'DEBIT' | 'CREDIT' | 'UNKNOWN';
   memo: string;
-  installmentCount?: number;
-  isInterestFree?: boolean;
   accountName: string;
   categoryName: string;
   paymentName: string;
@@ -191,8 +189,6 @@ export interface TransactionImportCommitRow {
   title: string;
   amount: number;
   memo?: string;
-  installmentCount?: number;
-  isInterestFree?: boolean;
   accountId: string;
   categoryId: string;
   paymentId?: string;

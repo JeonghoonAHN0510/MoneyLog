@@ -5,15 +5,13 @@
     "tradingAt",
     "tradingTime",
     "title",
-    "amount",
     "debitAmount",
     "creditAmount",
+    "amount",
     "accountName",
     "categoryName",
     "paymentName",
-    "memo",
-    "installmentCount",
-    "isInterestFree"
+    "memo"
   ],
   "aliases": {
     "tradingAt": [
@@ -66,17 +64,6 @@
       "memo",
       "메모",
       "거래점"
-    ],
-    "installmentCount": [
-      "installmentcount",
-      "할부개월",
-      "할부",
-      "installment"
-    ],
-    "isInterestFree": [
-      "isinterestfree",
-      "면제",
-      "이자면제"
     ]
   }
 }

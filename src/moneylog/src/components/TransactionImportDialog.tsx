@@ -77,6 +77,13 @@ const directionAmountClass = (directionType: 'INCOME' | 'EXPENSE' | 'UNKNOWN') =
     return 'text-foreground';
 };
 
+const toIdString = (value: string | number | null | undefined) => {
+    if (value == null) {
+        return '';
+    }
+    return String(value);
+};
+
 const sanitizeCategoryName = (categoryName: string) => categoryName
     .replace(/^\s*(수입|지출|입금|출금)\s*\/\s*/u, '')
     .trim();
@@ -139,8 +146,6 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
         title: row.title,
         amount: row.amount,
         memo: row.memo || '',
-        installmentCount: row.installmentCount,
-        isInterestFree: row.isInterestFree,
         accountId: row.resolvedAccountId != null ? String(row.resolvedAccountId) : '',
         categoryId: row.resolvedCategoryId != null ? String(row.resolvedCategoryId) : '',
         paymentId: row.resolvedPaymentId != null ? String(row.resolvedPaymentId) : '',
@@ -154,7 +159,7 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
         if (!importPreview) {
             return;
         }
-        const selectedCategory = importPreview.availableCategories.find((category) => category.id === categoryId);
+        const selectedCategory = importPreview.availableCategories.find((category) => toIdString(category.id) === categoryId);
         setImportRows((prev) => prev.map((row) => {
             if (row.rowIndex !== rowIndex) {
                 return row;
@@ -180,9 +185,14 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
         if (!commitRow.accountId || !commitRow.categoryId) {
             return false;
         }
-        const selectedCategory = importPreview.availableCategories.find((category) => category.id === commitRow.categoryId);
-        const rowDirectionType = normalizeDirectionType(previewRow.transactionDirection, selectedCategory?.type);
-        if (rowDirectionType !== 'UNKNOWN' && selectedCategory && selectedCategory.type !== rowDirectionType) {
+        const selectedCategory = importPreview.availableCategories.find(
+            (category) => toIdString(category.id) === commitRow.categoryId
+        );
+        if (!selectedCategory) {
+            return false;
+        }
+        const rowDirectionType = normalizeDirectionType(previewRow.transactionDirection, selectedCategory.type);
+        if (rowDirectionType !== 'UNKNOWN' && selectedCategory.type !== rowDirectionType) {
             return false;
         }
         if (rowDirectionType === 'EXPENSE') {
@@ -436,7 +446,9 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
                                 && normalizeAmountLikeText(previewRow.categoryName) === String(previewRow.amount);
                             const isZeroCategory = isZeroLikeAmountValue(previewRow.categoryName);
                             const safeCategoryLabel = isCategoryLikeAmount || isZeroCategory ? '' : categoryLabel;
-                            const selectedCategory = importPreview.availableCategories.find((category) => category.id === commitRow.categoryId);
+                            const selectedCategory = importPreview.availableCategories.find(
+                                (category) => toIdString(category.id) === commitRow.categoryId
+                            );
                             const resolvedDirection = normalizeDirectionType(previewRow.transactionDirection, selectedCategory?.type);
                             const needPayment = resolvedDirection === 'EXPENSE';
                             const directionedCategories = getDirectionFilteredCategories(resolvedDirection, importPreview.availableCategories);
@@ -471,7 +483,7 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {importPreview.availableAccounts.map((account) => (
-                                                        <SelectItem key={account.id} value={account.id}>
+                                                        <SelectItem key={account.id} value={toIdString(account.id)}>
                                                             {account.name}
                                                         </SelectItem>
                                                     ))}
@@ -497,7 +509,7 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
                                                         </SelectItem>
                                                     ) : (
                                                         directionedCategories.map((category) => (
-                                                            <SelectItem key={category.id} value={category.id}>
+                                                            <SelectItem key={category.id} value={toIdString(category.id)}>
                                                                 {category.name} ({category.type})
                                                             </SelectItem>
                                                         ))
@@ -517,7 +529,7 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {importPreview.availablePayments.map((payment) => (
-                                                            <SelectItem key={payment.id} value={payment.id}>
+                                                            <SelectItem key={payment.id} value={toIdString(payment.id)}>
                                                                 {payment.name}
                                                             </SelectItem>
                                                         ))}
