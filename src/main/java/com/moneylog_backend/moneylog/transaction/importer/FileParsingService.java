@@ -1,0 +1,154 @@
+package com.moneylog_backend.moneylog.transaction.importer;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+
+@Service
+public class FileParsingService {
+    private static final long IMPORT_MAX_FILE_SIZE_BYTES = 10L * 1024L * 1024L;
+    private static final int IMPORT_MAX_ROWS = 20_000;
+    private static final int IMPORT_MAX_COLUMNS = 200;
+    private static final DataFormatter DATA_FORMATTER = new DataFormatter();
+
+    public void validateFileSize (MultipartFile file) {
+        if (file.getSize() > IMPORT_MAX_FILE_SIZE_BYTES) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "업로드 가능한 파일 크기(10MB)를 초과했습니다.");
+        }
+    }
+
+    public String safeFileName (String fileName) {
+        return fileName == null ? "" : fileName.trim().toLowerCase();
+    }
+
+    public List<List<String>> parseRowsByFile (String fileName, MultipartFile file) {
+        if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
+            return parseExcel(file);
+        }
+        if (fileName.endsWith(".csv")) {
+            return parseCsv(file);
+        }
+        throw new IllegalArgumentException("CSV 또는 Excel(xlsx/xls) 파일만 업로드할 수 있습니다.");
+    }
+
+    private List<List<String>> parseCsv (MultipartFile file) {
+        List<List<String>> rows = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.isBlank()) {
+                    continue;
+                }
+                if (rows.isEmpty() && line.startsWith("\uFEFF")) {
+                    line = line.substring(1);
+                }
+                List<String> parsedRow = parseCsvLine(line);
+                if (parsedRow.size() > IMPORT_MAX_COLUMNS) {
+                    throw new ResponseStatusException(
+                        HttpStatus.PAYLOAD_TOO_LARGE,
+                        "업로드 가능한 최대 열 수(" + IMPORT_MAX_COLUMNS + "열)를 초과했습니다."
+                    );
+                }
+                if (rows.size() >= IMPORT_MAX_ROWS) {
+                    throw new ResponseStatusException(
+                        HttpStatus.PAYLOAD_TOO_LARGE,
+                        "업로드 가능한 최대 행 수(" + IMPORT_MAX_ROWS + "행)를 초과했습니다."
+                    );
+                }
+                rows.add(parsedRow);
+            }
+        } catch (IOException e) {
+            throw new IllegalArgumentException("CSV 파일을 읽는 중 오류가 발생했습니다.");
+        }
+        return rows;
+    }
+
+    private List<String> parseCsvLine (String line) {
+        List<String> values = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        boolean inQuotes = false;
+
+        for (int i = 0; i < line.length(); i++) {
+            char ch = line.charAt(i);
+            if (ch == '"') {
+                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                    sb.append('"');
+                    i++;
+                    continue;
+                }
+                inQuotes = !inQuotes;
+                continue;
+            }
+            if (ch == ',' && !inQuotes) {
+                values.add(sb.toString().trim());
+                sb.setLength(0);
+                continue;
+            }
+            sb.append(ch);
+        }
+        values.add(sb.toString().trim());
+        return values;
+    }
+
+    private List<List<String>> parseExcel (MultipartFile file) {
+        List<List<String>> rows = new ArrayList<>();
+        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+            var sheet = workbook.getSheetAt(0);
+            if (sheet.getLastRowNum() + 1 > IMPORT_MAX_ROWS) {
+                throw new ResponseStatusException(
+                    HttpStatus.PAYLOAD_TOO_LARGE,
+                    "업로드 가능한 최대 행 수(" + IMPORT_MAX_ROWS + "행)를 초과했습니다."
+                );
+            }
+            for (int rowIdx = 0; rowIdx <= sheet.getLastRowNum(); rowIdx++) {
+                Row row = sheet.getRow(rowIdx);
+                if (row == null) {
+                    rows.add(List.of());
+                    continue;
+                }
+                int lastCell = Math.max(0, row.getLastCellNum());
+                if (lastCell > IMPORT_MAX_COLUMNS) {
+                    throw new ResponseStatusException(
+                        HttpStatus.PAYLOAD_TOO_LARGE,
+                        "업로드 가능한 최대 열 수(" + IMPORT_MAX_COLUMNS + "열)를 초과했습니다."
+                    );
+                }
+                List<String> values = new ArrayList<>();
+                for (int col = 0; col <= lastCell; col++) {
+                    values.add(cellToString(row.getCell(col)));
+                }
+                rows.add(values);
+            }
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Excel 파일을 읽는 중 오류가 발생했습니다.");
+        }
+        return rows;
+    }
+
+    private String cellToString (Cell cell) {
+        if (cell == null) {
+            return "";
+        }
+        if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
+            return cell.getLocalDateTimeCellValue().toLocalDate().toString();
+        }
+        return DATA_FORMATTER.formatCellValue(cell).trim();
+    }
+}
