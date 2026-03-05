@@ -7,6 +7,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.poi.EmptyFileException;
+import org.apache.poi.EncryptedDocumentException;
+import org.apache.poi.UnsupportedFileFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -19,7 +22,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class FileParsingService {
     private static final long IMPORT_MAX_FILE_SIZE_BYTES = 10L * 1024L * 1024L;
     private static final int IMPORT_MAX_ROWS = 20_000;
@@ -73,7 +79,11 @@ public class FileParsingService {
                 rows.add(parsedRow);
             }
         } catch (IOException e) {
-            throw new IllegalArgumentException("CSV 파일을 읽는 중 오류가 발생했습니다.");
+            log.warn("CSV parse I/O error: sizeBytes={}, exceptionType={}",
+                     file.getSize(),
+                     e.getClass().getSimpleName(),
+                     e);
+            throw new IllegalArgumentException("CSV 파일을 읽는 중 오류가 발생했습니다.", e);
         }
         return rows;
     }
@@ -136,8 +146,24 @@ public class FileParsingService {
             }
         } catch (ResponseStatusException e) {
             throw e;
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Excel 파일을 읽는 중 오류가 발생했습니다.");
+        } catch (IOException e) {
+            log.warn("Excel parse I/O error: sizeBytes={}, exceptionType={}",
+                     file.getSize(),
+                     e.getClass().getSimpleName(),
+                     e);
+            throw new IllegalArgumentException("Excel 파일을 읽는 중 오류가 발생했습니다.", e);
+        } catch (EncryptedDocumentException | UnsupportedFileFormatException | EmptyFileException e) {
+            log.warn("Excel parse format error: sizeBytes={}, exceptionType={}",
+                     file.getSize(),
+                     e.getClass().getSimpleName(),
+                     e);
+            throw new IllegalArgumentException("Excel 파일 형식이 올바르지 않거나 손상되었습니다.", e);
+        } catch (RuntimeException e) {
+            log.error("Excel parse unexpected runtime error: sizeBytes={}, exceptionType={}",
+                      file.getSize(),
+                      e.getClass().getSimpleName(),
+                      e);
+            throw new IllegalArgumentException("Excel 파일을 읽는 중 오류가 발생했습니다.", e);
         }
         return rows;
     }
