@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type ChangeEvent } from 'react';
+import { useState, useEffect, useMemo, useRef, type ChangeEvent } from 'react';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
 import {
@@ -24,6 +24,13 @@ import {
     TransactionImportPreviewResponse,
     TransactionImportCommitRequest,
 } from '../types/finance';
+import {
+    normalizeDirectionType,
+    toCommitPayloadRow,
+    toIdString,
+    validateImportRow,
+    type TransactionDirectionType,
+} from '../utils/transactionImportValidation';
 import '../styles/components/TransactionImportDialog.css';
 
 interface TransactionImportDialogProps {
@@ -31,24 +38,8 @@ interface TransactionImportDialogProps {
     onOpenChange: (open: boolean) => void;
 }
 
-const normalizeDirectionType = (
-    previewDirection?: TransactionImportPreviewResponse['rows'][number]['transactionDirection'],
-    categoryType?: TransactionImportPreviewResponse['availableCategories'][number]['type']
-): 'INCOME' | 'EXPENSE' | 'UNKNOWN' => {
-    if (previewDirection === 'CREDIT') {
-        return 'INCOME';
-    }
-    if (previewDirection === 'DEBIT') {
-        return 'EXPENSE';
-    }
-    if (categoryType === 'INCOME' || categoryType === 'EXPENSE') {
-        return categoryType;
-    }
-    return 'UNKNOWN';
-};
-
 const getDirectionFilteredCategories = (
-    directionType: 'INCOME' | 'EXPENSE' | 'UNKNOWN',
+    directionType: TransactionDirectionType,
     categories: TransactionImportPreviewResponse['availableCategories']
 ): TransactionImportPreviewResponse['availableCategories'] => {
     if (directionType === 'INCOME' || directionType === 'EXPENSE') {
@@ -57,7 +48,7 @@ const getDirectionFilteredCategories = (
     return categories;
 };
 
-const directionAmountLabel = (directionType: 'INCOME' | 'EXPENSE' | 'UNKNOWN') => {
+const directionAmountLabel = (directionType: TransactionDirectionType) => {
     if (directionType === 'INCOME') {
         return '입금';
     }
@@ -67,7 +58,7 @@ const directionAmountLabel = (directionType: 'INCOME' | 'EXPENSE' | 'UNKNOWN') =
     return '금액';
 };
 
-const directionAmountClass = (directionType: 'INCOME' | 'EXPENSE' | 'UNKNOWN') => {
+const directionAmountClass = (directionType: TransactionDirectionType) => {
     if (directionType === 'INCOME') {
         return 'text-green-600';
     }
@@ -75,13 +66,6 @@ const directionAmountClass = (directionType: 'INCOME' | 'EXPENSE' | 'UNKNOWN') =
         return 'text-red-600';
     }
     return 'text-foreground';
-};
-
-const toIdString = (value: string | number | null | undefined) => {
-    if (value == null) {
-        return '';
-    }
-    return String(value);
 };
 
 const sanitizeCategoryName = (categoryName: string) => categoryName
@@ -171,39 +155,49 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
         }));
     };
 
-    const getPreviewRow = (rowIndex: number) => importPreview?.rows.find((previewRow) => previewRow.rowIndex === rowIndex);
-
-    const isImportRowReady = (commitRow: TransactionImportCommitRequest['rows'][number]) => {
+    const previewRowsByIndex = useMemo(() => {
+        const rowsByIndex = new Map<number, TransactionImportPreviewResponse['rows'][number]>();
         if (!importPreview) {
-            return false;
+            return rowsByIndex;
         }
+        importPreview.rows.forEach((row) => {
+            rowsByIndex.set(row.rowIndex, row);
+        });
+        return rowsByIndex;
+    }, [importPreview]);
 
-        const previewRow = getPreviewRow(commitRow.rowIndex);
-        if (!previewRow || previewRow.errors.length > 0) {
-            return false;
+    const categoriesById = useMemo(() => {
+        const map = new Map<string, TransactionImportPreviewResponse['availableCategories'][number]>();
+        if (!importPreview) {
+            return map;
         }
-        if (!commitRow.accountId || !commitRow.categoryId) {
-            return false;
-        }
-        const selectedCategory = importPreview.availableCategories.find(
-            (category) => toIdString(category.id) === commitRow.categoryId
-        );
-        if (!selectedCategory) {
-            return false;
-        }
-        const rowDirectionType = normalizeDirectionType(previewRow.transactionDirection, selectedCategory.type);
-        if (rowDirectionType !== 'UNKNOWN' && selectedCategory.type !== rowDirectionType) {
-            return false;
-        }
-        if (rowDirectionType === 'EXPENSE') {
-            if (!commitRow.paymentId) {
-                return false;
-            }
-        }
-        return true;
-    };
+        importPreview.availableCategories.forEach((category) => {
+            map.set(toIdString(category.id), category);
+        });
+        return map;
+    }, [importPreview]);
 
-    const unresolvedImportRows = importRows.filter((row) => !isImportRowReady(row));
+    const validationResults = useMemo(
+        () => importRows.map((commitRow) => validateImportRow({
+            importPreview,
+            commitRow,
+            previewRow: previewRowsByIndex.get(commitRow.rowIndex),
+            categoryById: categoriesById,
+        })),
+        [importRows, importPreview, previewRowsByIndex, categoriesById]
+    );
+
+    const validationByRowIndex = useMemo(
+        () => new Map(validationResults.map((result) => [result.rowIndex, result])),
+        [validationResults]
+    );
+
+    const unresolvedRowIndexSet = useMemo(
+        () => new Set(validationResults.filter((result) => !result.isReady).map((result) => result.rowIndex)),
+        [validationResults]
+    );
+
+    const unresolvedImportRows = importRows.filter((row) => unresolvedRowIndexSet.has(row.rowIndex));
     const unresolvedIssues = importPreview?.unresolvedIssues ?? [];
     const issueFieldLabels: Record<string, string> = {
         accountName: '계좌',
@@ -259,7 +253,7 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
     const canCommitImport = Boolean(
         importPreview &&
             importRows.length > 0 &&
-            unresolvedImportRows.length === 0 &&
+            validationResults.every((result) => result.isReady) &&
             importPreview.summary.invalidRows === 0 &&
             !importCommitMut.isPending
     );
@@ -312,13 +306,8 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
         }
 
         const payloadRows = importRows
-            .filter(isImportRowReady)
-            .map((row) => ({
-                ...row,
-                accountId: String(row.accountId),
-                categoryId: String(row.categoryId),
-                paymentId: row.paymentId ? String(row.paymentId) : undefined,
-            }));
+            .filter((_, index) => validationResults[index]?.isReady)
+            .map((row) => toCommitPayloadRow(row));
 
         if (payloadRows.length !== importRows.length) {
             toast.error('미해결 항목을 먼저 매핑해야 업로드할 수 있습니다.');
@@ -446,17 +435,15 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
                                 && normalizeAmountLikeText(previewRow.categoryName) === String(previewRow.amount);
                             const isZeroCategory = isZeroLikeAmountValue(previewRow.categoryName);
                             const safeCategoryLabel = isCategoryLikeAmount || isZeroCategory ? '' : categoryLabel;
-                            const selectedCategory = importPreview.availableCategories.find(
-                                (category) => toIdString(category.id) === commitRow.categoryId
-                            );
-                            const resolvedDirection = normalizeDirectionType(previewRow.transactionDirection, selectedCategory?.type);
+                            const selectedCategory = categoriesById.get(commitRow.categoryId);
+                            const validation = validationByRowIndex.get(previewRow.rowIndex);
+                            const resolvedDirection = validation?.resolvedDirection
+                                ?? normalizeDirectionType(previewRow.transactionDirection, selectedCategory?.type);
                             const needPayment = resolvedDirection === 'EXPENSE';
                             const directionedCategories = getDirectionFilteredCategories(resolvedDirection, importPreview.availableCategories);
                             const previewDirectionLabel = directionAmountLabel(resolvedDirection);
                             const previewDirectionClass = directionAmountClass(resolvedDirection);
-                            const isCategoryMismatch = resolvedDirection !== 'UNKNOWN'
-                                && selectedCategory
-                                && selectedCategory.type !== resolvedDirection;
+                            const isCategoryMismatch = validation?.reason === 'DIRECTION_MISMATCH';
 
                             return (
                                 <div key={`import-preview-${previewRow.rowIndex}`} className="finance-import-card">
