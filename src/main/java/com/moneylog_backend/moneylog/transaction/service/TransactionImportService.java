@@ -27,9 +27,11 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -57,6 +59,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TransactionImportService {
     private static final String UNMAPPED_REFERENCE_LABEL = "<미입력>";
+    private static final long IMPORT_MAX_FILE_SIZE_BYTES = 10L * 1024L * 1024L;
+    private static final int IMPORT_MAX_ROWS = 20_000;
+    private static final int IMPORT_MAX_COLUMNS = 200;
 
     private static final List<DateTimeFormatter> SUPPORTED_DATE_FORMATS = List.of(
         DateTimeFormatter.ISO_LOCAL_DATE,
@@ -97,6 +102,9 @@ public class TransactionImportService {
     public TransactionImportPreviewResponse previewImport (MultipartFile file, Integer userId) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("업로드할 파일이 없습니다.");
+        }
+        if (file.getSize() > IMPORT_MAX_FILE_SIZE_BYTES) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "업로드 가능한 파일 크기(10MB)를 초과했습니다.");
         }
 
         String fileName = safeFileName(file.getOriginalFilename()).toLowerCase();
@@ -220,7 +228,20 @@ public class TransactionImportService {
                 if (rows.isEmpty() && line.startsWith("\uFEFF")) {
                     line = line.substring(1);
                 }
-                rows.add(parseCsvLine(line));
+                List<String> parsedRow = parseCsvLine(line);
+                if (parsedRow.size() > IMPORT_MAX_COLUMNS) {
+                    throw new ResponseStatusException(
+                        HttpStatus.PAYLOAD_TOO_LARGE,
+                        "업로드 가능한 최대 열 수(" + IMPORT_MAX_COLUMNS + "열)를 초과했습니다."
+                    );
+                }
+                if (rows.size() >= IMPORT_MAX_ROWS) {
+                    throw new ResponseStatusException(
+                        HttpStatus.PAYLOAD_TOO_LARGE,
+                        "업로드 가능한 최대 행 수(" + IMPORT_MAX_ROWS + "행)를 초과했습니다."
+                    );
+                }
+                rows.add(parsedRow);
             }
         } catch (IOException e) {
             throw new IllegalArgumentException("CSV 파일을 읽는 중 오류가 발생했습니다.");
@@ -259,6 +280,12 @@ public class TransactionImportService {
         List<List<String>> rows = new ArrayList<>();
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
             var sheet = workbook.getSheetAt(0);
+            if (sheet.getLastRowNum() + 1 > IMPORT_MAX_ROWS) {
+                throw new ResponseStatusException(
+                    HttpStatus.PAYLOAD_TOO_LARGE,
+                    "업로드 가능한 최대 행 수(" + IMPORT_MAX_ROWS + "행)를 초과했습니다."
+                );
+            }
             for (int rowIdx = 0; rowIdx <= sheet.getLastRowNum(); rowIdx++) {
                 Row row = sheet.getRow(rowIdx);
                 if (row == null) {
@@ -266,12 +293,20 @@ public class TransactionImportService {
                     continue;
                 }
                 int lastCell = Math.max(0, row.getLastCellNum());
+                if (lastCell > IMPORT_MAX_COLUMNS) {
+                    throw new ResponseStatusException(
+                        HttpStatus.PAYLOAD_TOO_LARGE,
+                        "업로드 가능한 최대 열 수(" + IMPORT_MAX_COLUMNS + "열)를 초과했습니다."
+                    );
+                }
                 List<String> values = new ArrayList<>();
                 for (int col = 0; col <= lastCell; col++) {
                     values.add(cellToString(row.getCell(col)));
                 }
                 rows.add(values);
             }
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (Exception e) {
             throw new IllegalArgumentException("Excel 파일을 읽는 중 오류가 발생했습니다.");
         }
