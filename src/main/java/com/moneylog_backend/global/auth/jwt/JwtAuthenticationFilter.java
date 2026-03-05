@@ -24,8 +24,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtProvider jwtProvider;
     private final RedisService redisService;
-
-    private static final long REFRESH_THRESHOLD = 1000 * 60 * 5;
+    private final JwtProperties jwtProperties;
+    private final RedisTokenKeyResolver redisTokenKeyResolver;
 
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER_PREFIX = "Bearer ";
@@ -40,7 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(token) && jwtProvider.validateToken(token)) {
             // 3. ⭐ Redis 블랙리스트 확인 (로그아웃된 토큰인지)
             // 키: "BL:토큰값" 이 존재하면 로그아웃된 상태임
-            if (redisService.hasKey("BL:" + token)) {
+            if (redisService.hasKey(redisTokenKeyResolver.blacklist(token))) {
                 // 로그아웃된 토큰으로 접근 시 에러 처리 (여기선 간단히 401 에러로 넘기거나 예외 발생)
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그아웃된 사용자입니다.");
                 return; // 필터 체인 중단
@@ -51,8 +51,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UserDetails userDetails = customUserDetailsService.loadUserByUsername(loginId);
 
                 long remainingTime = jwtProvider.getExpiration(token);
+                long refreshThresholdMillis = jwtProperties.getAccessTokenRefreshThresholdInSeconds() * 1000;
 
-                if (remainingTime > 0 && remainingTime < REFRESH_THRESHOLD) {
+                if (remainingTime > 0 && remainingTime < refreshThresholdMillis) {
                     // 새 토큰 생성
                     String newToken = jwtProvider.createAccessToken(authentication);
 

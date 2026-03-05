@@ -1,6 +1,8 @@
 package com.moneylog_backend.moneylog.user.service;
 
 import com.moneylog_backend.global.auth.jwt.JwtProvider;
+import com.moneylog_backend.global.auth.jwt.JwtProperties;
+import com.moneylog_backend.global.auth.jwt.RedisTokenKeyResolver;
 import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.global.file.FileStorageService;
@@ -43,12 +45,9 @@ public class UserService {
     private static final String PROFILE_REPLACED_REASON = "PROFILE_IMAGE_REPLACED";
     private static final String PROFILE_TX_ROLLBACK_REASON = "PROFILE_IMAGE_TX_ROLLBACK";
     private static final String SIGNUP_TX_ROLLBACK_REASON = "SIGNUP_TX_ROLLBACK";
-    private static final String ACCESS_TOKEN_PREFIX = "RT:";
     private static final String REFRESH_TOKEN_NOT_FOUND = "리프레시 토큰이 없습니다.";
     private static final String REFRESH_TOKEN_MISMATCH = "일치하지 않는 리프레시 토큰입니다.";
     private static final String REFRESH_TOKEN_INVALID = "유효하지 않은 리프레시 토큰입니다.";
-    private static final Duration REFRESH_TOKEN_EXPIRE = Duration.ofDays(14);
-    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1800L;
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final PasswordEncoder passwordEncoder;
@@ -56,6 +55,8 @@ public class UserService {
     private final BankRepository bankRepository;
     private final RedisService redisService;
     private final JwtProvider jwtProvider;
+    private final JwtProperties jwtProperties;
+    private final RedisTokenKeyResolver redisTokenKeyResolver;
     private final FormatUtils formatUtils;
     private final UserMapper userMapper;
     private final FileStorageService fileStorageService;
@@ -93,13 +94,17 @@ public class UserService {
         String refreshToken = jwtProvider.createRefreshToken(authentication);
         // 4. Redis에 Refresh Token 저장
         // Key: "RT:{아이디}", Value: {리프레시 토큰}, Duration: 14일
-        redisService.setValues(ACCESS_TOKEN_PREFIX + authentication.getName(), refreshToken, REFRESH_TOKEN_EXPIRE);
+        redisService.setValues(
+            redisTokenKeyResolver.refreshToken(authentication.getName()),
+            refreshToken,
+            Duration.ofSeconds(jwtProperties.getRefreshTokenValidityInSeconds())
+        );
         // 5. 토큰 반환
         return TokenResponse.builder()
                             .grantType("Bearer")
                             .accessToken(accessToken)
                             .refreshToken(refreshToken)
-                            .accessTokenExpireTime(ACCESS_TOKEN_EXPIRE_TIME)
+                            .accessTokenExpireTime(jwtProperties.getAccessTokenValidityInSeconds())
                             .build();
     }
 
@@ -111,7 +116,7 @@ public class UserService {
         }
 
         String loginId = jwtProvider.getAuthentication(refreshToken).getName();
-        String savedRefreshToken = redisService.getValues(ACCESS_TOKEN_PREFIX + loginId);
+        String savedRefreshToken = redisService.getValues(redisTokenKeyResolver.refreshToken(loginId));
 
         if (savedRefreshToken == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, REFRESH_TOKEN_NOT_FOUND);
@@ -124,13 +129,17 @@ public class UserService {
         Authentication authentication = jwtProvider.getAuthentication(refreshToken);
         String newAccessToken = jwtProvider.createAccessToken(authentication);
         String newRefreshToken = jwtProvider.createRefreshToken(authentication);
-        redisService.setValues(ACCESS_TOKEN_PREFIX + loginId, newRefreshToken, REFRESH_TOKEN_EXPIRE);
+        redisService.setValues(
+            redisTokenKeyResolver.refreshToken(loginId),
+            newRefreshToken,
+            Duration.ofSeconds(jwtProperties.getRefreshTokenValidityInSeconds())
+        );
 
         return TokenResponse.builder()
                             .grantType("Bearer")
                             .accessToken(newAccessToken)
                             .refreshToken(newRefreshToken)
-                            .accessTokenExpireTime(ACCESS_TOKEN_EXPIRE_TIME)
+                            .accessTokenExpireTime(jwtProperties.getAccessTokenValidityInSeconds())
                             .build();
     }
 
@@ -139,10 +148,10 @@ public class UserService {
         Long expiration = jwtProvider.getExpiration(accessToken);
         // 2. 시간이 남았다면, 블랙리스트 등록
         if (expiration > 0) {
-            redisService.setValues("BL:" + accessToken, "Logout", Duration.ofMillis(expiration));
+            redisService.setValues(redisTokenKeyResolver.blacklist(accessToken), "Logout", Duration.ofMillis(expiration));
         }
         // 3. Refresh Token 삭제
-        redisService.deleteValues(ACCESS_TOKEN_PREFIX + id);
+        redisService.deleteValues(redisTokenKeyResolver.refreshToken(id));
     }
 
     public UserDto getUserInfo (String loginId) {

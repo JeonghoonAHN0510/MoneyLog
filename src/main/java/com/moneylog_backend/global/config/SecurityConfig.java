@@ -1,7 +1,9 @@
 package com.moneylog_backend.global.config;
 
 import com.moneylog_backend.global.auth.jwt.JwtAuthenticationFilter;
+import com.moneylog_backend.global.auth.jwt.JwtProperties;
 import com.moneylog_backend.global.auth.jwt.JwtProvider;
+import com.moneylog_backend.global.auth.jwt.RedisTokenKeyResolver;
 import com.moneylog_backend.global.auth.security.CustomUserDetailsService;
 import com.moneylog_backend.global.util.RedisService;
 
@@ -29,6 +31,8 @@ public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtProvider jwtProvider;
     private final RedisService redisService;
+    private final JwtProperties jwtProperties;
+    private final RedisTokenKeyResolver redisTokenKeyResolver;
 
     @Bean
     public SecurityFilterChain filterChain (HttpSecurity httpSecurity) throws Exception {
@@ -54,7 +58,8 @@ public class SecurityConfig {
                                                .hasRole("ADMIN")
                                                .anyRequest()
                                                .authenticated())
-            .addFilterBefore(new JwtAuthenticationFilter(customUserDetailsService, jwtProvider, redisService),
+            .addFilterBefore(new JwtAuthenticationFilter(customUserDetailsService, jwtProvider, redisService,
+                                                         jwtProperties, redisTokenKeyResolver),
                              UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();
     }
