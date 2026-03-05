@@ -25,6 +25,15 @@ public class TransactionImportCommitValidator {
     private final TransactionCategoryPaymentRuleValidator transactionCategoryPaymentRuleValidator;
 
     public void validateCommitRow (TransactionImportCommitRowDto row, Integer userId) {
+        if (row.getTitle() == null || row.getTitle().isBlank()) {
+            throw new IllegalArgumentException("제목은 필수입니다.");
+        }
+        if (row.getTitle().length() > 100) {
+            throw new IllegalArgumentException("제목은 100자 이내여야 합니다.");
+        }
+        if (row.getMemo() != null && row.getMemo().length() > 500) {
+            throw new IllegalArgumentException("메모는 500자 이내여야 합니다.");
+        }
         if (row.getTradingAt() == null) {
             throw new IllegalArgumentException("거래일은 필수입니다.");
         }
