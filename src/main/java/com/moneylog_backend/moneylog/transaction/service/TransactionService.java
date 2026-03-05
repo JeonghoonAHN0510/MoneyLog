@@ -31,6 +31,7 @@ import com.moneylog_backend.moneylog.transaction.installment.entity.CardInstallm
 import com.moneylog_backend.moneylog.transaction.installment.repository.CardInstallmentPlanRepository;
 import com.moneylog_backend.moneylog.transaction.mapper.TransactionMapper;
 import com.moneylog_backend.moneylog.transaction.repository.TransactionRepository;
+import com.moneylog_backend.moneylog.transaction.validation.TransactionCategoryPaymentRuleValidator;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -56,6 +57,7 @@ public class TransactionService {
     private final TransactionMapper transactionMapper;
     private final CategoryMapper categoryMapper;
     private final TransactionSettlementService transactionSettlementService;
+    private final TransactionCategoryPaymentRuleValidator transactionCategoryPaymentRuleValidator;
 
     @Transactional
     public int saveTransaction (TransactionReqDto transactionReqDto, Integer userId) {
@@ -76,9 +78,7 @@ public class TransactionService {
         }
 
         if (CategoryEnum.INCOME.equals(type)) {
-            if (transactionReqDto.getPaymentId() != null) {
-                throw new IllegalArgumentException("수입 카테고리에는 결제수단을 지정할 수 없습니다.");
-            }
+            transactionCategoryPaymentRuleValidator.validateIncomePaymentForbidden(type, transactionReqDto.getPaymentId());
             if (transactionReqDto.isInstallment()) {
                 throw new IllegalArgumentException("수입 카테고리에는 할부를 적용할 수 없습니다.");
             }
@@ -144,9 +144,7 @@ public class TransactionService {
         if (CategoryEnum.EXPENSE.equals(newType)) {
             validatePaymentOwnership(newPaymentId, userId);
         } else {
-            if (newPaymentId != null) {
-                throw new IllegalArgumentException("수입 카테고리에는 결제수단을 지정할 수 없습니다.");
-            }
+            transactionCategoryPaymentRuleValidator.validateIncomePaymentForbidden(newType, newPaymentId);
         }
 
         Integer newAmount = transactionReqDto.getAmount();

@@ -12,6 +12,7 @@ import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
 import com.moneylog_backend.moneylog.payment.entity.PaymentEntity;
 import com.moneylog_backend.moneylog.payment.repository.PaymentRepository;
 import com.moneylog_backend.moneylog.transaction.dto.req.TransactionImportCommitRowDto;
+import com.moneylog_backend.moneylog.transaction.validation.TransactionCategoryPaymentRuleValidator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +22,7 @@ public class TransactionImportCommitValidator {
     private final AccountRepository accountRepository;
     private final CategoryRepository categoryRepository;
     private final PaymentRepository paymentRepository;
+    private final TransactionCategoryPaymentRuleValidator transactionCategoryPaymentRuleValidator;
 
     public void validateCommitRow (TransactionImportCommitRowDto row, Integer userId) {
         if (row.getTradingAt() == null) {
@@ -52,9 +54,7 @@ public class TransactionImportCommitValidator {
                 throw new IllegalArgumentException("권한이 없는 결제수단입니다.");
             }
         }
-        if (CategoryEnum.INCOME.equals(categoryEntity.getType()) && row.getPaymentId() != null) {
-            throw new IllegalArgumentException("수입 카테고리에는 결제수단을 지정할 수 없습니다.");
-        }
+        transactionCategoryPaymentRuleValidator.validateIncomePaymentForbidden(categoryEntity.getType(), row.getPaymentId());
         if (row.getAmount() == null || row.getAmount() <= 0) {
             throw new IllegalArgumentException("금액은 1 이상이어야 합니다.");
         }
