@@ -17,19 +17,33 @@ import { TransactionList } from '../components/TransactionList';
 import { AddTransactionDialog } from '../components/AddTransactionDialog';
 import { EditTransactionDialog } from '../components/EditTransactionDialog';
 import { TransferDialog } from '../components/TransferDialog';
+import { TransactionImportDialog } from '../components/TransactionImportDialog';
 import { ScheduleDialog } from '../components/ScheduleDialog';
 import { TakeHomeCalculator } from '../components/TakeHomeCalculator';
 import { BudgetManager } from '../components/BudgetManager';
 import { AccountManager } from '../components/AccountManager';
 import { CategoryManager } from '../components/CategoryManager';
 import { Budget, Category, Account, Transaction, Payment, Transfer, Fixed } from '../types/finance';
-import { Plus, Wallet, Calendar, ChartBar, Calculator, Target, List, LogOut, ImagePlus } from 'lucide-react';
+import {
+    Plus,
+    Wallet,
+    Calendar,
+    ChartBar,
+    Calculator,
+    Target,
+    List,
+    LogOut,
+    ImagePlus,
+    RefreshCcw,
+    Upload
+} from 'lucide-react';
 import { toast } from 'sonner';
 import useUserStore from '../stores/authStore';
 import api from '../api/axiosConfig';
 import {
     useUserInfo,
     useUpdateProfileImage,
+    useRefreshToken,
     useAddTransaction,
     useUpdateTransaction,
     useDeleteTransaction,
@@ -54,13 +68,14 @@ import '../styles/pages/FinancePage.css';
 
 export default function FinancePage() {
     const navigate = useNavigate();
-    const { isAuthenticated, logout } = useUserStore();
+    const { isAuthenticated, logout, refreshToken, setTokens } = useUserStore();
 
     // UI 상태
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
     const [isEditTransactionDialogOpen, setIsEditTransactionDialogOpen] = useState(false);
     const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+    const [isTransactionImportOpen, setIsTransactionImportOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
     const profileImageInputRef = useRef<HTMLInputElement | null>(null);
@@ -74,6 +89,7 @@ export default function FinancePage() {
 
     // --- [TanStack Query] 서버 데이터 ---
     const { data: userInfo, isLoading: userInfoLoading, isError: userInfoError } = useUserInfo();
+    const refreshTokenMut = useRefreshToken();
 
     // 로그인 체크
     useEffect(() => {
@@ -101,6 +117,24 @@ export default function FinancePage() {
         } catch (error) {
             logout();
             navigate('/');
+        }
+    };
+
+    const handleRefreshSession = async () => {
+        if (!refreshToken) {
+            toast.error('리프레시 토큰이 없습니다.');
+            return;
+        }
+
+        try {
+            const result = await refreshTokenMut.mutateAsync({ refreshToken });
+            setTokens(result.accessToken, result.refreshToken);
+            api.defaults.headers.common['Authorization'] = `Bearer ${result.accessToken}`;
+            toast.success('로그인 세션이 연장되었습니다.');
+        } catch (e) {
+            toast.error(getApiErrorMessage(e, '로그인 연장에 실패했습니다.'));
+            logout();
+            navigate('/login');
         }
     };
 
@@ -185,6 +219,7 @@ export default function FinancePage() {
         setEditingTransaction(transaction);
         setIsEditTransactionDialogOpen(true);
     };
+
 
     // --- [Budget CRUD] ---
     const handleAddBudget = async (budget: Omit<Budget, 'budgetId' | "userId" | "budgetDate" | "createdAt" | "updatedAt" | "categoryName">) => {
@@ -391,6 +426,15 @@ export default function FinancePage() {
                                     <span>프로필 이미지 변경</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    onClick={handleRefreshSession}
+                                    className="cursor-pointer"
+                                    disabled={refreshTokenMut.isPending}
+                                >
+                                    <RefreshCcw className="mr-2 h-4 w-4" />
+                                    <span>로그인 연장</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => setIsScheduleDialogOpen(true)} className="cursor-pointer">
                                     <Target className="mr-2 h-4 w-4" />
                                     <span>스케줄 설정</span>
@@ -459,6 +503,10 @@ export default function FinancePage() {
                     </TabsContent>
 
                     <TabsContent value="transactions" className="finance-tab-content">
+                        <Button size="sm" onClick={() => setIsTransactionImportOpen(true)}>
+                            <Upload className="h-4 w-4 mr-2" />
+                            거래 업로드(CSV/Excel)
+                        </Button>
                         <TransactionList
                             onEdit={handleEditTransaction}
                             onDelete={handleDeleteTransaction}
@@ -522,6 +570,11 @@ export default function FinancePage() {
             <ScheduleDialog
                 open={isScheduleDialogOpen}
                 onOpenChange={setIsScheduleDialogOpen}
+            />
+
+            <TransactionImportDialog
+                open={isTransactionImportOpen}
+                onOpenChange={setIsTransactionImportOpen}
             />
         </div>
     );

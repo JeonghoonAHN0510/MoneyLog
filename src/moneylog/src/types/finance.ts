@@ -44,6 +44,7 @@ export interface Transaction {
   amount: number;
   memo: string;
   installmentCount?: number;
+  flowDirection?: 'INCOME' | 'EXPENSE' | 'UNKNOWN';
   categoryType: 'INCOME' | 'EXPENSE';
   categoryName: string;
   paymentName: string;
@@ -129,4 +130,76 @@ export interface DashboardData {
   totalExpense: number;
   totalBalance: number;
   categoryStats: CategoryStats[];
+}
+
+export interface TransactionImportReference {
+  id: string | number;
+  name: string;
+  type?: 'INCOME' | 'EXPENSE' | 'ACCOUNT' | 'PAYMENT';
+}
+
+export interface TransactionImportUnresolvedIssue {
+  rowIndex: number;
+  field: string;
+  rawValue: string;
+  headerColumnLabel: string;
+  reasonCode: string;
+  valueHint: string;
+}
+
+export interface TransactionImportPreviewRow {
+  rowIndex: number;
+  tradingAt: string;
+  title: string;
+  amount: number;
+  transactionDirection?: 'DEBIT' | 'CREDIT' | 'UNKNOWN';
+  memo: string;
+  accountName: string;
+  categoryName: string;
+  paymentName: string;
+  resolvedAccountId?: string;
+  resolvedCategoryId?: string;
+  resolvedPaymentId?: string;
+  unresolvedFields: string[];
+  errors: string[];
+}
+
+export interface TransactionImportSummary {
+  totalRows: number;
+  resolvedRows: number;
+  unresolvedRows: number;
+  invalidRows: number;
+}
+
+export interface TransactionImportPreviewResponse {
+  rows: TransactionImportPreviewRow[];
+  summary: TransactionImportSummary;
+  unresolvedAccounts: string[];
+  unresolvedCategories: string[];
+  unresolvedPayments: string[];
+  unresolvedIssues: TransactionImportUnresolvedIssue[];
+  availableAccounts: TransactionImportReference[];
+  availableCategories: TransactionImportReference[];
+  availablePayments: TransactionImportReference[];
+}
+
+export interface TransactionImportCommitRow {
+  rowIndex: number;
+  tradingAt: string;
+  title: string;
+  amount: number;
+  memo?: string;
+  accountId: string;
+  categoryId: string;
+  paymentId?: string;
+}
+
+export interface TransactionImportCommitRequest {
+  rows: TransactionImportCommitRow[];
+}
+
+export interface TransactionImportCommitResponse {
+  requestedCount: number;
+  importedCount: number;
+  transactionIds: string[];
 }

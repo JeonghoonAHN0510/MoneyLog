@@ -1,6 +1,5 @@
 package com.moneylog_backend.global.auth.jwt;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -29,13 +28,11 @@ public class JwtProvider {
     private final long accessTokenValidityTime;
     private final long refreshTokenValidityTime;
 
-    public JwtProvider (@Value("${jwt.secret}") String secret,
-                        @Value("${jwt.access-token-validity-in-seconds}") long accessTokenValidityTime,
-                        @Value("${jwt.refresh-token-validity-in-seconds}") long refreshTokenValidityTime) {
-        byte[] secretBytes = Decoders.BASE64.decode(secret);
+    public JwtProvider (JwtProperties jwtProperties) {
+        byte[] secretBytes = Decoders.BASE64.decode(jwtProperties.getSecret());
         this.key = Keys.hmacShaKeyFor(secretBytes);
-        this.accessTokenValidityTime = accessTokenValidityTime * 1000;
-        this.refreshTokenValidityTime = refreshTokenValidityTime * 1000;
+        this.accessTokenValidityTime = jwtProperties.getAccessTokenValidityInSeconds() * 1000;
+        this.refreshTokenValidityTime = jwtProperties.getRefreshTokenValidityInSeconds() * 1000;
     }
 
     // 1. Access Token 생성

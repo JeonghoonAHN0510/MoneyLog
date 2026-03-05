@@ -41,7 +41,7 @@ api.interceptors.response.use(
         if (newAccessToken) {
             const token = newAccessToken.replace('Bearer ', '');
             
-            useUserStore.getState().setAccessToken(token);
+            authStore.getState().setAccessToken(token);
 
             // Axios 기본 헤더도 갱신
             api.defaults.headers.common['Authorization'] = `Bearer ${token}`;

@@ -14,7 +14,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "./ui/alert-dialog";
-import { useTransactions, useCategories } from '../api/queries';
+import { useTransactions, useTransactionsByDateRange, useCategories } from '../api/queries';
 import { formatKrw } from '../utils/currency';
 import { formatKoreanDate } from '../utils/date';
 
@@ -23,6 +23,10 @@ interface TransactionListProps {
     onEdit: (transaction: Transaction) => void;
     onDelete: (id: string) => void;
 }
+
+const sanitizeCategoryName = (categoryName: string) => categoryName
+    .replace(/^\s*(수입|지출|입금|출금)\s*\/\s*/u, '')
+    .trim();
 
 // =========================================================
 // 1. 개별 거래 항목 컴포넌트 (TransactionItem)
@@ -35,14 +39,24 @@ interface TransactionItemProps {
 }
 
 const TransactionItem = ({ transaction, categoryColor, onEdit, onDeleteClick }: TransactionItemProps) => {
+    const directionType = transaction.flowDirection === 'UNKNOWN' || transaction.flowDirection == null
+        ? transaction.categoryType
+        : transaction.flowDirection;
+    const categoryBadgeClass = directionType === 'INCOME'
+        ? 'bg-emerald-100 text-emerald-700'
+        : directionType === 'EXPENSE'
+            ? 'bg-rose-100 text-rose-700'
+            : '';
+    const categoryLabel = sanitizeCategoryName(transaction.categoryName);
+
     return (
         <div className="flex items-center justify-between p-2 hover:bg-accent/50 transition-colors rounded-md">
             <div className="flex items-center gap-3 flex-1">
                 <div
-                    className={`p-2 rounded-full ${transaction.categoryType === 'INCOME' ? 'bg-green-100' : 'bg-red-100'
+                    className={`p-2 rounded-full ${directionType === 'INCOME' ? 'bg-green-100' : 'bg-red-100'
                         }`}
                 >
-                    {transaction.categoryType === 'INCOME' ? (
+                    {directionType === 'INCOME' ? (
                         <ArrowUpRight className="size-4 text-green-600" />
                     ) : (
                         <ArrowDownRight className="size-4 text-red-600" />
@@ -50,7 +64,7 @@ const TransactionItem = ({ transaction, categoryColor, onEdit, onDeleteClick }: 
                 </div>
                 <div className="flex-1">
                     <div className="flex items-center gap-2">
-                        <span className="font-medium">{transaction.title || transaction.categoryName}</span>
+                            <span className="font-medium">{transaction.title || categoryLabel}</span>
                         {transaction.fixedId && (
                             <Badge variant="secondary" className="text-[10px] px-1 py-0 h-5">
                                 고정
@@ -59,13 +73,12 @@ const TransactionItem = ({ transaction, categoryColor, onEdit, onDeleteClick }: 
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                         <span
-                            className="px-1.5 py-0.5 rounded text-[10px]"
+                            className={`px-1.5 py-0.5 rounded text-[10px] ${categoryBadgeClass || ''}`}
                             style={{
-                                backgroundColor: `${categoryColor}20`,
-                                color: categoryColor,
+                                ...(categoryBadgeClass ? {} : { backgroundColor: `${categoryColor}20`, color: categoryColor }),
                             }}
                         >
-                            {transaction.categoryName}
+                            {categoryLabel}
                         </span>
                         {transaction.paymentName && <span>· {transaction.paymentName}</span>}
                         {transaction.isInstallment && transaction.installmentNo && transaction.installmentTotalCount && (
@@ -82,10 +95,10 @@ const TransactionItem = ({ transaction, categoryColor, onEdit, onDeleteClick }: 
             </div>
             <div className="flex items-center gap-1 md:gap-2">
                 <span
-                    className={`text-sm md:text-base font-semibold ${transaction.categoryType === 'INCOME' ? 'text-green-600' : 'text-red-600'
+                    className={`text-sm md:text-base font-semibold ${directionType === 'INCOME' ? 'text-green-600' : 'text-red-600'
                         }`}
                 >
-                    {transaction.categoryType === 'INCOME' ? '+' : '-'}
+                    {directionType === 'INCOME' ? '입금 + ' : '출금 - '}
                     {formatKrw(transaction.amount)}원
                 </span>
                 <Button
@@ -117,7 +130,16 @@ export function TransactionList({
     onEdit,
     onDelete,
 }: TransactionListProps) {
-    const { data: transactions = [] } = useTransactions();
+    const {
+        data: transactions = [],
+        isLoading: isTransactionsLoading,
+        isError: isTransactionsError,
+    } = useTransactions();
+    const {
+        data: dateTransactions = [],
+        isLoading: isDateTransactionsLoading,
+        isError: isDateTransactionsError,
+    } = useTransactionsByDateRange(selectedDate, selectedDate);
     const { data: categories = [] } = useCategories();
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
@@ -130,12 +152,10 @@ export function TransactionList({
         onDelete(deleteTargetId);
         setDeleteTargetId(null);
     };
-    const filteredTransactions = selectedDate
-        ? transactions.filter((transaction) => {
-            const datePart = transaction.tradingAt.split('T')[0];
-            return datePart === selectedDate;
-        })
-        : transactions;
+    const isDateMode = Boolean(selectedDate);
+    const isLoading = isDateMode ? isDateTransactionsLoading : isTransactionsLoading;
+    const isError = isDateMode ? isDateTransactionsError : isTransactionsError;
+    const filteredTransactions = isDateMode ? dateTransactions : transactions;
 
     const sortedTransactions = [...filteredTransactions].sort(
         (a, b) => new Date(b.tradingAt).getTime() - new Date(a.tradingAt).getTime()
@@ -148,7 +168,8 @@ export function TransactionList({
 
     const getDailyTotal = (transactions: Transaction[]) => {
         return transactions.reduce((acc, curr) => {
-            return curr.categoryType === 'INCOME' ? acc + curr.amount : acc - curr.amount;
+            const directionType = curr.flowDirection ?? curr.categoryType;
+            return directionType === 'INCOME' ? acc + curr.amount : acc - curr.amount;
         }, 0);
     };
 
@@ -170,7 +191,15 @@ export function TransactionList({
                 </CardTitle>
             </CardHeader>
             <CardContent className="px-0">
-                {sortedTransactions.length === 0 ? (
+                {isLoading ? (
+                    <div className="text-center text-muted-foreground py-12 border rounded-lg border-dashed">
+                        거래 내역을 불러오는 중입니다
+                    </div>
+                ) : isError ? (
+                    <div className="text-center text-red-600 py-12 border rounded-lg border-dashed">
+                        거래 내역 조회에 실패했습니다
+                    </div>
+                ) : sortedTransactions.length === 0 ? (
                     <div className="text-center text-muted-foreground py-12 border rounded-lg border-dashed">
                         거래 내역이 없습니다
                     </div>
@@ -191,15 +220,18 @@ export function TransactionList({
                                     </div>
 
                                     <div className="p-2 space-y-1">
-                                        {dateTransactions.map((transaction) => (
-                                            <TransactionItem
-                                                key={transaction.transactionId}
-                                                transaction={transaction}
-                                                categoryColor={getCategoryColor(transaction.categoryName, transaction.categoryType)}
-                                                onEdit={onEdit}
-                                                onDeleteClick={handleDeleteClick}
-                                            />
-                                        ))}
+                                        {dateTransactions.map((transaction) => {
+                                            const categoryLabel = sanitizeCategoryName(transaction.categoryName);
+                                            return (
+                                                <TransactionItem
+                                                    key={transaction.transactionId}
+                                                    transaction={transaction}
+                                                    categoryColor={getCategoryColor(categoryLabel, transaction.categoryType)}
+                                                    onEdit={onEdit}
+                                                    onDeleteClick={handleDeleteClick}
+                                                />
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             );

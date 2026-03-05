@@ -37,7 +37,7 @@ export default function LoginPage() {
       const response = await api.post('/user/login', user);
       const data = await response.data;
       if (data) {
-        login(data.accessToken);
+        login(data.accessToken, data.refreshToken);
         toast.success('로그인 성공!');
         navigate('/finance');
       }

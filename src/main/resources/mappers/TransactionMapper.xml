@@ -45,8 +45,8 @@
             t.is_interest_free AS isInterestFree,
             t.is_settled AS isSettled,
             t.settled_at AS settledAt,
-            t.category_type AS categoryType,
-            c.category_name AS categoryName,
+            c.type AS categoryType,
+            c.name AS categoryName,
             p.name AS paymentName,
             t.trading_at AS tradingAt,
             t.created_at AS createdAt,
@@ -66,7 +66,7 @@
                 AND (t.title LIKE CONCAT('%', #{keyword}, '%') OR t.memo LIKE CONCAT('%', #{keyword}, '%'))
             </if>
             <if test="categoryType != null and categoryType != ''">
-                AND t.category_type = #{categoryType}
+                AND c.type = #{categoryType}
             </if>
             <if test="categoryId != null and categoryId != ''">
                 AND t.category_id = #{categoryId}

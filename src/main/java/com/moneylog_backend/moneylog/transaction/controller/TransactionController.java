@@ -3,12 +3,18 @@ package com.moneylog_backend.moneylog.transaction.controller;
 import com.moneylog_backend.global.auth.annotation.LoginUser;
 import com.moneylog_backend.moneylog.transaction.dto.req.TransactionReqDto;
 import com.moneylog_backend.moneylog.transaction.dto.req.TransactionSearchReqDto;
+import com.moneylog_backend.moneylog.transaction.dto.req.TransactionImportCommitRequest;
+import com.moneylog_backend.moneylog.transaction.dto.res.TransactionImportCommitResponse;
+import com.moneylog_backend.moneylog.transaction.dto.res.TransactionImportPreviewResponse;
 import com.moneylog_backend.moneylog.transaction.service.TransactionService;
+import com.moneylog_backend.moneylog.transaction.service.TransactionImportService;
 
 import java.time.LocalDate;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -18,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TransactionController {
     private final TransactionService transactionService;
+    private final TransactionImportService transactionImportService;
 
     @PostMapping
     public ResponseEntity<?> saveTransaction (@RequestBody @Valid TransactionReqDto transactionReqDto,
@@ -102,5 +110,17 @@ public class TransactionController {
         }
 
         return ResponseEntity.ok(transactionService.getDashboardData(userId, year, month));
+    }
+
+    @PostMapping(value = "/import/preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<TransactionImportPreviewResponse> previewImport (@RequestPart("file") MultipartFile file,
+                                                                        @LoginUser Integer userId) {
+        return ResponseEntity.ok(transactionImportService.previewImport(file, userId));
+    }
+
+    @PostMapping("/import/commit")
+    public ResponseEntity<TransactionImportCommitResponse> commitImport (@RequestBody TransactionImportCommitRequest request,
+                                                                        @LoginUser Integer userId) {
+        return ResponseEntity.ok(transactionImportService.commitImport(request, userId));
     }
 }

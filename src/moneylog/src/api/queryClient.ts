@@ -19,6 +19,9 @@ export const queryKeys = {
     accounts: ['accounts'] as const,
     schedules: ['schedules'] as const,
     transactions: ['transactions'] as const,
+    transactionsByDateRangeRoot: ['transactions', 'by-date-range'] as const,
+    transactionsByDateRange: (startDate: string, endDate: string) =>
+        ['transactions', 'by-date-range', startDate, endDate] as const,
     budgets: ['budgets'] as const,
     userInfo: ['userInfo'] as const,
     dashboard: (year: number, month: number) => ['dashboard', year, month] as const,
