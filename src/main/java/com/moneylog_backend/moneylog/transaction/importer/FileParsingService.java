@@ -7,6 +7,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.csv.CSVException;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.poi.EmptyFileException;
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.UnsupportedFileFormatException;
@@ -54,30 +58,43 @@ public class FileParsingService {
 
     private List<List<String>> parseCsv (MultipartFile file) {
         List<List<String>> rows = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.isBlank()) {
-                    continue;
-                }
-                if (rows.isEmpty() && line.startsWith("\uFEFF")) {
-                    line = line.substring(1);
-                }
-                List<String> parsedRow = parseCsvLine(line);
-                if (parsedRow.size() > IMPORT_MAX_COLUMNS) {
-                    throw new ResponseStatusException(
-                        HttpStatus.PAYLOAD_TOO_LARGE,
-                        "업로드 가능한 최대 열 수(" + IMPORT_MAX_COLUMNS + "열)를 초과했습니다."
-                    );
-                }
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
+                                               .setIgnoreEmptyLines(true)
+                                               .build();
+        try (
+            BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
+            CSVParser parser = csvFormat.parse(reader)
+        ) {
+            for (CSVRecord record : parser) {
                 if (rows.size() >= IMPORT_MAX_ROWS) {
                     throw new ResponseStatusException(
                         HttpStatus.PAYLOAD_TOO_LARGE,
                         "업로드 가능한 최대 행 수(" + IMPORT_MAX_ROWS + "행)를 초과했습니다."
                     );
                 }
+                List<String> parsedRow = new ArrayList<>();
+                for (String value : record) {
+                    parsedRow.add(value == null ? "" : value.trim());
+                }
+                if (rows.isEmpty() && !parsedRow.isEmpty() && parsedRow.get(0).startsWith("\uFEFF")) {
+                    parsedRow.set(0, parsedRow.get(0).substring(1));
+                }
+                if (parsedRow.size() > IMPORT_MAX_COLUMNS) {
+                    throw new ResponseStatusException(
+                        HttpStatus.PAYLOAD_TOO_LARGE,
+                        "업로드 가능한 최대 열 수(" + IMPORT_MAX_COLUMNS + "열)를 초과했습니다."
+                    );
+                }
                 rows.add(parsedRow);
             }
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (CSVException e) {
+            log.warn("CSV parse format error: sizeBytes={}, exceptionType={}",
+                     file.getSize(),
+                     e.getClass().getSimpleName(),
+                     e);
+            throw new IllegalArgumentException("CSV 파일 형식이 올바르지 않거나 손상되었습니다.", e);
         } catch (IOException e) {
             log.warn("CSV parse I/O error: sizeBytes={}, exceptionType={}",
                      file.getSize(),
@@ -86,33 +103,6 @@ public class FileParsingService {
             throw new IllegalArgumentException("CSV 파일을 읽는 중 오류가 발생했습니다.", e);
         }
         return rows;
-    }
-
-    private List<String> parseCsvLine (String line) {
-        List<String> values = new ArrayList<>();
-        StringBuilder sb = new StringBuilder();
-        boolean inQuotes = false;
-
-        for (int i = 0; i < line.length(); i++) {
-            char ch = line.charAt(i);
-            if (ch == '"') {
-                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
-                    sb.append('"');
-                    i++;
-                    continue;
-                }
-                inQuotes = !inQuotes;
-                continue;
-            }
-            if (ch == ',' && !inQuotes) {
-                values.add(sb.toString().trim());
-                sb.setLength(0);
-                continue;
-            }
-            sb.append(ch);
-        }
-        values.add(sb.toString().trim());
-        return values;
     }
 
     private List<List<String>> parseExcel (MultipartFile file) {
