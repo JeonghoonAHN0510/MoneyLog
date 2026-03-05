@@ -49,6 +49,12 @@ export const normalizeDirectionType = (
   return 'UNKNOWN';
 };
 
+const isResolvableDuplicateError = (errorMessage: string) =>
+  /동일한\s*(계좌명|카테고리명|결제수단명).*(중복|애매)/u.test(errorMessage);
+
+const hasBlockingPreviewErrors = (errors: string[]) =>
+  errors.some((errorMessage) => !isResolvableDuplicateError(errorMessage));
+
 interface ValidateImportRowParams {
   importPreview: TransactionImportPreviewResponse | null;
   commitRow: CommitRow;
@@ -74,7 +80,16 @@ export const validateImportRow = ({
   const resolvedPreviewRow =
     previewRow ??
     importPreview.rows.find((row) => row.rowIndex === commitRow.rowIndex);
-  if (!resolvedPreviewRow || resolvedPreviewRow.errors.length > 0) {
+  if (!resolvedPreviewRow) {
+    return {
+      rowIndex: commitRow.rowIndex,
+      isReady: false,
+      reason: 'PREVIEW_ERROR',
+      resolvedDirection: 'UNKNOWN',
+    };
+  }
+
+  if (hasBlockingPreviewErrors(resolvedPreviewRow.errors)) {
     return {
       rowIndex: commitRow.rowIndex,
       isReady: false,

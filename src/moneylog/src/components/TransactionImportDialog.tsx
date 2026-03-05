@@ -187,13 +187,27 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
         [importRows, importPreview, previewRowsByIndex, categoriesById]
     );
 
+    const readyRowsCount = useMemo(
+        () => validationResults.filter((result) => result.isReady).length,
+        [validationResults]
+    );
+
+    const blockingRowsCount = useMemo(
+        () => validationResults.filter((result) => result.reason === 'PREVIEW_ERROR').length,
+        [validationResults]
+    );
+
     const validationByRowIndex = useMemo(
         () => new Map(validationResults.map((result) => [result.rowIndex, result])),
         [validationResults]
     );
 
     const unresolvedRowIndexSet = useMemo(
-        () => new Set(validationResults.filter((result) => !result.isReady).map((result) => result.rowIndex)),
+        () => new Set(
+            validationResults
+                .filter((result) => !result.isReady && result.reason !== 'PREVIEW_ERROR')
+                .map((result) => result.rowIndex)
+        ),
         [validationResults]
     );
 
@@ -253,8 +267,8 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
     const canCommitImport = Boolean(
         importPreview &&
             importRows.length > 0 &&
-            validationResults.every((result) => result.isReady) &&
-            importPreview.summary.invalidRows === 0 &&
+            readyRowsCount === importRows.length &&
+            blockingRowsCount === 0 &&
             !importCommitMut.isPending
     );
 
@@ -275,11 +289,23 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
         try {
             const preview = await importPreviewMut.mutateAsync(file);
             setImportPreview(preview);
-            setImportRows(preview.rows.map(buildDefaultCommitRow));
+            const defaultRows = preview.rows.map(buildDefaultCommitRow);
+            setImportRows(defaultRows);
 
-            if (preview.summary.invalidRows > 0) {
+            const initialRowsByIndex = new Map(preview.rows.map((row) => [row.rowIndex, row]));
+            const initialCategoriesById = new Map(preview.availableCategories.map((category) => [toIdString(category.id), category]));
+            const initialValidationResults = defaultRows.map((commitRow) => validateImportRow({
+                importPreview: preview,
+                commitRow,
+                previewRow: initialRowsByIndex.get(commitRow.rowIndex),
+                categoryById: initialCategoriesById,
+            }));
+            const initialBlockingCount = initialValidationResults.filter((result) => result.reason === 'PREVIEW_ERROR').length;
+            const initialResolvableCount = initialValidationResults.filter((result) => !result.isReady && result.reason !== 'PREVIEW_ERROR').length;
+
+            if (initialBlockingCount > 0) {
                 toast.error('CSV/Excel 업로드 데이터에 오류가 있어 확인이 필요합니다.');
-            } else if (preview.summary.unresolvedRows > 0) {
+            } else if (initialResolvableCount > 0) {
                 toast.warning('미해결 항목이 있어 매핑이 필요합니다.');
             } else {
                 toast.success('미리보기 완료. 바로 업로드할 수 있습니다.');
@@ -295,7 +321,7 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
         if (!importPreview || importRows.length === 0) {
             return;
         }
-        if (importPreview.summary.invalidRows > 0) {
+        if (blockingRowsCount > 0) {
             toast.error('오류가 있는 행이 있어 업로드할 수 없습니다.');
             return;
         }
@@ -363,9 +389,9 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
                     <div className="finance-import-summary">
                         <p>
                             총 {importPreview.summary.totalRows}건 ·
-                            준비 완료 {importPreview.summary.resolvedRows}건 ·
+                            준비 완료 {readyRowsCount}건 ·
                             미해결 {unresolvedImportRows.length}건 ·
-                            오류 {importPreview.summary.invalidRows}건
+                            오류 {blockingRowsCount}건
                         </p>
                         {unresolvedImportRows.length > 0 && (
                             <p className="finance-import-warning">
