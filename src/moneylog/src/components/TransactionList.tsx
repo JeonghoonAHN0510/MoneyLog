@@ -209,7 +209,7 @@ export function TransactionList({
                             const dailyTotal = getDailyTotal(dateTransactions);
 
                             return (
-                                <div key={date} className="overflow-hidden rounded-[1.6rem] border border-white/55 bg-[var(--panel-gradient)] shadow-[var(--shadow-soft)]">
+                                <div key={date} className="overflow-hidden rounded-[1.6rem] border border-white/55 [background:var(--panel-gradient)] shadow-[var(--shadow-soft)]">
                                     <div className="flex items-center justify-between border-b border-white/45 bg-white/48 p-4 backdrop-blur-sm">
                                         <span className="font-medium text-sm text-foreground">
                                             {formatKoreanDate(date)}
@@ -250,7 +250,7 @@ export function TransactionList({
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => setDeleteTargetId(null)}>취소</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700 focus:ring-red-600">삭제</AlertDialogAction>
+                        <AlertDialogAction onClick={confirmDelete} variant="destructive">삭제</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

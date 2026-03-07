@@ -398,8 +398,6 @@ export default function FinancePage() {
 
     const renderCurrentSection = () => {
         switch (currentTab) {
-            case 'dashboard':
-                return <DashboardView />;
             case 'calendar':
                 return (
                     <>
