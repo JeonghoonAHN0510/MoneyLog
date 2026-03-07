@@ -62,7 +62,7 @@ import {
     useUpdatePayment,
     useDeletePayment,
 } from '../api/queries';
-import { getApiErrorMessage } from '../utils/error';
+import { getApiErrorMessage, getApiErrorStatus } from '../utils/error';
 import { buildProfileImageViewUrl, getProfileInitial } from '../utils/profileImage';
 import '../styles/pages/FinancePage.css';
 
@@ -88,7 +88,7 @@ export default function FinancePage() {
     };
 
     // --- [TanStack Query] 서버 데이터 ---
-    const { data: userInfo, isLoading: userInfoLoading, isError: userInfoError } = useUserInfo();
+    const { data: userInfo, isLoading: userInfoLoading, error: userInfoError } = useUserInfo();
     const refreshTokenMut = useRefreshToken();
 
     // 로그인 체크
@@ -99,13 +99,52 @@ export default function FinancePage() {
         }
     }, [isAuthenticated, navigate]);
 
-    // 사용자 정보 로드 실패 시 로그아웃
+    const runMutationWithToast = async <T,>({
+        action,
+        successMessage,
+        errorMessage,
+        onSuccess,
+        onError,
+        onFinally,
+    }: {
+        action: () => Promise<T>;
+        successMessage?: string;
+        errorMessage: string;
+        onSuccess?: (result: T) => void;
+        onError?: (error: unknown) => void;
+        onFinally?: () => void;
+    }) => {
+        try {
+            const result = await action();
+            if (successMessage) {
+                toast.success(successMessage);
+            }
+            onSuccess?.(result);
+            return result;
+        } catch (error) {
+            toast.error(getApiErrorMessage(error, errorMessage));
+            onError?.(error);
+            return null;
+        } finally {
+            onFinally?.();
+        }
+    };
+
+    // 사용자 정보 로드 실패 시 상태코드별 분기
     useEffect(() => {
-        if (userInfoError) {
-            toast.error('사용자 정보를 불러오는데 실패했습니다.');
+        if (!userInfoError) {
+            return;
+        }
+
+        const status = getApiErrorStatus(userInfoError);
+        if (status === 401 || status === 403) {
+            toast.error(getApiErrorMessage(userInfoError, '로그인 정보가 유효하지 않습니다. 다시 로그인해주세요.'));
             logout();
             navigate('/login');
+            return;
         }
+
+        toast.error(getApiErrorMessage(userInfoError, '사용자 정보를 불러오는데 실패했습니다. 잠시 후 다시 시도해주세요.'));
     }, [userInfoError, logout, navigate]);
 
     const handleLogout = async () => {
@@ -126,16 +165,19 @@ export default function FinancePage() {
             return;
         }
 
-        try {
-            const result = await refreshTokenMut.mutateAsync({ refreshToken });
-            setTokens(result.accessToken, result.refreshToken);
-            api.defaults.headers.common['Authorization'] = `Bearer ${result.accessToken}`;
-            toast.success('로그인 세션이 연장되었습니다.');
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, '로그인 연장에 실패했습니다.'));
-            logout();
-            navigate('/login');
-        }
+        await runMutationWithToast({
+            action: () => refreshTokenMut.mutateAsync({ refreshToken }),
+            successMessage: '로그인 세션이 연장되었습니다.',
+            errorMessage: '로그인 연장에 실패했습니다.',
+            onSuccess: (result) => {
+                setTokens(result.accessToken, result.refreshToken);
+                api.defaults.headers.common['Authorization'] = `Bearer ${result.accessToken}`;
+            },
+            onError: () => {
+                logout();
+                navigate('/login');
+            },
+        });
     };
 
     // --- [TanStack Query Mutations] ---
@@ -168,51 +210,47 @@ export default function FinancePage() {
             return;
         }
 
-        try {
-            await updateProfileImageMut.mutateAsync(file);
-            toast.success('프로필 이미지가 변경되었습니다.');
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, '프로필 이미지 변경에 실패하였습니다.'));
-        } finally {
-            event.target.value = '';
-        }
+        await runMutationWithToast({
+            action: () => updateProfileImageMut.mutateAsync(file),
+            successMessage: '프로필 이미지가 변경되었습니다.',
+            errorMessage: '프로필 이미지 변경에 실패하였습니다.',
+            onFinally: () => {
+                event.target.value = '';
+            },
+        });
     };
 
     // --- [Transaction CRUD] ---
     const handleAddTransaction = async (transaction: Partial<Transaction>) => {
-        try {
-            await addTransactionMut.mutateAsync(transaction);
-            toast.success("거래 내역이 추가되었습니다.");
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, "거래 내역 추가에 실패하였습니다."));
-        }
+        await runMutationWithToast({
+            action: () => addTransactionMut.mutateAsync(transaction),
+            successMessage: '거래 내역이 추가되었습니다.',
+            errorMessage: '거래 내역 추가에 실패하였습니다.',
+        });
     };
 
     const handleAddFixed = async (fixed: Partial<Fixed>) => {
-        try {
-            await addFixedMut.mutateAsync(fixed);
-            toast.success("고정 거래 내역이 추가되었습니다.");
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, "고정 거래 내역 추가에 실패하였습니다."));
-        }
+        await runMutationWithToast({
+            action: () => addFixedMut.mutateAsync(fixed),
+            successMessage: '고정 거래 내역이 추가되었습니다.',
+            errorMessage: '고정 거래 내역 추가에 실패하였습니다.',
+        });
     };
 
     const handleUpdateTransaction = async (transaction: Partial<Transaction>) => {
-        try {
-            await updateTransactionMut.mutateAsync(transaction);
-            toast.success("거래 내역이 수정되었습니다.");
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, "거래 내역 수정 실패"));
-        }
+        await runMutationWithToast({
+            action: () => updateTransactionMut.mutateAsync(transaction),
+            successMessage: '거래 내역이 수정되었습니다.',
+            errorMessage: '거래 내역 수정에 실패했습니다.',
+        });
     };
 
     const handleDeleteTransaction = async (transactionId: string) => {
-        try {
-            await deleteTransactionMut.mutateAsync(transactionId);
-            toast.success("거래 내역이 삭제되었습니다.");
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, "거래 내역 삭제에 실패하였습니다."));
-        }
+        await runMutationWithToast({
+            action: () => deleteTransactionMut.mutateAsync(transactionId),
+            successMessage: '거래 내역이 삭제되었습니다.',
+            errorMessage: '거래 내역 삭제에 실패하였습니다.',
+        });
     };
 
     const handleEditTransaction = (transaction: Transaction) => {
@@ -223,134 +261,129 @@ export default function FinancePage() {
 
     // --- [Budget CRUD] ---
     const handleAddBudget = async (budget: Omit<Budget, 'budgetId' | "userId" | "budgetDate" | "createdAt" | "updatedAt" | "categoryName">) => {
-        try {
-            await addBudgetMut.mutateAsync(budget);
-            toast.success("예산이 설정되었습니다.");
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, "예산 설정에 실패하였습니다."));
-        }
+        await runMutationWithToast({
+            action: () => addBudgetMut.mutateAsync(budget),
+            successMessage: '예산이 설정되었습니다.',
+            errorMessage: '예산 설정에 실패하였습니다.',
+        });
     };
 
     const handleUpdateBudget = async (budget: Partial<Budget>) => {
-        try {
-            await updateBudgetMut.mutateAsync(budget);
-            toast.success("예산이 수정되었습니다.");
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, "예산 수정에 실패하였습니다."));
-        }
+        await runMutationWithToast({
+            action: () => updateBudgetMut.mutateAsync(budget),
+            successMessage: '예산이 수정되었습니다.',
+            errorMessage: '예산 수정에 실패하였습니다.',
+        });
     };
 
     const handleDeleteBudget = async (budgetId: string) => {
-        try {
-            await deleteBudgetMut.mutateAsync(budgetId);
-            toast.success("예산이 삭제되었습니다.");
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, "예산 삭제에 실패하였습니다."));
-        }
+        await runMutationWithToast({
+            action: () => deleteBudgetMut.mutateAsync(budgetId),
+            successMessage: '예산이 삭제되었습니다.',
+            errorMessage: '예산 삭제에 실패하였습니다.',
+        });
     };
 
     // --- [Account CRUD] ---
     const handleAddAccount = async (account: Omit<Account, "accountId" | "userId" | "createdAt" | "updatedAt" | "bankName">) => {
-        try {
-            await addAccountMut.mutateAsync(account);
-            toast.success("계좌가 추가되었습니다.");
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, "계좌 추가에 실패하였습니다."));
-        }
+        await runMutationWithToast({
+            action: () => addAccountMut.mutateAsync(account),
+            successMessage: '계좌가 추가되었습니다.',
+            errorMessage: '계좌 추가에 실패하였습니다.',
+        });
     };
 
     const handleUpdateAccount = async (account: Partial<Account>) => {
-        try {
-            await updateAccountMut.mutateAsync(account);
-            toast.success("계좌가 수정되었습니다.");
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, "계좌 수정에 실패하였습니다."));
-        }
+        await runMutationWithToast({
+            action: () => updateAccountMut.mutateAsync(account),
+            successMessage: '계좌가 수정되었습니다.',
+            errorMessage: '계좌 수정에 실패하였습니다.',
+        });
     };
 
     const handleDeleteAccount = async (accountId: string) => {
-        try {
-            await deleteAccountMut.mutateAsync(accountId);
-            toast.success("계좌가 삭제되었습니다.");
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, "계좌 삭제에 실패하였습니다."));
-        }
+        await runMutationWithToast({
+            action: () => deleteAccountMut.mutateAsync(accountId),
+            successMessage: '계좌가 삭제되었습니다.',
+            errorMessage: '계좌 삭제에 실패하였습니다.',
+        });
     };
 
     // --- [Category CRUD] ---
     const handleAddCategory = async (category: Omit<Category, "categoryId" | "userId" | "createdAt" | "updatedAt">) => {
-        try {
-            await addCategoryMut.mutateAsync(category);
-            toast.success("카테고리가 추가되었습니다.");
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, "카테고리 추가에 실패하였습니다."));
-        }
+        await runMutationWithToast({
+            action: () => addCategoryMut.mutateAsync(category),
+            successMessage: '카테고리가 추가되었습니다.',
+            errorMessage: '카테고리 추가에 실패하였습니다.',
+        });
     };
 
     const handleUpdateCategory = async (category: Partial<Category>) => {
-        try {
-            await updateCategoryMut.mutateAsync(category);
-            toast.success("카테고리가 수정되었습니다.");
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, "카테고리 수정에 실패하였습니다."));
-        }
+        await runMutationWithToast({
+            action: () => updateCategoryMut.mutateAsync(category),
+            successMessage: '카테고리가 수정되었습니다.',
+            errorMessage: '카테고리 수정에 실패하였습니다.',
+        });
     };
 
     const handleDeleteCategory = async (categoryId: string) => {
-        try {
-            await deleteCategoryMut.mutateAsync(categoryId);
-            toast.success("카테고리가 삭제되었습니다.");
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, "카테고리 삭제에 실패하였습니다."));
-        }
+        await runMutationWithToast({
+            action: () => deleteCategoryMut.mutateAsync(categoryId),
+            successMessage: '카테고리가 삭제되었습니다.',
+            errorMessage: '카테고리 삭제에 실패하였습니다.',
+        });
     };
 
     // --- [Payment CRUD] ---
     const handleAddPayment = async (payment: Omit<Payment, "paymentId" | "userId" | "createdAt" | "updatedAt">) => {
-        try {
-            await addPaymentMut.mutateAsync(payment);
-            toast.success("결제수단이 추가되었습니다.");
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, "결제수단 추가에 실패하였습니다."));
-        }
+        await runMutationWithToast({
+            action: () => addPaymentMut.mutateAsync(payment),
+            successMessage: '결제수단이 추가되었습니다.',
+            errorMessage: '결제수단 추가에 실패하였습니다.',
+        });
     };
 
     const handleUpdatePayment = async (payment: Partial<Payment>) => {
-        try {
-            await updatePaymentMut.mutateAsync(payment);
-            toast.success("결제수단이 수정되었습니다.");
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, "결제수단 수정에 실패하였습니다."));
-        }
+        await runMutationWithToast({
+            action: () => updatePaymentMut.mutateAsync(payment),
+            successMessage: '결제수단이 수정되었습니다.',
+            errorMessage: '결제수단 수정에 실패하였습니다.',
+        });
     };
 
     const handleDeletePayment = async (paymentId: string) => {
-        try {
-            await deletePaymentMut.mutateAsync(paymentId);
-            toast.success("결제수단이 삭제되었습니다.");
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, "결제수단 삭제에 실패하였습니다."));
-        }
+        await runMutationWithToast({
+            action: () => deletePaymentMut.mutateAsync(paymentId),
+            successMessage: '결제수단이 삭제되었습니다.',
+            errorMessage: '결제수단 삭제에 실패하였습니다.',
+        });
     };
 
     // --- [Transfer Logic] ---
     const handleAddTransfer = async (transfer: Omit<Transfer, "transferId" | "userId" | "createdAt" | "updatedAt">) => {
-        try {
-            await transferMut.mutateAsync(transfer);
-            toast.success("이체가 완료되었습니다.");
-        } catch (e) {
-            toast.error(getApiErrorMessage(e, "이체에 실패하였습니다."));
-        }
+        await runMutationWithToast({
+            action: () => transferMut.mutateAsync(transfer),
+            successMessage: '이체가 완료되었습니다.',
+            errorMessage: '이체에 실패하였습니다.',
+        });
     };
 
     const handleDateClick = (date: string) => {
         setSelectedDate(date);
     };
 
-    if (userInfoLoading || !userInfo) {
+    if (userInfoLoading) {
         return (
             <div className="finance-loading">
                 <p className="finance-loading-text">정보를 불러오는 중입니다...</p>
+            </div>
+        );
+    }
+
+    if (!userInfo) {
+        return (
+            <div className="finance-loading">
+                <p className="finance-loading-text">사용자 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</p>
             </div>
         );
     }

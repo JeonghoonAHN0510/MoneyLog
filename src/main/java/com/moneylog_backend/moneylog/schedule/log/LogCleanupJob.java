@@ -20,15 +20,15 @@ public class LogCleanupJob extends QuartzJobBean {
 
     @Override
     protected void executeInternal (JobExecutionContext context) throws JobExecutionException {
-        log.info(">>> Quartz Job Started: Cleaning up old logs...");
+        log.info("Quartz 로그 정리 작업을 시작합니다.");
 
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
 
         try {
             logRepository.deleteLogsOlderThan(thirtyDaysAgo);
-            log.info(">>> Quartz Job Finished: Logs older than {} have been deleted.", thirtyDaysAgo);
+            log.info("{} 이전 로그를 정리했습니다.", thirtyDaysAgo);
         } catch (Exception e) {
-            log.error(">>> Quartz Job Failed: ", e);
+            log.error("Quartz 로그 정리 작업에 실패했습니다.", e);
 
         }
     }

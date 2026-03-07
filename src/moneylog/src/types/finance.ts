@@ -201,5 +201,5 @@ export interface TransactionImportCommitRequest {
 export interface TransactionImportCommitResponse {
   requestedCount: number;
   importedCount: number;
-  transactionIds: string[];
+  transactionIds: number[];
 }

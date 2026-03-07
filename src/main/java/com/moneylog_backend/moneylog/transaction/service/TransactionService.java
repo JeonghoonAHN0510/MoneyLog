@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.global.type.CategoryEnum;
-import com.moneylog_backend.global.type.PaymentEnum;
 import com.moneylog_backend.global.util.OwnershipValidator;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
@@ -31,7 +30,7 @@ import com.moneylog_backend.moneylog.transaction.installment.entity.CardInstallm
 import com.moneylog_backend.moneylog.transaction.installment.repository.CardInstallmentPlanRepository;
 import com.moneylog_backend.moneylog.transaction.mapper.TransactionMapper;
 import com.moneylog_backend.moneylog.transaction.repository.TransactionRepository;
-import com.moneylog_backend.moneylog.transaction.validation.TransactionCategoryPaymentRuleValidator;
+import com.moneylog_backend.moneylog.transaction.validation.TransactionWriteValidator;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -46,7 +45,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Slf4j
 public class TransactionService {
-    private static final int MAX_INSTALLMENT_COUNT = 36;
     private static final ZoneId KST_ZONE = ZoneId.of("Asia/Seoul");
 
     private final TransactionRepository transactionRepository;
@@ -57,20 +55,33 @@ public class TransactionService {
     private final TransactionMapper transactionMapper;
     private final CategoryMapper categoryMapper;
     private final TransactionSettlementService transactionSettlementService;
-    private final TransactionCategoryPaymentRuleValidator transactionCategoryPaymentRuleValidator;
+    private final TransactionWriteValidator transactionWriteValidator;
 
     @Transactional
     public int saveTransaction (TransactionReqDto transactionReqDto, Integer userId) {
-        AccountEntity accountEntity = getAccountByIdAndValidateOwnership(transactionReqDto.getAccountId(), userId);
+        transactionWriteValidator.validateRequiredId(transactionReqDto.getAccountId(), "계좌 ID");
+        transactionWriteValidator.validateRequiredId(transactionReqDto.getCategoryId(), "카테고리 ID");
+        transactionWriteValidator.validateBasicFields(
+            transactionReqDto.getTitle(),
+            transactionReqDto.getMemo(),
+            transactionReqDto.getAmount(),
+            transactionReqDto.getTradingAt()
+        );
 
+        AccountEntity accountEntity = getAccountByIdAndValidateOwnership(transactionReqDto.getAccountId(), userId);
         CategoryEntity categoryEntity = getCategoryByIdAndValidateOwnership(transactionReqDto.getCategoryId(), userId);
         CategoryEnum type = categoryEntity.getType();
+        transactionWriteValidator.validatePaymentPolicy(type, transactionReqDto.getPaymentId());
 
         if (CategoryEnum.EXPENSE.equals(type)) {
-            validatePaymentOwnership(transactionReqDto.getPaymentId(), userId);
+            PaymentEntity paymentEntity = getPaymentByIdAndValidateOwnership(transactionReqDto.getPaymentId(), userId);
 
             if (transactionReqDto.isInstallment()) {
-                validateInstallmentPlan(transactionReqDto, userId);
+                transactionWriteValidator.validateInstallment(
+                    type,
+                    transactionReqDto.getInstallmentCount(),
+                    paymentEntity.getType()
+                );
                 return saveInstallmentTransactions(transactionReqDto, categoryEntity, accountEntity);
             }
 
@@ -78,9 +89,8 @@ public class TransactionService {
         }
 
         if (CategoryEnum.INCOME.equals(type)) {
-            transactionCategoryPaymentRuleValidator.validateIncomePaymentForbidden(type, transactionReqDto.getPaymentId());
             if (transactionReqDto.isInstallment()) {
-                throw new IllegalArgumentException("수입 카테고리에는 할부를 적용할 수 없습니다.");
+                transactionWriteValidator.validateInstallment(type, transactionReqDto.getInstallmentCount(), null);
             }
             return saveSingleTransaction(transactionReqDto, userId, accountEntity, type);
         }
@@ -120,6 +130,16 @@ public class TransactionService {
 
     @Transactional
     public TransactionResDto updateTransaction (TransactionReqDto transactionReqDto, Integer userId) {
+        transactionWriteValidator.validateRequiredId(transactionReqDto.getTransactionId(), "거래 ID");
+        transactionWriteValidator.validateRequiredId(transactionReqDto.getAccountId(), "계좌 ID");
+        transactionWriteValidator.validateRequiredId(transactionReqDto.getCategoryId(), "카테고리 ID");
+        transactionWriteValidator.validateBasicFields(
+            transactionReqDto.getTitle(),
+            transactionReqDto.getMemo(),
+            transactionReqDto.getAmount(),
+            transactionReqDto.getTradingAt()
+        );
+
         TransactionEntity transactionEntity = getTransactionByIdAndValidateOwnership(
             transactionReqDto.getTransactionId(), userId);
 
@@ -141,10 +161,9 @@ public class TransactionService {
         CategoryEnum newType = newCategory.getType();
 
         Integer newPaymentId = transactionReqDto.getPaymentId();
+        transactionWriteValidator.validatePaymentPolicy(newType, newPaymentId);
         if (CategoryEnum.EXPENSE.equals(newType)) {
-            validatePaymentOwnership(newPaymentId, userId);
-        } else {
-            transactionCategoryPaymentRuleValidator.validateIncomePaymentForbidden(newType, newPaymentId);
+            getPaymentByIdAndValidateOwnership(newPaymentId, userId);
         }
 
         Integer newAmount = transactionReqDto.getAmount();
@@ -307,22 +326,6 @@ public class TransactionService {
         return LocalDateTime.now(KST_ZONE);
     }
 
-    private void validateInstallmentPlan (TransactionReqDto transactionReqDto, Integer userId) {
-        Integer installmentCount = transactionReqDto.getInstallmentCount();
-
-        if (installmentCount == null || installmentCount < 2) {
-            throw new IllegalArgumentException("할부 적용 시 할부 개월 수가 필요합니다.");
-        }
-        if (installmentCount > MAX_INSTALLMENT_COUNT) {
-            throw new IllegalArgumentException("할부는 최대 " + MAX_INSTALLMENT_COUNT + "개월까지 지원됩니다.");
-        }
-
-        PaymentEntity paymentEntity = getPaymentByIdAndValidateOwnership(transactionReqDto.getPaymentId(), userId);
-        if (!PaymentEnum.CREDIT_CARD.equals(paymentEntity.getType()) && !PaymentEnum.CHECK_CARD.equals(paymentEntity.getType())) {
-            throw new IllegalArgumentException("할부는 카드 결제수단만 가능합니다.");
-        }
-    }
-
     private Integer calculateInstallmentAmount (int index, Integer totalAmount, Integer installmentCount) {
         int baseAmount = totalAmount / installmentCount;
         int remainder = totalAmount % installmentCount;
@@ -376,10 +379,6 @@ public class TransactionService {
         OwnershipValidator.validateOwner(categoryEntity.getUserId(), userId, "본인의 카테고리가 아닙니다.");
 
         return categoryEntity;
-    }
-
-    private void validatePaymentOwnership (Integer paymentId, Integer userId) {
-        getPaymentByIdAndValidateOwnership(paymentId, userId);
     }
 
     private PaymentEntity getPaymentByIdAndValidateOwnership (Integer paymentId, Integer userId) {

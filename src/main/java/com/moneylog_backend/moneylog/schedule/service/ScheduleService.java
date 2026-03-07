@@ -48,7 +48,7 @@ public class ScheduleService {
                 }
             });
         } catch (SchedulerException e) {
-            log.error("Scheduler init failed", e);
+            log.error("스케줄러 초기화에 실패했습니다.", e);
         }
     }
 
@@ -67,10 +67,10 @@ public class ScheduleService {
                                                 .build();
 
             scheduler.scheduleJob(jobDetail, trigger);
-            log.info("Job Registered: {} at {}", meta.getJobName(), meta.getCronExpression());
+            log.info("스케줄 작업을 등록했습니다. jobName={}, cronExpression={}", meta.getJobName(), meta.getCronExpression());
 
         } catch (SchedulerException e) {
-            log.error("Failed to register job", e);
+            log.error("스케줄 작업 등록에 실패했습니다.", e);
         }
     }
 
@@ -87,7 +87,7 @@ public class ScheduleService {
 
             // 변경 사항이 없으면 skip
             if (newCron.equals(meta.getCronExpression())) {
-                log.info(">>> Schedule is same, skip update: {}", jobName);
+                log.info("변경된 스케줄이 없어 업데이트를 건너뜁니다. jobName={}", jobName);
                 return;
             }
 
@@ -103,10 +103,10 @@ public class ScheduleService {
 
             scheduler.rescheduleJob(triggerKey, newTrigger);
 
-            log.info(">>> Rescheduled Job: {} to {}", jobName, newCron);
+            log.info("스케줄 작업을 재등록했습니다. jobName={}, cronExpression={}", jobName, newCron);
 
         } catch (SchedulerException e) {
-            log.error("Failed to reschedule job", e);
+            log.error("스케줄 작업 재등록에 실패했습니다.", e);
             throw new RuntimeException(ErrorMessageConstants.SCHEDULE_RESCHEDULE_FAILED);
         }
     }

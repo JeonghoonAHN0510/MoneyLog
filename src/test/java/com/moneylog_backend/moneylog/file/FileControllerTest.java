@@ -52,7 +52,7 @@ class FileControllerTest {
         ResponseEntity<String> response = fileController.delete("/uploads/a.jpg");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Deleted", response.getBody());
+        assertEquals("파일을 삭제했습니다.", response.getBody());
     }
 
     @Test
@@ -67,6 +67,6 @@ class FileControllerTest {
         ResponseEntity<String> response = fileController.delete("/uploads/a.jpg");
 
         assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
-        assertEquals("Queued for deletion", response.getBody());
+        assertEquals("파일 삭제를 예약했습니다.", response.getBody());
     }
 }
