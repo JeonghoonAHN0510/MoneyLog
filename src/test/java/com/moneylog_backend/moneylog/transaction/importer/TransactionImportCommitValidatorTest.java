@@ -13,12 +13,12 @@ import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
 import com.moneylog_backend.moneylog.payment.repository.PaymentRepository;
 import com.moneylog_backend.moneylog.transaction.dto.req.TransactionImportCommitRowDto;
 import com.moneylog_backend.moneylog.transaction.validation.TransactionCategoryPaymentRuleValidator;
+import com.moneylog_backend.moneylog.transaction.validation.TransactionWriteValidator;
 
 class TransactionImportCommitValidatorTest {
     private AccountRepository accountRepository;
     private CategoryRepository categoryRepository;
     private PaymentRepository paymentRepository;
-    private TransactionCategoryPaymentRuleValidator transactionCategoryPaymentRuleValidator;
     private TransactionImportCommitValidator validator;
 
     @BeforeEach
@@ -26,12 +26,11 @@ class TransactionImportCommitValidatorTest {
         accountRepository = mock(AccountRepository.class);
         categoryRepository = mock(CategoryRepository.class);
         paymentRepository = mock(PaymentRepository.class);
-        transactionCategoryPaymentRuleValidator = mock(TransactionCategoryPaymentRuleValidator.class);
         validator = new TransactionImportCommitValidator(
             accountRepository,
             categoryRepository,
             paymentRepository,
-            transactionCategoryPaymentRuleValidator
+            new TransactionWriteValidator(new TransactionCategoryPaymentRuleValidator())
         );
     }
 
@@ -47,7 +46,7 @@ class TransactionImportCommitValidatorTest {
         );
 
         assertEquals("제목은 필수입니다.", exception.getMessage());
-        verifyNoInteractions(accountRepository, categoryRepository, paymentRepository, transactionCategoryPaymentRuleValidator);
+        verifyNoInteractions(accountRepository, categoryRepository, paymentRepository);
     }
 
     @Test
@@ -62,7 +61,7 @@ class TransactionImportCommitValidatorTest {
         );
 
         assertEquals("제목은 필수입니다.", exception.getMessage());
-        verifyNoInteractions(accountRepository, categoryRepository, paymentRepository, transactionCategoryPaymentRuleValidator);
+        verifyNoInteractions(accountRepository, categoryRepository, paymentRepository);
     }
 
     @Test
@@ -78,7 +77,7 @@ class TransactionImportCommitValidatorTest {
         );
 
         assertEquals("제목은 100자 이내여야 합니다.", exception.getMessage());
-        verifyNoInteractions(accountRepository, categoryRepository, paymentRepository, transactionCategoryPaymentRuleValidator);
+        verifyNoInteractions(accountRepository, categoryRepository, paymentRepository);
     }
 
     @Test
@@ -95,6 +94,6 @@ class TransactionImportCommitValidatorTest {
         );
 
         assertEquals("메모는 500자 이내여야 합니다.", exception.getMessage());
-        verifyNoInteractions(accountRepository, categoryRepository, paymentRepository, transactionCategoryPaymentRuleValidator);
+        verifyNoInteractions(accountRepository, categoryRepository, paymentRepository);
     }
 }

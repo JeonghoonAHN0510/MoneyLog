@@ -304,7 +304,7 @@ public class GlobalExceptionHandler {
     // 7. 그 외 예상치 못한 모든 에러 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAllExceptions(Exception ex) {
-        log.error("Internal server error", ex);
+        log.error("서버 내부 오류가 발생했습니다.", ex);
         ErrorResponse response = new ErrorResponse("INTERNAL_SERVER_ERROR", ErrorMessageConstants.INTERNAL_SERVER_ERROR);
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }

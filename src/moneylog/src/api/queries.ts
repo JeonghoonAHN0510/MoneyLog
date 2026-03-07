@@ -1,6 +1,17 @@
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { queryKeys } from './queryClient';
 import api from './axiosConfig';
+import {
+    serializeAccountPayload,
+    serializeBudgetPayload,
+    serializeCategoryPayload,
+    serializeFixedPayload,
+    serializeIdParam,
+    serializePaymentPayload,
+    serializeTransactionPayload,
+    serializeTransactionImportCommitPayload,
+    serializeTransferPayload,
+} from './requestSerializers';
 import { Schedule, ScheduleReqDto } from '../types/schedule';
 import {
     UserInfo,
@@ -187,7 +198,7 @@ export function useTransactionImportCommit() {
     const qc = useQueryClient();
     return useMutation<TransactionImportCommitResponse, Error, TransactionImportCommitRequest>({
         mutationFn: async (payload: TransactionImportCommitRequest) => {
-            const res = await api.post('/transaction/import/commit', payload);
+            const res = await api.post('/transaction/import/commit', serializeTransactionImportCommitPayload(payload));
             return res.data;
         },
         onSuccess: () => {
@@ -254,7 +265,7 @@ export const useUpdateSchedule = () => {
 export function useAddTransaction() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (data: Partial<Transaction>) => api.post('/transaction', data),
+        mutationFn: (data: Partial<Transaction>) => api.post('/transaction', serializeTransactionPayload(data)),
         onSuccess: () => {
             invalidateTransactionCaches(qc);
         },
@@ -265,7 +276,7 @@ export function useAddTransaction() {
 export function useUpdateTransaction() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (data: Partial<Transaction>) => api.put('/transaction', data),
+        mutationFn: (data: Partial<Transaction>) => api.put('/transaction', serializeTransactionPayload(data)),
         onSuccess: () => {
             invalidateTransactionCaches(qc);
         },
@@ -276,7 +287,9 @@ export function useUpdateTransaction() {
 export function useDeleteTransaction() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (transactionId: string) => api.delete(`/transaction?transactionId=${transactionId}`),
+        mutationFn: (transactionId: string) => api.delete('/transaction', {
+            params: { transactionId: serializeIdParam(transactionId) },
+        }),
         onSuccess: () => {
             invalidateTransactionCaches(qc);
         },
@@ -287,9 +300,9 @@ export function useDeleteTransaction() {
 export function useAddFixed() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (data: Partial<Fixed>) => api.post('/fixed', data),
+        mutationFn: (data: Partial<Fixed>) => api.post('/fixed', serializeFixedPayload(data)),
         onSuccess: () => {
-            transactionRelatedKeys.forEach((key) => qc.invalidateQueries({ queryKey: key }));
+            invalidateTransactionCaches(qc);
         },
     });
 }
@@ -299,7 +312,7 @@ export function useAddAccount() {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: (data: Omit<Account, 'accountId' | 'userId' | 'createdAt' | 'updatedAt' | 'bankName'>) =>
-            api.post('/account', data),
+            api.post('/account', serializeAccountPayload(data)),
         onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.accounts }),
     });
 }
@@ -308,7 +321,7 @@ export function useAddAccount() {
 export function useUpdateAccount() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (data: Partial<Account>) => api.put('/account', data),
+        mutationFn: (data: Partial<Account>) => api.put('/account', serializeAccountPayload(data)),
         onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.accounts }),
     });
 }
@@ -317,7 +330,9 @@ export function useUpdateAccount() {
 export function useDeleteAccount() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (accountId: string) => api.delete(`/account?accountId=${accountId}`),
+        mutationFn: (accountId: string) => api.delete('/account', {
+            params: { accountId: serializeIdParam(accountId) },
+        }),
         onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.accounts }),
     });
 }
@@ -327,7 +342,7 @@ export function useTransfer() {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: (data: Omit<Transfer, 'transferId' | 'userId' | 'createdAt' | 'updatedAt'>) =>
-            api.put('/account/transfer', data),
+            api.put('/account/transfer', serializeTransferPayload(data)),
         onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.accounts }),
     });
 }
@@ -337,7 +352,7 @@ export function useAddBudget() {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: (data: Omit<Budget, 'budgetId' | 'userId' | 'budgetDate' | 'createdAt' | 'updatedAt' | 'categoryName'>) =>
-            api.post('/budget', data),
+            api.post('/budget', serializeBudgetPayload(data)),
         onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.budgets }),
     });
 }
@@ -346,7 +361,7 @@ export function useAddBudget() {
 export function useUpdateBudget() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (data: Partial<Budget>) => api.put('/budget', data),
+        mutationFn: (data: Partial<Budget>) => api.put('/budget', serializeBudgetPayload(data)),
         onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.budgets }),
     });
 }
@@ -355,7 +370,9 @@ export function useUpdateBudget() {
 export function useDeleteBudget() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (budgetId: string) => api.delete(`/budget?budgetId=${budgetId}`),
+        mutationFn: (budgetId: string) => api.delete('/budget', {
+            params: { budgetId: serializeIdParam(budgetId) },
+        }),
         onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.budgets }),
     });
 }
@@ -365,7 +382,7 @@ export function useAddCategory() {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: (data: Omit<Category, 'categoryId' | 'userId' | 'createdAt' | 'updatedAt'>) =>
-            api.post('/category', data),
+            api.post('/category', serializeCategoryPayload(data)),
         onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.categories }),
     });
 }
@@ -374,7 +391,7 @@ export function useAddCategory() {
 export function useUpdateCategory() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (data: Partial<Category>) => api.put('/category', data),
+        mutationFn: (data: Partial<Category>) => api.put('/category', serializeCategoryPayload(data)),
         onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.categories }),
     });
 }
@@ -383,7 +400,9 @@ export function useUpdateCategory() {
 export function useDeleteCategory() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (categoryId: string) => api.delete(`/category?categoryId=${categoryId}`),
+        mutationFn: (categoryId: string) => api.delete('/category', {
+            params: { categoryId: serializeIdParam(categoryId) },
+        }),
         onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.categories }),
     });
 }
@@ -393,7 +412,7 @@ export function useAddPayment() {
     const qc = useQueryClient();
     return useMutation({
         mutationFn: (data: Omit<Payment, 'paymentId' | 'userId' | 'createdAt' | 'updatedAt'>) =>
-            api.post('/payment', data),
+            api.post('/payment', serializePaymentPayload(data)),
         onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.payments }),
     });
 }
@@ -402,7 +421,7 @@ export function useAddPayment() {
 export function useUpdatePayment() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (data: Partial<Payment>) => api.put('/payment', data),
+        mutationFn: (data: Partial<Payment>) => api.put('/payment', serializePaymentPayload(data)),
         onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.payments }),
     });
 }
@@ -411,7 +430,9 @@ export function useUpdatePayment() {
 export function useDeletePayment() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (paymentId: string) => api.delete(`/payment?paymentId=${paymentId}`),
+        mutationFn: (paymentId: string) => api.delete('/payment', {
+            params: { paymentId: serializeIdParam(paymentId) },
+        }),
         onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.payments }),
     });
 }

@@ -82,8 +82,8 @@ public class FileController {
     public ResponseEntity<String> delete(@RequestParam String fileUrl) {
         DeleteDispatchResult result = fileDeleteTaskService.deleteNowOrEnqueueWithResult(fileUrl, MANUAL_DELETE_REASON);
         if (result == DeleteDispatchResult.ENQUEUED) {
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body("Queued for deletion");
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body("파일 삭제를 예약했습니다.");
         }
-        return ResponseEntity.ok("Deleted");
+        return ResponseEntity.ok("파일을 삭제했습니다.");
     }
 }

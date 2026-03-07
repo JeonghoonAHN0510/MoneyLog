@@ -2,8 +2,6 @@ package com.moneylog_backend.moneylog.schedule.dto;
 
 import org.hibernate.validator.constraints.Range;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.AccessLevel;
@@ -18,15 +16,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ScheduleReqDto {
 
-    @NotBlank(message = "Job Name은 필수입니다")
+    @NotBlank(message = "작업 이름은 필수입니다.")
     private String jobName;
 
-    @NotBlank(message = "빈도 설정은 필수입니다 (DAILY, WEEKLY, MONTHLY)")
-    @Pattern(regexp = "^(DAILY|WEEKLY|MONTHLY)$", message = "DAILY, WEEKLY, MONTHLY 중 하나여야 합니다")
+    @NotBlank(message = "실행 주기는 필수입니다. (DAILY, WEEKLY, MONTHLY)")
+    @Pattern(regexp = "^(DAILY|WEEKLY|MONTHLY)$", message = "실행 주기는 DAILY, WEEKLY, MONTHLY 중 하나여야 합니다.")
     private String frequency;
 
-    @NotBlank(message = "시간은 필수입니다 (HH:mm)")
-    @Pattern(regexp = "^([01]?[0-9]|2[0-3]):[0-5][0-9]$", message = "HH:mm 형식이어야 합니다")
+    @NotBlank(message = "실행 시간은 필수입니다. (HH:mm)")
+    @Pattern(regexp = "^([01]?[0-9]|2[0-3]):[0-5][0-9]$", message = "실행 시간은 HH:mm 형식이어야 합니다.")
     private String time;
 
     @Range(min = 1, max = 7, message = "요일은 1~7 사이여야 합니다.")
