@@ -3,7 +3,11 @@
 /* LoginPage.css - 로그인 페이지 스타일 */
 
 .login-page {
-    @apply min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4;
+    @apply min-h-screen flex items-center justify-center p-4;
+    background:
+        radial-gradient(circle at top left, rgba(106, 169, 255, 0.24), transparent 28%),
+        radial-gradient(circle at right 18%, rgba(23, 118, 214, 0.16), transparent 24%),
+        linear-gradient(180deg, #f7fbff 0%, #edf4fb 54%, #e4edf8 100%);
 }
 
 .login-wrapper {
@@ -12,28 +16,33 @@
 
 /* 로고 영역 */
 .login-logo {
-    @apply flex items-center justify-center gap-2 mb-8;
+    @apply mb-8 flex items-center justify-center gap-3;
 }
 
 .login-logo-icon {
-    @apply size-10 text-blue-600;
+    @apply size-10;
+    color: #1558b3;
 }
 
 .login-logo-text {
-    @apply text-3xl font-bold text-gray-900;
+    @apply text-3xl font-semibold tracking-tight;
 }
 
 /* 카드 */
 .login-card {
-    @apply border-2;
+    @apply border rounded-[2rem];
+    background: var(--panel-gradient);
+    border-color: rgba(255, 255, 255, 0.58);
+    box-shadow: var(--shadow-strong);
+    backdrop-filter: blur(20px);
 }
 
 .login-card-header {
-    @apply space-y-1;
+    @apply space-y-2;
 }
 
 .login-card-title {
-    @apply text-2xl;
+    @apply text-2xl font-semibold tracking-tight;
 }
 
 /* 폼 */
@@ -42,7 +51,10 @@
 }
 
 .login-error-alert {
-    @apply p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md flex items-center gap-2;
+    @apply flex items-center gap-2 rounded-xl border px-4 py-3 text-sm;
+    color: #bf3158;
+    background: rgba(255, 239, 244, 0.9);
+    border-color: rgba(220, 89, 130, 0.24);
 }
 
 .login-error-alert svg {
@@ -58,7 +70,8 @@
 }
 
 .login-password-toggle {
-    @apply absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700;
+    @apply absolute right-3 top-1/2 -translate-y-1/2;
+    color: #6a819f;
 }
 
 .login-password-toggle-icon {
@@ -71,7 +84,8 @@
 }
 
 .login-forgot-link {
-    @apply text-blue-600 hover:text-blue-700 hover:underline;
+    @apply font-medium hover:underline;
+    color: #1558b3;
 }
 
 .login-submit-btn {
@@ -84,11 +98,12 @@
 }
 
 .login-signup-prompt-text {
-    @apply text-gray-600;
+    color: #607896;
 }
 
 .login-signup-link {
-    @apply text-blue-600 hover:text-blue-700 hover:underline font-medium;
+    @apply font-medium hover:underline;
+    color: #1558b3;
 }
 
 .login-home-btn-wrapper {
@@ -101,9 +116,13 @@
 
 /* 데모 정보 */
 .login-demo-info {
-    @apply mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg;
+    @apply mt-4 rounded-[1.4rem] border p-4;
+    background: rgba(255, 255, 255, 0.58);
+    border-color: rgba(155, 181, 216, 0.32);
+    box-shadow: var(--shadow-soft);
 }
 
 .login-demo-info p {
-    @apply text-sm text-blue-800;
+    @apply text-sm leading-6;
+    color: #446283;
 }

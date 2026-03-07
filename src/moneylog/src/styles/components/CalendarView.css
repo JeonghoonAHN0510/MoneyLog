@@ -44,17 +44,18 @@
 }
 
 .calendar-day-card {
-    @apply min-h-16 md:min-h-24 p-1 md:p-2 transition-colors relative flex flex-col justify-between;
+    @apply min-h-16 md:min-h-24 p-1 md:p-2 transition-all relative flex flex-col justify-between rounded-[1.2rem] border border-white/48 bg-white/58 shadow-[var(--shadow-soft)] backdrop-blur-md;
     cursor: pointer;
 }
 
 .calendar-day-card:hover {
-    background-color: var(--accent);
+    background-color: rgba(255, 255, 255, 0.76);
+    transform: translateY(-1px);
 }
 
 .calendar-day-card-today {
-    @apply border-2;
-    border-color: var(--primary);
+    border-color: rgba(21, 88, 179, 0.48);
+    box-shadow: 0 0 0 1px rgba(21, 88, 179, 0.16), var(--shadow-soft);
 }
 
 .calendar-day-number {
