@@ -471,7 +471,7 @@ export function CategoryManager({
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => setDeleteTargetId(null)}>취소</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700 focus:ring-red-600">삭제</AlertDialogAction>
+                        <AlertDialogAction onClick={confirmDelete} variant="destructive">삭제</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -514,7 +514,7 @@ export function CategoryManager({
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => setDeletePaymentTargetId(null)}>취소</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDeletePayment} className="bg-red-600 hover:bg-red-700 focus:ring-red-600">삭제</AlertDialogAction>
+                        <AlertDialogAction onClick={confirmDeletePayment} variant="destructive">삭제</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

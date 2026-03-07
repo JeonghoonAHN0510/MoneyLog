@@ -7,9 +7,9 @@ import { formatKrw } from '../utils/currency';
 
 // 카테고리 색상 팔레트 (순환 사용)
 const CHART_COLORS = [
-  '#0ea5e9', '#22c55e', '#f97316', '#ef4444', '#14b8a6',
-  '#eab308', '#3b82f6', '#06b6d4', '#84cc16', '#f59e0b',
-  '#10b981', '#f43f5e',
+  '#1558b3', '#1d73d6', '#2b8fe5', '#0ea5c6', '#2f96c6',
+  '#2f778f', '#22c55e', '#38bdf8', '#1e40af', '#0f766e',
+  '#2563eb', '#64748b',
 ];
 
 export function DashboardView() {

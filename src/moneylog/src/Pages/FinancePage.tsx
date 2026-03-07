@@ -1,15 +1,6 @@
 import { useState, useEffect, useRef, type ChangeEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Button } from '../components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger
-} from '../components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { CalendarView } from '../components/CalendarView';
 import { DashboardView } from '../components/DashboardView';
@@ -19,7 +10,6 @@ import { EditTransactionDialog } from '../components/EditTransactionDialog';
 import { TransferDialog } from '../components/TransferDialog';
 import { TransactionImportDialog } from '../components/TransactionImportDialog';
 import { ScheduleDialog } from '../components/ScheduleDialog';
-import { TakeHomeCalculator } from '../components/TakeHomeCalculator';
 import { BudgetManager } from '../components/BudgetManager';
 import { AccountManager } from '../components/AccountManager';
 import { CategoryManager } from '../components/CategoryManager';
@@ -29,7 +19,6 @@ import {
     Wallet,
     Calendar,
     ChartBar,
-    Calculator,
     Target,
     List,
     LogOut,
@@ -66,6 +55,17 @@ import { getApiErrorMessage, getApiErrorStatus } from '../utils/error';
 import { buildProfileImageViewUrl, getProfileInitial } from '../utils/profileImage';
 import '../styles/pages/FinancePage.css';
 
+const financeSections = [
+    { value: 'dashboard', label: '대시보드', description: '월간 자산 브리핑', icon: ChartBar },
+    { value: 'calendar', label: '캘린더', description: '날짜별 현금흐름', icon: Calendar },
+    { value: 'transactions', label: '거래', description: '전체 거래와 업로드', icon: Upload },
+    { value: 'accounts', label: '계좌', description: '계좌 포트폴리오', icon: Wallet },
+    { value: 'categories', label: '카테고리', description: '분류와 결제수단', icon: List },
+    { value: 'budget', label: '예산', description: '예산 사용률 추적', icon: Target },
+] as const;
+
+type FinanceSection = (typeof financeSections)[number]['value'];
+
 export default function FinancePage() {
     const navigate = useNavigate();
     const { isAuthenticated, logout, refreshToken, setTokens } = useUserStore();
@@ -81,11 +81,30 @@ export default function FinancePage() {
     const profileImageInputRef = useRef<HTMLInputElement | null>(null);
 
     const [searchParams, setSearchParams] = useSearchParams();
-    const currentTab = searchParams.get('tab') || 'dashboard';
+    const currentTabParam = searchParams.get('tab');
+    const currentTab = financeSections.some((section) => section.value === currentTabParam)
+        ? currentTabParam as FinanceSection
+        : 'dashboard';
+    const currentSection = financeSections.find((section) => section.value === currentTab) ?? financeSections[0];
+    const currentMonthLabel = new Intl.DateTimeFormat('ko-KR', { month: 'long' }).format(new Date());
+    const heroHighlights = [
+        { label: '이번 달 포커스', value: `${currentMonthLabel} 브리핑` },
+        { label: '활성 섹션', value: currentSection.label },
+        { label: '관리 흐름', value: '거래 · 예산 · 계좌' },
+    ];
 
-    const handleTabChange = (value: string) => {
+    const handleTabChange = (value: FinanceSection) => {
         setSearchParams({ tab: value });
+        if (value !== 'calendar') {
+            setSelectedDate(undefined);
+        }
     };
+
+    useEffect(() => {
+        if (currentTabParam && !financeSections.some((section) => section.value === currentTabParam)) {
+            setSearchParams({ tab: 'dashboard' });
+        }
+    }, [currentTabParam, setSearchParams]);
 
     // --- [TanStack Query] 서버 데이터 ---
     const { data: userInfo, isLoading: userInfoLoading, error: userInfoError } = useUserInfo();
@@ -202,6 +221,11 @@ export default function FinancePage() {
 
     const openProfileImagePicker = () => {
         profileImageInputRef.current?.click();
+    };
+
+    const openImportWorkspace = () => {
+        handleTabChange('transactions');
+        setIsTransactionImportOpen(true);
     };
 
     const handleProfileImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -372,6 +396,61 @@ export default function FinancePage() {
         setSelectedDate(date);
     };
 
+    const renderCurrentSection = () => {
+        switch (currentTab) {
+            case 'calendar':
+                return (
+                    <>
+                        <CalendarView onDateClick={handleDateClick} />
+                        {selectedDate && (
+                            <TransactionList
+                                selectedDate={selectedDate}
+                                onEdit={handleEditTransaction}
+                                onDelete={handleDeleteTransaction}
+                            />
+                        )}
+                    </>
+                );
+            case 'transactions':
+                return (
+                    <TransactionList
+                        onEdit={handleEditTransaction}
+                        onDelete={handleDeleteTransaction}
+                    />
+                );
+            case 'accounts':
+                return (
+                    <AccountManager
+                        onAdd={handleAddAccount}
+                        onUpdate={handleUpdateAccount}
+                        onDelete={handleDeleteAccount}
+                        onTransferClick={() => setIsTransferDialogOpen(true)}
+                    />
+                );
+            case 'categories':
+                return (
+                    <CategoryManager
+                        onAdd={handleAddCategory}
+                        onUpdate={handleUpdateCategory}
+                        onDelete={handleDeleteCategory}
+                        onAddPayment={handleAddPayment}
+                        onUpdatePayment={handleUpdatePayment}
+                        onDeletePayment={handleDeletePayment}
+                    />
+                );
+            case 'budget':
+                return (
+                    <BudgetManager
+                        onAdd={handleAddBudget}
+                        onUpdate={handleUpdateBudget}
+                        onDelete={handleDeleteBudget}
+                    />
+                );
+            default:
+                return <DashboardView />;
+        }
+    };
+
     if (userInfoLoading) {
         return (
             <div className="finance-loading">
@@ -394,6 +473,8 @@ export default function FinancePage() {
 
     return (
         <div className="finance-page">
+            <div className="finance-orb finance-orb-primary" />
+            <div className="finance-orb finance-orb-secondary" />
             <div className="finance-container">
                 <input
                     ref={profileImageInputRef}
@@ -402,182 +483,141 @@ export default function FinancePage() {
                     className="hidden"
                     onChange={handleProfileImageChange}
                 />
-                <div className="finance-header">
-                    <div>
-                        <h1 className="finance-title">
+                <section className="finance-hero">
+                    <div className="finance-hero-main finance-glass-panel">
+                        <div className="finance-hero-kicker">
                             <Wallet className="finance-title-icon" />
-                            내 가계부
-                        </h1>
-                        <p className="finance-subtitle">사회 초년생을 위한 스마트 재무 관리</p>
+                            Blue Finance Workspace
+                        </div>
+                        <h1 className="finance-title">내 자산 흐름을 더 선명하게 관리하세요</h1>
+                        <p className="finance-subtitle">
+                            거래, 예산, 계좌, 카테고리를 하나의 금융 워크스페이스에서 연결하고
+                            월간 흐름을 차분한 블루 테마로 정리합니다.
+                        </p>
+                        <div className="finance-hero-chip-row">
+                            <span className="finance-hero-chip">수입 흐름</span>
+                            <span className="finance-hero-chip">지출 통제</span>
+                            <span className="finance-hero-chip">예산 모니터링</span>
+                        </div>
+                        <div className="finance-actions">
+                            <Button size="lg" onClick={() => setIsAddDialogOpen(true)}>
+                                <Plus className="finance-add-btn-icon" />
+                                거래 추가
+                            </Button>
+                            <Button size="lg" variant="outline" onClick={openImportWorkspace}>
+                                <Upload className="finance-add-btn-icon" />
+                                거래 업로드
+                            </Button>
+                            <Button size="lg" variant="secondary" onClick={() => setIsTransferDialogOpen(true)}>
+                                <Wallet className="finance-add-btn-icon" />
+                                계좌 이체
+                            </Button>
+                        </div>
                     </div>
-                    <div className="finance-actions">
-                        <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
-                            <Plus className="finance-add-btn-icon" />
-                            <span className="finance-add-btn-text">거래 추가</span>
-                        </Button>
 
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="finance-user-btn">
-                                    <Avatar className="finance-user-avatar">
-                                        {profileImageViewUrl && (
-                                            <AvatarImage src={profileImageViewUrl} alt={`${userInfo.name} profile`} />
-                                        )}
-                                        <AvatarFallback className="finance-user-avatar-fallback">
-                                            {getProfileInitial(userInfo.name)}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <span className="finance-user-name">{userInfo?.name}</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="finance-dropdown-content">
-                                <DropdownMenuLabel>
-                                    <div className="finance-dropdown-label-inner">
-                                        <Avatar className="finance-dropdown-avatar">
-                                            {profileImageViewUrl && (
-                                                <AvatarImage src={profileImageViewUrl} alt={`${userInfo.name} profile`} />
-                                            )}
-                                            <AvatarFallback className="finance-user-avatar-fallback">
-                                                {getProfileInitial(userInfo.name)}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div className="finance-dropdown-userinfo">
-                                            <p className="finance-dropdown-name">{userInfo?.name}</p>
-                                            <p className="finance-dropdown-email">
-                                                {userInfo?.email}
-                                            </p>
+                    <div className="finance-profile-panel finance-glass-panel">
+                        <div className="finance-profile-top">
+                            <Avatar className="finance-profile-avatar">
+                                {profileImageViewUrl && (
+                                    <AvatarImage src={profileImageViewUrl} alt={`${userInfo.name} profile`} />
+                                )}
+                                <AvatarFallback className="finance-user-avatar-fallback">
+                                    {getProfileInitial(userInfo.name)}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="finance-profile-copy">
+                                <p className="finance-profile-name">{userInfo.name}</p>
+                                <p className="finance-profile-email">{userInfo.email}</p>
+                            </div>
+                        </div>
+
+                        <div className="finance-highlight-grid">
+                            {heroHighlights.map((item) => (
+                                <div key={item.label} className="finance-highlight-card">
+                                    <span className="finance-highlight-label">{item.label}</span>
+                                    <strong className="finance-highlight-value">{item.value}</strong>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="finance-profile-actions">
+                            <Button variant="outline" size="sm" onClick={openProfileImagePicker} disabled={updateProfileImageMut.isPending}>
+                                <ImagePlus className="finance-profile-action-icon" />
+                                프로필
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={handleRefreshSession} disabled={refreshTokenMut.isPending}>
+                                <RefreshCcw className="finance-profile-action-icon" />
+                                세션 연장
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => setIsScheduleDialogOpen(true)}>
+                                <Target className="finance-profile-action-icon" />
+                                스케줄
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={handleLogout}>
+                                <LogOut className="finance-profile-action-icon" />
+                                로그아웃
+                            </Button>
+                        </div>
+                    </div>
+                </section>
+
+                <div className="finance-workspace">
+                    <aside className="finance-sidebar finance-glass-panel">
+                        <div className="finance-sidebar-header">
+                            <p className="finance-sidebar-kicker">WORKSPACE</p>
+                            <h2 className="finance-sidebar-title">자산 관리 허브</h2>
+                            <p className="finance-sidebar-copy">핵심 금융 작업을 섹션 단위로 정리해 빠르게 이동합니다.</p>
+                        </div>
+                        <div className="finance-sidebar-list">
+                            {financeSections.map((section) => {
+                                const Icon = section.icon;
+                                const isActive = currentTab === section.value;
+
+                                return (
+                                    <button
+                                        key={section.value}
+                                        type="button"
+                                        className={`finance-side-nav ${isActive ? 'is-active' : ''}`}
+                                        onClick={() => handleTabChange(section.value)}
+                                    >
+                                        <div className="finance-side-nav-icon">
+                                            <Icon className="finance-tab-icon" />
                                         </div>
-                                    </div>
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    onClick={openProfileImagePicker}
-                                    className="cursor-pointer"
-                                    disabled={updateProfileImageMut.isPending}
-                                >
-                                    <ImagePlus className="mr-2 h-4 w-4" />
-                                    <span>프로필 이미지 변경</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    onClick={handleRefreshSession}
-                                    className="cursor-pointer"
-                                    disabled={refreshTokenMut.isPending}
-                                >
-                                    <RefreshCcw className="mr-2 h-4 w-4" />
-                                    <span>로그인 연장</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => setIsScheduleDialogOpen(true)} className="cursor-pointer">
-                                    <Target className="mr-2 h-4 w-4" />
-                                    <span>스케줄 설정</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={handleLogout} className="finance-logout-item">
-                                    <LogOut className="finance-logout-icon" />
-                                    로그아웃
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
+                                        <div className="finance-side-nav-copy">
+                                            <span className="finance-side-nav-title">{section.label}</span>
+                                            <span className="finance-side-nav-description">{section.description}</span>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </aside>
+
+                    <section className="finance-main">
+                        <div className="finance-main-head finance-glass-panel">
+                            <div>
+                                <p className="finance-main-kicker">CURRENT SECTION</p>
+                                <h2 className="finance-main-title">{currentSection.label}</h2>
+                                <p className="finance-main-subtitle">{currentSection.description}</p>
+                            </div>
+                            <div className="finance-main-actions">
+                                {currentTab === 'transactions' && (
+                                    <Button variant="outline" size="sm" onClick={() => setIsTransactionImportOpen(true)}>
+                                        <Upload className="finance-profile-action-icon" />
+                                        CSV/Excel 업로드
+                                    </Button>
+                                )}
+                                {currentTab === 'calendar' && selectedDate && (
+                                    <div className="finance-selected-date-chip">{selectedDate}</div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="finance-tab-content">
+                            {renderCurrentSection()}
+                        </div>
+                    </section>
                 </div>
-
-                <Tabs
-                    value={currentTab}
-                    onValueChange={handleTabChange}
-                    className="finance-tabs"
-                >
-                    <div className="finance-tabs-scroll">
-                        <TabsList className="finance-tabs-list">
-                            <TabsTrigger value="dashboard" className="finance-tab-trigger">
-                                <ChartBar className="finance-tab-icon" />
-                                <span className="finance-tab-text">대시보드</span>
-                            </TabsTrigger>
-                            <TabsTrigger value="calendar" className="finance-tab-trigger">
-                                <Calendar className="finance-tab-icon" />
-                                <span className="finance-tab-text">캘린더</span>
-                            </TabsTrigger>
-                            <TabsTrigger value="transactions" className="finance-tab-trigger">
-                                <Wallet className="finance-tab-icon" />
-                                <span className="finance-tab-text">거래내역</span>
-                            </TabsTrigger>
-                            <TabsTrigger value="accounts" className="finance-tab-trigger">
-                                <Wallet className="finance-tab-icon" />
-                                <span className="finance-tab-text">계좌</span>
-                            </TabsTrigger>
-                            <TabsTrigger value="categories" className="finance-tab-trigger">
-                                <List className="finance-tab-icon" />
-                                <span className="finance-tab-text">카테고리</span>
-                            </TabsTrigger>
-                            <TabsTrigger value="budget" className="finance-tab-trigger">
-                                <Target className="finance-tab-icon" />
-                                <span className="finance-tab-text">예산</span>
-                            </TabsTrigger>
-                            <TabsTrigger value="calculator" className="finance-tab-trigger">
-                                <Calculator className="finance-tab-icon" />
-                                <span className="finance-tab-text">계산기</span>
-                            </TabsTrigger>
-                        </TabsList>
-                    </div>
-
-                    <TabsContent value="dashboard" className="finance-tab-content">
-                        <DashboardView />
-                    </TabsContent>
-
-                    <TabsContent value="calendar" className="finance-tab-content">
-                        <CalendarView onDateClick={handleDateClick} />
-                        {selectedDate && (
-                            <TransactionList
-                                selectedDate={selectedDate}
-                                onEdit={handleEditTransaction}
-                                onDelete={handleDeleteTransaction}
-                            />
-                        )}
-                    </TabsContent>
-
-                    <TabsContent value="transactions" className="finance-tab-content">
-                        <Button size="sm" onClick={() => setIsTransactionImportOpen(true)}>
-                            <Upload className="h-4 w-4 mr-2" />
-                            거래 업로드(CSV/Excel)
-                        </Button>
-                        <TransactionList
-                            onEdit={handleEditTransaction}
-                            onDelete={handleDeleteTransaction}
-                        />
-                    </TabsContent>
-
-                    <TabsContent value="accounts" className="finance-tab-content">
-                        <AccountManager
-                            onAdd={handleAddAccount}
-                            onUpdate={handleUpdateAccount}
-                            onDelete={handleDeleteAccount}
-                            onTransferClick={() => setIsTransferDialogOpen(true)}
-                        />
-                    </TabsContent>
-
-                    <TabsContent value="categories" className="finance-tab-content">
-                        <CategoryManager
-                            onAdd={handleAddCategory}
-                            onUpdate={handleUpdateCategory}
-                            onDelete={handleDeleteCategory}
-                            onAddPayment={handleAddPayment}
-                            onUpdatePayment={handleUpdatePayment}
-                            onDeletePayment={handleDeletePayment}
-                        />
-                    </TabsContent>
-
-                    <TabsContent value="budget" className="finance-tab-content">
-                        <BudgetManager
-                            onAdd={handleAddBudget}
-                            onUpdate={handleUpdateBudget}
-                            onDelete={handleDeleteBudget}
-                        />
-                    </TabsContent>
-
-                    <TabsContent value="calculator" className="finance-tab-content">
-                        <TakeHomeCalculator />
-                    </TabsContent>
-                </Tabs>
             </div>
 
             <AddTransactionDialog
