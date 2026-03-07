@@ -42,3 +42,4 @@ out/
 /AGENTS.md
 /src/main/resources/application-local.yml
 /docs/codex/
+/.codex/
