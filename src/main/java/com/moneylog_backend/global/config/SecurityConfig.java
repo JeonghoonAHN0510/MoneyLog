@@ -69,6 +69,9 @@ public class SecurityConfig {
                                  "/api/user/signup",
                                  "/api/user/login",
                                  "/api/user/refresh",
+                                 "/api/user/password-reset/request",
+                                 "/api/user/password-reset/verify-otp",
+                                 "/api/user/password-reset/confirm",
                                  "/api/bank",
                                  "/api/files/view")
                 .permitAll()

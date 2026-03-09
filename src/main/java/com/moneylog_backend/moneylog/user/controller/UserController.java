@@ -1,8 +1,14 @@
 package com.moneylog_backend.moneylog.user.controller;
 
 import com.moneylog_backend.moneylog.user.dto.LoginReqDto;
+import com.moneylog_backend.moneylog.user.dto.PasswordResetConfirmReqDto;
+import com.moneylog_backend.moneylog.user.dto.PasswordResetRequestDto;
+import com.moneylog_backend.moneylog.user.dto.PasswordResetRequestResponse;
+import com.moneylog_backend.moneylog.user.dto.PasswordResetVerifyOtpReqDto;
+import com.moneylog_backend.moneylog.user.dto.PasswordResetVerifyOtpResDto;
 import com.moneylog_backend.moneylog.user.dto.RefreshReqDto;
 import com.moneylog_backend.moneylog.user.dto.UserDto;
+import com.moneylog_backend.moneylog.user.service.PasswordResetService;
 import com.moneylog_backend.moneylog.user.service.UserService;
 
 import org.springframework.http.HttpStatus;
@@ -23,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final PasswordResetService passwordResetService;
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @ModelAttribute UserDto userDto) throws IOException {
@@ -37,6 +44,26 @@ public class UserController {
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestBody @Valid RefreshReqDto refreshReqDto) {
         return ResponseEntity.ok(userService.refresh(refreshReqDto));
+    }
+
+    @PostMapping("/password-reset/request")
+    public ResponseEntity<PasswordResetRequestResponse> requestPasswordReset(
+        @RequestBody @Valid PasswordResetRequestDto requestDto
+    ) {
+        return ResponseEntity.ok(passwordResetService.requestOtp(requestDto));
+    }
+
+    @PostMapping("/password-reset/verify-otp")
+    public ResponseEntity<PasswordResetVerifyOtpResDto> verifyPasswordResetOtp(
+        @RequestBody @Valid PasswordResetVerifyOtpReqDto requestDto
+    ) {
+        return ResponseEntity.ok(passwordResetService.verifyOtp(requestDto));
+    }
+
+    @PostMapping("/password-reset/confirm")
+    public ResponseEntity<Boolean> confirmPasswordReset(@RequestBody @Valid PasswordResetConfirmReqDto requestDto) {
+        passwordResetService.confirmReset(requestDto);
+        return ResponseEntity.ok(true);
     }
 
     @PostMapping("/logout")

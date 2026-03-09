@@ -66,6 +66,8 @@ dependencies {
     implementation 'org.apache.poi:poi-ooxml:5.2.5'
     // [19] CSV 파싱
     implementation 'org.apache.commons:commons-csv:1.11.0'
+    // [20] Email
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
     // 개발 편의성 (서버 자동 재시작 등)
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     // 테스트 코드 작성용
