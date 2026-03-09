@@ -1,7 +1,8 @@
 import axios from 'axios';
 import authStore from '../stores/authStore.js';
 
-export const API_BASE_URL = 'http://localhost:8080/api';
+const DEFAULT_API_BASE_URL = 'http://localhost:8080/api';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL;
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -40,13 +41,15 @@ api.interceptors.response.use(
 
         if (newAccessToken) {
             const token = newAccessToken.replace('Bearer ', '');
-            
+
             authStore.getState().setAccessToken(token);
 
             // Axios 기본 헤더도 갱신
             api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            
-            console.log("🔄 세션(토큰)이 연장되었습니다.");
+
+            if (import.meta.env.DEV) {
+                console.info('세션(토큰)이 연장되었습니다.');
+            }
         }
         return response;
     },

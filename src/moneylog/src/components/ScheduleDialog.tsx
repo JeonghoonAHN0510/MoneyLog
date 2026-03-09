@@ -121,8 +121,15 @@ export function ScheduleDialog({ open, onOpenChange }: ScheduleDialogProps) {
         }
     };
 
+    const handleOpenChange = (nextOpen: boolean) => {
+        if (!nextOpen) {
+            setEditingJob(null);
+        }
+        onOpenChange(nextOpen);
+    };
+
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle>스케줄 작업 설정</DialogTitle>
