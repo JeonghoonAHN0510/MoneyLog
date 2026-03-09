@@ -110,6 +110,7 @@ export interface UserInfo {
   id: string;
   email: string;
   name: string;
+  role: 'USER' | 'ADMIN';
   profileImageUrl?: string | null;
 }
 

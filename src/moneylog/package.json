@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint ",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -75,6 +76,8 @@
     "@tailwindcss/vite": "^4.1.18",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.46.0",
+    "@typescript-eslint/parser": "^8.46.0",
     "@vitejs/plugin-react-swc": "^4.2.2",
     "autoprefixer": "^10.4.23",
     "eslint": "^9.39.2",
@@ -83,6 +86,7 @@
     "globals": "^16.5.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.0.0",
+    "typescript": "^5.9.3",
     "vite": "^7.3.0"
   }
 }

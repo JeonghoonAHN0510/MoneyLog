@@ -109,6 +109,7 @@ export default function FinancePage() {
     // --- [TanStack Query] 서버 데이터 ---
     const { data: userInfo, isLoading: userInfoLoading, error: userInfoError } = useUserInfo();
     const refreshTokenMut = useRefreshToken();
+    const isAdmin = userInfo?.role === 'ADMIN';
 
     // 로그인 체크
     useEffect(() => {
@@ -165,6 +166,12 @@ export default function FinancePage() {
 
         toast.error(getApiErrorMessage(userInfoError, '사용자 정보를 불러오는데 실패했습니다. 잠시 후 다시 시도해주세요.'));
     }, [userInfoError, logout, navigate]);
+
+    useEffect(() => {
+        if (!isAdmin && isScheduleDialogOpen) {
+            setIsScheduleDialogOpen(false);
+        }
+    }, [isAdmin, isScheduleDialogOpen]);
 
     const handleLogout = async () => {
         try {
@@ -549,10 +556,12 @@ export default function FinancePage() {
                                 <RefreshCcw className="finance-profile-action-icon" />
                                 세션 연장
                             </Button>
-                            <Button variant="outline" size="sm" onClick={() => setIsScheduleDialogOpen(true)}>
-                                <Target className="finance-profile-action-icon" />
-                                스케줄
-                            </Button>
+                            {isAdmin && (
+                                <Button variant="outline" size="sm" onClick={() => setIsScheduleDialogOpen(true)}>
+                                    <Target className="finance-profile-action-icon" />
+                                    스케줄
+                                </Button>
+                            )}
                             <Button variant="ghost" size="sm" onClick={handleLogout}>
                                 <LogOut className="finance-profile-action-icon" />
                                 로그아웃
@@ -640,10 +649,12 @@ export default function FinancePage() {
                 onUpdate={handleUpdateTransaction}
             />
 
-            <ScheduleDialog
-                open={isScheduleDialogOpen}
-                onOpenChange={setIsScheduleDialogOpen}
-            />
+            {isAdmin && (
+                <ScheduleDialog
+                    open={isScheduleDialogOpen}
+                    onOpenChange={setIsScheduleDialogOpen}
+                />
+            )}
 
             <TransactionImportDialog
                 open={isTransactionImportOpen}
