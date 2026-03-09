@@ -1,7 +1,7 @@
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Wallet, ArrowLeft } from 'lucide-react';
+import { Wallet } from 'lucide-react';
 import '../styles/pages/ForgotPasswordPage.css';
 
 export default function ForgotPasswordPage() {
@@ -37,15 +37,6 @@ export default function ForgotPasswordPage() {
                 onClick={() => navigate('/login')}
               >
                 로그인 페이지로 돌아가기
-              </Button>
-            </div>
-
-            <div className="forgot-back-wrapper">
-              <Button asChild variant="ghost" className="forgot-back-btn">
-                <Link to="/login">
-                  <ArrowLeft className="forgot-back-icon" />
-                  로그인 페이지로 돌아가기
-                </Link>
               </Button>
             </div>
           </CardContent>

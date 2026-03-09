@@ -22,7 +22,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final CustomUserDetailsService customUserDetailsService;
@@ -76,6 +78,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             } catch (Exception e) {
+                log.error("JWT 인증 필터 처리 중 예상치 못한 오류 발생", e);
                 commenceUnauthorized(request, response,
                                      new AuthenticationServiceException("인증 처리 중 오류가 발생했습니다.", e));
                 return;
