@@ -22,11 +22,13 @@ public class UserWriteTxService {
 
     @Transactional
     public int signup(UserDto userDto,
+                      String normalizedEmail,
+                      String emailHash,
                       String regexPhone,
                       String profileImageUrl,
                       String encodedPassword,
                       String regexAccountNumber) {
-        UserEntity userEntity = userDto.toEntity(regexPhone, profileImageUrl, encodedPassword);
+        UserEntity userEntity = userDto.toEntity(normalizedEmail, emailHash, regexPhone, profileImageUrl, encodedPassword);
         userRepository.save(userEntity);
 
         AccountEntity accountEntity = AccountEntity.builder()

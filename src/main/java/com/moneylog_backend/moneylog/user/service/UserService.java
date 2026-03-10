@@ -7,6 +7,8 @@ import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.global.file.FileStorageService;
 import com.moneylog_backend.global.file.cleanup.FileDeleteTaskService;
+import com.moneylog_backend.global.security.pii.PiiCryptoService;
+import com.moneylog_backend.global.security.redis.RedisSecretProtector;
 import com.moneylog_backend.global.util.BankAccountNumberFormatter;
 import com.moneylog_backend.global.util.FormatUtils;
 import com.moneylog_backend.global.util.RedisService;
@@ -62,10 +64,14 @@ public class UserService {
     private final FileStorageService fileStorageService;
     private final UserWriteTxService userWriteTxService;
     private final FileDeleteTaskService fileDeleteTaskService;
+    private final PiiCryptoService piiCryptoService;
+    private final RedisSecretProtector redisSecretProtector;
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public int signup(UserDto userDto) throws IOException {
-        checkIdOrEmailValidity(userDto);
+        String normalizedEmail = piiCryptoService.normalizeEmail(userDto.getEmail());
+        String emailHash = piiCryptoService.hashEmail(normalizedEmail);
+        checkIdOrEmailValidity(userDto.getId(), normalizedEmail, emailHash);
 
         int bankId = userDto.getBankId();
         String bankName = getBankName(bankId);
@@ -75,7 +81,15 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(userDto.getPassword());
 
         try {
-            return userWriteTxService.signup(userDto, regexPhone, profileImageUrl, encodedPassword, regexAccountNumber);
+            return userWriteTxService.signup(
+                userDto,
+                normalizedEmail,
+                emailHash,
+                regexPhone,
+                profileImageUrl,
+                encodedPassword,
+                regexAccountNumber
+            );
         } catch (RuntimeException ex) {
             fileDeleteTaskService.deleteNowOrEnqueue(profileImageUrl, SIGNUP_TX_ROLLBACK_REASON);
             throw ex;
@@ -96,7 +110,7 @@ public class UserService {
         // Key: "RT:{아이디}", Value: {리프레시 토큰}, Duration: 14일
         redisService.setValues(
             redisTokenKeyResolver.refreshToken(authentication.getName()),
-            refreshToken,
+            redisSecretProtector.hashRefreshToken(refreshToken),
             Duration.ofSeconds(jwtProperties.getRefreshTokenValidityInSeconds())
         );
         // 5. 토큰 반환
@@ -116,13 +130,13 @@ public class UserService {
         }
 
         String loginId = jwtProvider.getAuthentication(refreshToken).getName();
-        String savedRefreshToken = redisService.getValues(redisTokenKeyResolver.refreshToken(loginId));
+        String savedRefreshTokenHash = redisService.getValues(redisTokenKeyResolver.refreshToken(loginId));
 
-        if (savedRefreshToken == null) {
+        if (savedRefreshTokenHash == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, REFRESH_TOKEN_NOT_FOUND);
         }
 
-        if (!savedRefreshToken.equals(refreshToken)) {
+        if (!redisSecretProtector.matchesRefreshToken(refreshToken, savedRefreshTokenHash)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, REFRESH_TOKEN_MISMATCH);
         }
 
@@ -131,7 +145,7 @@ public class UserService {
         String newRefreshToken = jwtProvider.createRefreshToken(authentication);
         redisService.setValues(
             redisTokenKeyResolver.refreshToken(loginId),
-            newRefreshToken,
+            redisSecretProtector.hashRefreshToken(newRefreshToken),
             Duration.ofSeconds(jwtProperties.getRefreshTokenValidityInSeconds())
         );
 
@@ -181,11 +195,11 @@ public class UserService {
         }
     }
 
-    private void checkIdOrEmailValidity (UserDto userDto) {
-        if (userRepository.existsByLoginId(userDto.getId())) {
+    private void checkIdOrEmailValidity(String loginId, String normalizedEmail, String emailHash) {
+        if (userRepository.existsByLoginId(loginId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, ErrorMessageConstants.DUPLICATE_LOGIN_ID);
         }
-        if (userRepository.existsByEmail(userDto.getEmail())) {
+        if (userRepository.existsByEmailHash(emailHash) || userRepository.countLegacyPlainEmail(normalizedEmail) > 0) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, ErrorMessageConstants.DUPLICATE_EMAIL);
         }
     }
