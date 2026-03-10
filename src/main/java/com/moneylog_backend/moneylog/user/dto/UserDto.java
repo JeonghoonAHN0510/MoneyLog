@@ -62,13 +62,18 @@ public class UserDto {
     private String bankName;
     private String accountNumber;
 
-    public UserEntity toEntity (String regexPhone, String profileImageUrl, String encodedPassword) {
+    public UserEntity toEntity(String normalizedEmail,
+                               String emailHash,
+                               String regexPhone,
+                               String profileImageUrl,
+                               String encodedPassword) {
         return UserEntity.builder()
                          .accountId(this.accountId)
                          .name(this.name)
                          .loginId(this.id)
                          .password(encodedPassword)
-                         .email(this.email)
+                         .email(normalizedEmail)
+                         .emailHash(emailHash)
                          .phone(regexPhone)
                          .gender(this.gender)
                          .role(RoleEnum.USER)

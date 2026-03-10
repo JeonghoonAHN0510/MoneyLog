@@ -1,6 +1,7 @@
 package com.moneylog_backend.moneylog.user.entity;
 
 import com.moneylog_backend.global.common.BaseTime;
+import com.moneylog_backend.global.security.pii.PiiStringEncryptConverter;
 import com.moneylog_backend.global.type.ProviderEnum;
 import com.moneylog_backend.global.type.RoleEnum;
 import com.moneylog_backend.global.type.StatusEnum;
@@ -31,15 +32,20 @@ public class UserEntity extends BaseTime {
     private Integer userId;
     @Column(name = "account_id", columnDefinition = "INT UNSIGNED")
     private Integer accountId;
-    @Column(columnDefinition = "VARCHAR(50) NOT NULL")
+    @Convert(converter = PiiStringEncryptConverter.class)
+    @Column(columnDefinition = "VARCHAR(512) NOT NULL")
     private String name;
     @Column(name = "id", columnDefinition = "VARCHAR(50) NOT NULL UNIQUE")
     private String loginId;
     @Column(columnDefinition = "VARCHAR(255)")
     private String password;
-    @Column(columnDefinition = "VARCHAR(100) NOT NULL UNIQUE")
+    @Convert(converter = PiiStringEncryptConverter.class)
+    @Column(columnDefinition = "VARCHAR(512) NOT NULL")
     private String email;
-    @Column(columnDefinition = "VARCHAR(20) NOT NULL")
+    @Column(name = "email_hash", columnDefinition = "CHAR(64)")
+    private String emailHash;
+    @Convert(converter = PiiStringEncryptConverter.class)
+    @Column(columnDefinition = "VARCHAR(512) NOT NULL")
     private String phone;
     @Column(columnDefinition = "BOOLEAN")
     private boolean gender;
@@ -54,7 +60,8 @@ public class UserEntity extends BaseTime {
     @Column(columnDefinition = "ENUM('LOCAL', 'KAKAO', 'GOOGLE') DEFAULT 'LOCAL'")
     @Enumerated(EnumType.STRING)
     private ProviderEnum provider;
-    @Column(name = "provider_id", columnDefinition = "VARCHAR(255)")
+    @Convert(converter = PiiStringEncryptConverter.class)
+    @Column(name = "provider_id", columnDefinition = "VARCHAR(512)")
     private String providerId;
     @Column(name = "last_login_at", columnDefinition = "DATETIME(6)")
     private LocalDateTime lastLoginAt;

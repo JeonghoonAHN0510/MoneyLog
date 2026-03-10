@@ -26,23 +26,24 @@ CREATE TABLE IF NOT EXISTS account (
 CREATE TABLE IF NOT EXISTS user (
     user_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     account_id INT UNSIGNED NULL,
-    name VARCHAR(50) NOT NULL,
+    name VARCHAR(512) NOT NULL,
     id VARCHAR(50) NOT NULL,
     password VARCHAR(255) NULL,
-    email VARCHAR(100) NOT NULL,
-    phone VARCHAR(20) NOT NULL,
+    email VARCHAR(512) NOT NULL,
+    email_hash CHAR(64) NULL,
+    phone VARCHAR(512) NOT NULL,
     gender BOOLEAN NOT NULL,
     role ENUM('ADMIN', 'USER') DEFAULT 'USER',
     profile_image_url VARCHAR(255) NULL,
     status ENUM('ACTIVE', 'DORMANT', 'WITHDRAWN') DEFAULT 'ACTIVE',
     provider ENUM('LOCAL', 'KAKAO', 'GOOGLE') DEFAULT 'LOCAL',
-    provider_id VARCHAR(255) NULL,
+    provider_id VARCHAR(512) NULL,
     last_login_at DATETIME(6) NULL,
     created_at DATETIME(6) NULL,
     updated_at DATETIME(6) NULL,
     PRIMARY KEY (user_id),
     UNIQUE KEY uk_user_login_id (id),
-    UNIQUE KEY uk_user_email (email)
+    UNIQUE KEY uk_user_email_hash (email_hash)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS category (

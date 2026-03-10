@@ -2,6 +2,8 @@ package com.moneylog_backend.moneylog.user.service;
 
 import com.moneylog_backend.global.auth.jwt.RedisTokenKeyResolver;
 import com.moneylog_backend.global.constant.ErrorMessageConstants;
+import com.moneylog_backend.global.security.pii.PiiCryptoService;
+import com.moneylog_backend.global.security.redis.RedisSecretProtector;
 import com.moneylog_backend.global.type.ProviderEnum;
 import com.moneylog_backend.global.util.RedisService;
 import com.moneylog_backend.moneylog.user.dto.PasswordResetConfirmReqDto;
@@ -33,6 +35,8 @@ public class PasswordResetService {
     private final PasswordResetMailService passwordResetMailService;
     private final PasswordEncoder passwordEncoder;
     private final UserWriteTxService userWriteTxService;
+    private final PiiCryptoService piiCryptoService;
+    private final RedisSecretProtector redisSecretProtector;
 
     @Value("${app.security.password-reset.otp-ttl-seconds:300}")
     private int otpTtlSeconds;
@@ -75,9 +79,9 @@ public class PasswordResetService {
         UserEntity userEntity = loadResettableUser(requestDto.getId(), requestDto.getEmail());
         Integer userId = userEntity.getUserId();
         String otpKey = redisTokenKeyResolver.passwordResetOtp(userId);
-        String storedOtp = redisService.getValues(otpKey);
+        String storedOtpHash = redisService.getValues(otpKey);
 
-        if (storedOtp == null) {
+        if (storedOtpHash == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ErrorMessageConstants.PASSWORD_RESET_OTP_EXPIRED);
         }
 
@@ -87,7 +91,7 @@ public class PasswordResetService {
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, ErrorMessageConstants.PASSWORD_RESET_OTP_ATTEMPTS_EXCEEDED);
         }
 
-        if (!storedOtp.equals(requestDto.getOtpCode())) {
+        if (!redisSecretProtector.matchesPasswordResetOtp(userId, requestDto.getOtpCode(), storedOtpHash)) {
             int nextAttempts = currentAttempts + 1;
             if (nextAttempts >= otpMaxAttempts) {
                 clearOtpState(userId);
@@ -145,7 +149,7 @@ public class PasswordResetService {
                                                   ErrorMessageConstants.PASSWORD_RESET_IDENTITY_CHECK_FAILED
                                               ));
 
-        if (!userEntity.getEmail().equalsIgnoreCase(email)) {
+        if (!piiCryptoService.normalizeEmail(userEntity.getEmail()).equals(piiCryptoService.normalizeEmail(email))) {
             throw invalidPasswordResetIdentity();
         }
 
@@ -166,7 +170,7 @@ public class PasswordResetService {
     private void storeOtpState(Integer userId, String otpCode) {
         redisService.setValues(
             redisTokenKeyResolver.passwordResetOtp(userId),
-            otpCode,
+            redisSecretProtector.hashPasswordResetOtp(userId, otpCode),
             Duration.ofSeconds(otpTtlSeconds)
         );
         redisService.setValues(
