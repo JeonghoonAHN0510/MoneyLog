@@ -71,6 +71,10 @@ public class UserEntity extends BaseTime {
         this.profileImageUrl = profileImageUrl;
     }
 
+    public void updatePassword(String password) {
+        this.password = password;
+    }
+
     public UserDto excludePassword () {
         return UserDto.builder()
                       .userId(this.userId)

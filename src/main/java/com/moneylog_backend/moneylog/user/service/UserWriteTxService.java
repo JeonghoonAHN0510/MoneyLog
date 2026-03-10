@@ -54,4 +54,12 @@ public class UserWriteTxService {
 
         return new ProfileImageUpdateTxResult(userEntity.excludePassword(), oldFileUrl);
     }
+
+    @Transactional
+    public void updatePassword(Integer userId, String encodedPassword) {
+        UserEntity userEntity = userRepository.findById(userId)
+                                              .orElseThrow(
+                                                  () -> new ResourceNotFoundException(ErrorMessageConstants.USER_NOT_FOUND));
+        userEntity.updatePassword(encodedPassword);
+    }
 }

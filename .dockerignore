@@ -1,0 +1,11 @@
+.git
+.gradle
+.idea
+build
+docs
+out
+src/moneylog/dist
+src/moneylog/node_modules
+src/moneylog/.env
+src/moneylog/.vite
+*.iml

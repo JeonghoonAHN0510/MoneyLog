@@ -37,9 +37,11 @@ out/
 
 /src/main/resources/application.yml
 /src/moneylog/.env
+/\.env.docker
 /project_flow.md
 /.geminiignore
 /AGENTS.md
 /src/main/resources/application-local.yml
 /docs/codex/
 /.codex/
+/.env.docker

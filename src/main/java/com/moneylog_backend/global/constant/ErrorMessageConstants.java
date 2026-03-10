@@ -31,6 +31,16 @@ public final class ErrorMessageConstants {
     public static final String INVALID_UPLOAD_DIRECTORY = "올바르지 않은 업로드 디렉터리입니다.";
     public static final String FILE_DELETE_FAILED = "파일 삭제 중 오류가 발생했습니다.";
     public static final String S3_STORAGE_NOT_ENABLED = "S3 저장소가 활성화되어 있지 않습니다.";
+    public static final String PASSWORD_RESET_LOGIN_ID_NOT_FOUND = "가입되지 않은 아이디입니다.";
+    public static final String PASSWORD_RESET_EMAIL_MISMATCH = "아이디와 이메일이 일치하지 않습니다.";
+    public static final String PASSWORD_RESET_PROVIDER_NOT_SUPPORTED = "비밀번호 재설정을 지원하지 않는 계정입니다.";
+    public static final String PASSWORD_RESET_IDENTITY_CHECK_FAILED = "입력한 계정 정보로 비밀번호를 재설정할 수 없습니다.";
+    public static final String PASSWORD_RESET_OTP_RESEND_COOLDOWN = "인증번호는 잠시 후 다시 요청해주세요.";
+    public static final String PASSWORD_RESET_OTP_INVALID = "인증번호가 올바르지 않습니다.";
+    public static final String PASSWORD_RESET_OTP_EXPIRED = "인증번호가 만료되었습니다. 다시 요청해주세요.";
+    public static final String PASSWORD_RESET_OTP_ATTEMPTS_EXCEEDED = "인증번호 입력 횟수를 초과했습니다. 다시 요청해주세요.";
+    public static final String PASSWORD_RESET_TOKEN_INVALID = "비밀번호 재설정 세션이 유효하지 않습니다. 다시 인증해주세요.";
+    public static final String PASSWORD_RESET_EMAIL_SEND_FAILED = "인증번호 메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.";
 
     private static final String UNKNOWN_STATUS_FORMAT = "알 수 없는 상태 코드입니다: %s";
     private static final String UNKNOWN_FREQUENCY_FORMAT = "알 수 없는 스케줄 빈도입니다: %s";
