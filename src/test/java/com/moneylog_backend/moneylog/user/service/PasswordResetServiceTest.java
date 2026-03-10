@@ -84,7 +84,7 @@ class PasswordResetServiceTest {
     }
 
     @Test
-    void 인증번호_요청시_아이디가_없으면_404를_반환한다() {
+    void 인증번호_요청시_아이디가_없어도_일반화된_400을_반환한다() {
         when(userRepository.findByLoginId("tester")).thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(
@@ -92,8 +92,39 @@ class PasswordResetServiceTest {
             () -> passwordResetService.requestOtp(new PasswordResetRequestDto("tester", "tester@moneylog.com"))
         );
 
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals(ErrorMessageConstants.PASSWORD_RESET_LOGIN_ID_NOT_FOUND, exception.getReason());
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        assertEquals(ErrorMessageConstants.PASSWORD_RESET_IDENTITY_CHECK_FAILED, exception.getReason());
+        verify(redisService, never()).setValues(anyString(), anyString(), any());
+        verify(passwordResetMailService, never()).sendOtp(any(), any());
+    }
+
+    @Test
+    void 인증번호_요청시_이메일이_불일치해도_일반화된_400을_반환한다() {
+        when(userRepository.findByLoginId("tester")).thenReturn(Optional.of(localUser()));
+
+        ResponseStatusException exception = assertThrows(
+            ResponseStatusException.class,
+            () -> passwordResetService.requestOtp(new PasswordResetRequestDto("tester", "other@moneylog.com"))
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        assertEquals(ErrorMessageConstants.PASSWORD_RESET_IDENTITY_CHECK_FAILED, exception.getReason());
+        verify(redisService, never()).setValues(anyString(), anyString(), any());
+        verify(passwordResetMailService, never()).sendOtp(any(), any());
+    }
+
+    @Test
+    void 인증번호_요청시_LOCAL이_아닌_계정도_일반화된_400을_반환한다() {
+        when(userRepository.findByLoginId("tester")).thenReturn(Optional.of(oauthUser()));
+
+        ResponseStatusException exception = assertThrows(
+            ResponseStatusException.class,
+            () -> passwordResetService.requestOtp(new PasswordResetRequestDto("tester", "tester@moneylog.com"))
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        assertEquals(ErrorMessageConstants.PASSWORD_RESET_IDENTITY_CHECK_FAILED, exception.getReason());
+        verify(redisService, never()).setValues(anyString(), anyString(), any());
         verify(passwordResetMailService, never()).sendOtp(any(), any());
     }
 
@@ -140,6 +171,48 @@ class PasswordResetServiceTest {
     }
 
     @Test
+    void 인증번호_검증시_아이디가_없어도_일반화된_400을_반환한다() {
+        when(userRepository.findByLoginId("tester")).thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(
+            ResponseStatusException.class,
+            () -> passwordResetService.verifyOtp(new PasswordResetVerifyOtpReqDto("tester", "tester@moneylog.com", "123456"))
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        assertEquals(ErrorMessageConstants.PASSWORD_RESET_IDENTITY_CHECK_FAILED, exception.getReason());
+        verify(redisService, never()).getValues(anyString());
+    }
+
+    @Test
+    void 인증번호_검증시_이메일이_불일치해도_일반화된_400을_반환한다() {
+        when(userRepository.findByLoginId("tester")).thenReturn(Optional.of(localUser()));
+
+        ResponseStatusException exception = assertThrows(
+            ResponseStatusException.class,
+            () -> passwordResetService.verifyOtp(new PasswordResetVerifyOtpReqDto("tester", "other@moneylog.com", "123456"))
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        assertEquals(ErrorMessageConstants.PASSWORD_RESET_IDENTITY_CHECK_FAILED, exception.getReason());
+        verify(redisService, never()).getValues(anyString());
+    }
+
+    @Test
+    void 인증번호_검증시_LOCAL이_아닌_계정도_일반화된_400을_반환한다() {
+        when(userRepository.findByLoginId("tester")).thenReturn(Optional.of(oauthUser()));
+
+        ResponseStatusException exception = assertThrows(
+            ResponseStatusException.class,
+            () -> passwordResetService.verifyOtp(new PasswordResetVerifyOtpReqDto("tester", "tester@moneylog.com", "123456"))
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        assertEquals(ErrorMessageConstants.PASSWORD_RESET_IDENTITY_CHECK_FAILED, exception.getReason());
+        verify(redisService, never()).getValues(anyString());
+    }
+
+    @Test
     void 비밀번호_재설정_확정시_비밀번호를_변경하고_refreshToken을_삭제한다() {
         UserEntity userEntity = localUser();
         when(redisTokenKeyResolver.passwordResetToken("reset-token")).thenReturn("PR:TOKEN:reset-token");
@@ -164,6 +237,17 @@ class PasswordResetServiceTest {
                          .loginId("tester")
                          .email("tester@moneylog.com")
                          .provider(ProviderEnum.LOCAL)
+                         .createdAt(LocalDateTime.now())
+                         .updatedAt(LocalDateTime.now())
+                         .build();
+    }
+
+    private UserEntity oauthUser() {
+        return UserEntity.builder()
+                         .userId(2)
+                         .loginId("tester")
+                         .email("tester@moneylog.com")
+                         .provider(ProviderEnum.KAKAO)
                          .createdAt(LocalDateTime.now())
                          .updatedAt(LocalDateTime.now())
                          .build();

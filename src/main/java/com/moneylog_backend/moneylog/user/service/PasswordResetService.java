@@ -141,22 +141,26 @@ public class PasswordResetService {
     private UserEntity loadResettableUser(String loginId, String email) {
         UserEntity userEntity = userRepository.findByLoginId(loginId)
                                               .orElseThrow(() -> new ResponseStatusException(
-                                                  HttpStatus.NOT_FOUND,
-                                                  ErrorMessageConstants.PASSWORD_RESET_LOGIN_ID_NOT_FOUND
+                                                  HttpStatus.BAD_REQUEST,
+                                                  ErrorMessageConstants.PASSWORD_RESET_IDENTITY_CHECK_FAILED
                                               ));
 
         if (!userEntity.getEmail().equalsIgnoreCase(email)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ErrorMessageConstants.PASSWORD_RESET_EMAIL_MISMATCH);
+            throw invalidPasswordResetIdentity();
         }
 
         if (userEntity.getProvider() != null && userEntity.getProvider() != ProviderEnum.LOCAL) {
-            throw new ResponseStatusException(
-                HttpStatus.CONFLICT,
-                ErrorMessageConstants.PASSWORD_RESET_PROVIDER_NOT_SUPPORTED
-            );
+            throw invalidPasswordResetIdentity();
         }
 
         return userEntity;
+    }
+
+    private ResponseStatusException invalidPasswordResetIdentity() {
+        return new ResponseStatusException(
+            HttpStatus.BAD_REQUEST,
+            ErrorMessageConstants.PASSWORD_RESET_IDENTITY_CHECK_FAILED
+        );
     }
 
     private void storeOtpState(Integer userId, String otpCode) {

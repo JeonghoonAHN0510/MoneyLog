@@ -34,6 +34,7 @@ public final class ErrorMessageConstants {
     public static final String PASSWORD_RESET_LOGIN_ID_NOT_FOUND = "가입되지 않은 아이디입니다.";
     public static final String PASSWORD_RESET_EMAIL_MISMATCH = "아이디와 이메일이 일치하지 않습니다.";
     public static final String PASSWORD_RESET_PROVIDER_NOT_SUPPORTED = "비밀번호 재설정을 지원하지 않는 계정입니다.";
+    public static final String PASSWORD_RESET_IDENTITY_CHECK_FAILED = "입력한 계정 정보로 비밀번호를 재설정할 수 없습니다.";
     public static final String PASSWORD_RESET_OTP_RESEND_COOLDOWN = "인증번호는 잠시 후 다시 요청해주세요.";
     public static final String PASSWORD_RESET_OTP_INVALID = "인증번호가 올바르지 않습니다.";
     public static final String PASSWORD_RESET_OTP_EXPIRED = "인증번호가 만료되었습니다. 다시 요청해주세요.";
