@@ -1,6 +1,8 @@
 package com.moneylog_backend.moneylog.user.entity;
 
 import com.moneylog_backend.global.common.BaseTime;
+import com.moneylog_backend.global.config.SpringContextHolder;
+import com.moneylog_backend.global.security.pii.PiiCryptoService;
 import com.moneylog_backend.global.security.pii.PiiStringEncryptConverter;
 import com.moneylog_backend.global.type.ProviderEnum;
 import com.moneylog_backend.global.type.RoleEnum;
@@ -80,6 +82,17 @@ public class UserEntity extends BaseTime {
 
     public void updatePassword(String password) {
         this.password = password;
+    }
+
+    public void updateEmailHash(String emailHash) {
+        this.emailHash = emailHash;
+    }
+
+    @PrePersist
+    @PreUpdate
+    private void syncEmailHash() {
+        PiiCryptoService piiCryptoService = SpringContextHolder.getBean(PiiCryptoService.class);
+        this.emailHash = piiCryptoService.hashEmail(piiCryptoService.normalizeEmail(this.email));
     }
 
     public UserDto excludePassword () {

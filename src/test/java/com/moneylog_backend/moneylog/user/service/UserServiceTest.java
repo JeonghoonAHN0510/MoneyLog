@@ -14,6 +14,7 @@ import com.moneylog_backend.moneylog.account.repository.AccountRepository;
 import com.moneylog_backend.moneylog.bank.entity.BankEntity;
 import com.moneylog_backend.moneylog.bank.repository.BankRepository;
 import com.moneylog_backend.moneylog.user.dto.UserDto;
+import com.moneylog_backend.moneylog.user.entity.UserEntity;
 import com.moneylog_backend.moneylog.user.mapper.UserMapper;
 import com.moneylog_backend.moneylog.user.repository.UserRepository;
 
@@ -206,7 +207,7 @@ class UserServiceTest {
         when(piiCryptoService.normalizeEmail("tester@moneylog.com")).thenReturn("tester@moneylog.com");
         when(piiCryptoService.hashEmail("tester@moneylog.com")).thenReturn("email-hash");
         when(userRepository.existsByEmailHash("email-hash")).thenReturn(false);
-        when(userRepository.countLegacyPlainEmail("tester@moneylog.com")).thenReturn(0L);
+        when(userRepository.findAllByEmailHashIsNullOrderByUserIdAsc()).thenReturn(List.of());
         when(bankRepository.findById(1)).thenReturn(Optional.of(BankEntity.builder().bankId(1).name("한국은행").code("001").build()));
         when(fileStorageService.storeFile(eq(file), eq("profile"))).thenReturn("/uploads/signup.jpg");
         when(formatUtils.toPhone("01012341234")).thenReturn("010-1234-1234");
@@ -219,19 +220,23 @@ class UserServiceTest {
     }
 
     @Test
-    void legacy_평문_이메일이_이미_있으면_중복_이메일로_막는다() {
+    void null_hash_사용자와_이메일이_같으면_중복_이메일로_막는다() {
         UserDto request = UserDto.builder()
                                  .id("tester")
                                  .email("tester@moneylog.com")
                                  .phone("01012341234")
                                  .password("password")
                                  .build();
+        UserEntity legacyUser = UserEntity.builder()
+                                          .userId(1)
+                                          .email("tester@moneylog.com")
+                                          .build();
 
         when(userRepository.existsByLoginId("tester")).thenReturn(false);
         when(piiCryptoService.normalizeEmail("tester@moneylog.com")).thenReturn("tester@moneylog.com");
         when(piiCryptoService.hashEmail("tester@moneylog.com")).thenReturn("email-hash");
         when(userRepository.existsByEmailHash("email-hash")).thenReturn(false);
-        when(userRepository.countLegacyPlainEmail("tester@moneylog.com")).thenReturn(1L);
+        when(userRepository.findAllByEmailHashIsNullOrderByUserIdAsc()).thenReturn(List.of(legacyUser));
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> userService.signup(request));
 
