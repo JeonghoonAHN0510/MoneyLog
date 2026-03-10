@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS user (
     id VARCHAR(50) NOT NULL,
     password VARCHAR(255) NULL,
     email VARCHAR(512) NOT NULL,
-    email_hash CHAR(64) NULL,
+    email_hash CHAR(64) NOT NULL,
     phone VARCHAR(512) NOT NULL,
     gender BOOLEAN NOT NULL,
     role ENUM('ADMIN', 'USER') DEFAULT 'USER',

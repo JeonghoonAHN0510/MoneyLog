@@ -199,9 +199,17 @@ public class UserService {
         if (userRepository.existsByLoginId(loginId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, ErrorMessageConstants.DUPLICATE_LOGIN_ID);
         }
-        if (userRepository.existsByEmailHash(emailHash) || userRepository.countLegacyPlainEmail(normalizedEmail) > 0) {
+        if (userRepository.existsByEmailHash(emailHash) || existsDuplicateEmailAmongNullHashUsers(normalizedEmail)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, ErrorMessageConstants.DUPLICATE_EMAIL);
         }
+    }
+
+    private boolean existsDuplicateEmailAmongNullHashUsers(String normalizedEmail) {
+        return userRepository.findAllByEmailHashIsNullOrderByUserIdAsc()
+                             .stream()
+                             .map(UserEntity::getEmail)
+                             .map(piiCryptoService::normalizeEmail)
+                             .anyMatch(normalizedEmail::equals);
     }
 
     private String getBankName (int bankId) {
