@@ -7,15 +7,16 @@ import org.springframework.security.authentication.AuthenticationServiceExceptio
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Set;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -27,6 +28,15 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    private static final Set<String> PUBLIC_AUTH_PATHS = Set.of(
+        "/api/user/signup",
+        "/api/user/login",
+        "/api/user/refresh",
+        "/api/user/password-reset/request",
+        "/api/user/password-reset/verify-otp",
+        "/api/user/password-reset/confirm"
+    );
+
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtProvider jwtProvider;
     private final RedisService redisService;
@@ -38,9 +48,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     public static final String BEARER_PREFIX = "Bearer ";
 
     @Override
-    protected void doFilterInternal (HttpServletRequest request, HttpServletResponse response,
-                                     FilterChain filterChain) throws ServletException, IOException {
-        // 1. Request Header에서 토큰 추출
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return PUBLIC_AUTH_PATHS.contains(request.getServletPath());
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
         String token = resolveToken(request);
 
         if (StringUtils.hasText(token) && !jwtProvider.validateToken(token)) {
@@ -48,14 +62,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // 2. 토큰 유효성 검사
         if (StringUtils.hasText(token)) {
-            // 3. ⭐ Redis 블랙리스트 확인 (로그아웃된 토큰인지)
-            // 키: "BL:토큰값" 이 존재하면 로그아웃된 상태임
             if (redisService.hasKey(redisTokenKeyResolver.blacklist(token))) {
                 commenceUnauthorized(request, response, new BadCredentialsException("로그아웃된 사용자입니다."));
                 return;
             }
+
             try {
                 Authentication authentication = jwtProvider.getAuthentication(token);
                 String loginId = authentication.getName();
@@ -65,10 +77,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 long refreshThresholdMillis = jwtProperties.getAccessTokenRefreshThresholdInSeconds() * 1000;
 
                 if (remainingTime > 0 && remainingTime < refreshThresholdMillis) {
-                    // 새 토큰 생성
                     String newToken = jwtProvider.createAccessToken(authentication);
-
-                    // 헤더에 추가
                     response.setHeader(AUTHORIZATION_HEADER, BEARER_PREFIX + newToken);
                 }
 
@@ -79,18 +88,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             } catch (Exception e) {
                 log.error("JWT 인증 필터 처리 중 예상치 못한 오류 발생", e);
-                commenceUnauthorized(request, response,
-                                     new AuthenticationServiceException("인증 처리 중 오류가 발생했습니다.", e));
+                commenceUnauthorized(
+                    request,
+                    response,
+                    new AuthenticationServiceException("인증 처리 중 오류가 발생했습니다.", e)
+                );
                 return;
             }
-
         }
 
         filterChain.doFilter(request, response);
     }
 
-    // 헤더에서 "Bearer " 떼고 순수 토큰만 가져오기
-    private String resolveToken (HttpServletRequest request) {
+    private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
             return bearerToken.substring(7);
@@ -98,8 +108,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
-    private void commenceUnauthorized (HttpServletRequest request, HttpServletResponse response,
-                                       AuthenticationException authenticationException)
+    private void commenceUnauthorized(HttpServletRequest request, HttpServletResponse response,
+                                      AuthenticationException authenticationException)
         throws IOException, ServletException {
         SecurityContextHolder.clearContext();
         authenticationEntryPoint.commence(request, response, authenticationException);
