@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Wallet, Eye, EyeOff } from 'lucide-react';
+import StandalonePageHeader from '../components/StandalonePageHeader';
+import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../api/axiosConfig';
 import useUserStore from '../stores/authStore';
@@ -20,7 +21,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
@@ -53,11 +54,7 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-wrapper">
-        {/* Logo */}
-        <div className="login-logo">
-          <Wallet className="login-logo-icon" />
-          <span className="login-logo-text">내 가계부</span>
-        </div>
+        <StandalonePageHeader />
 
         {/* Login Card */}
         <Card className="login-card">
@@ -134,16 +131,6 @@ export default function LoginPage() {
               >
                 회원가입
               </Link>
-            </div>
-
-            <div className="login-home-btn-wrapper">
-              <Button
-                variant="outline"
-                className="login-home-btn"
-                onClick={() => navigate('/')}
-              >
-                홈으로 돌아가기
-              </Button>
             </div>
           </CardContent>
         </Card>
