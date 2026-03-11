@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import useUserStore from '../stores/authStore';
-import api from '../api/axiosConfig';
+import api, { clearAuthorizationHeader, setAuthorizationHeader } from '../api/axiosConfig';
 import {
     useUserInfo,
     useUpdateProfileImage,
@@ -159,6 +159,7 @@ export default function FinancePage() {
         const status = getApiErrorStatus(userInfoError);
         if (status === 401 || status === 403) {
             toast.error(getApiErrorMessage(userInfoError, '로그인 정보가 유효하지 않습니다. 다시 로그인해주세요.'));
+            clearAuthorizationHeader();
             logout();
             navigate('/login');
             return;
@@ -173,14 +174,19 @@ export default function FinancePage() {
         }
     }, [isAdmin, isScheduleDialogOpen]);
 
+    const resetClientSession = () => {
+        clearAuthorizationHeader();
+        logout();
+    };
+
     const handleLogout = async () => {
         try {
             await api.post('/user/logout');
-            logout();
+            resetClientSession();
             toast.success('로그아웃 되었습니다.');
             navigate('/');
-        } catch (error) {
-            logout();
+        } catch {
+            resetClientSession();
             navigate('/');
         }
     };
@@ -197,10 +203,10 @@ export default function FinancePage() {
             errorMessage: '로그인 연장에 실패했습니다.',
             onSuccess: (result) => {
                 setTokens(result.accessToken, result.refreshToken);
-                api.defaults.headers.common['Authorization'] = `Bearer ${result.accessToken}`;
+                setAuthorizationHeader(result.accessToken);
             },
             onError: () => {
-                logout();
+                resetClientSession();
                 navigate('/login');
             },
         });

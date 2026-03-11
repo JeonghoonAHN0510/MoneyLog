@@ -5,7 +5,8 @@ import { Input } from '../components/ui/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '../components/ui/input-otp';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Wallet } from 'lucide-react';
+import StandalonePageHeader from '../components/StandalonePageHeader';
+
 import { toast } from 'sonner';
 import api from '../api/axiosConfig';
 import { getApiErrorMessage } from '../utils/error';
@@ -189,10 +190,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="forgot-page">
       <div className="forgot-wrapper">
-        <div className="forgot-logo">
-          <Wallet className="forgot-logo-icon" />
-          <span className="forgot-logo-text">내 가계부</span>
-        </div>
+        <StandalonePageHeader />
 
         <Card className="forgot-card">
           <CardHeader className="forgot-card-header">

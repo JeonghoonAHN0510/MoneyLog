@@ -4,6 +4,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -14,14 +15,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.moneylog_backend.global.auth.jwt.JwtProperties;
 import com.moneylog_backend.global.auth.jwt.JwtProvider;
@@ -108,7 +113,7 @@ class ScheduleSecurityConfigTest {
     }
 
     @Test
-    void 블랙리스트_토큰은_401을_반환한다() throws Exception {
+    void 블랙리스트_토큰은_보호_경로에서_401을_반환한다() throws Exception {
         when(jwtProvider.validateToken("blacklisted-token")).thenReturn(true);
         when(redisTokenKeyResolver.blacklist("blacklisted-token")).thenReturn("BL:blacklisted-token");
         when(redisService.hasKey("BL:blacklisted-token")).thenReturn(true);
@@ -123,7 +128,7 @@ class ScheduleSecurityConfigTest {
     }
 
     @Test
-    void 잘못된_토큰은_401을_반환한다() throws Exception {
+    void 잘못된_토큰은_보호_경로에서_401을_반환한다() throws Exception {
         when(jwtProvider.validateToken("invalid-token")).thenReturn(false);
 
         mockMvc.perform(post("/api/admin/schedule/update")
@@ -137,7 +142,31 @@ class ScheduleSecurityConfigTest {
                .andExpect(jsonPath("$.message").value("유효하지 않은 인증 토큰입니다."));
     }
 
-    private void mockUserToken (String token, String loginId, RoleEnum role) {
+    @Test
+    void 공개_인증_경로는_블랙리스트_토큰이_있어도_차단하지_않는다() throws Exception {
+        mockMvc.perform(post("/api/user/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{}")
+                            .header("Authorization", "Bearer blacklisted-token"))
+               .andExpect(status().isOk())
+               .andExpect(content().string("login-ok"));
+
+        verifyNoInteractions(redisService, customUserDetailsService);
+    }
+
+    @Test
+    void 공개_인증_경로는_잘못된_토큰이_있어도_차단하지_않는다() throws Exception {
+        mockMvc.perform(post("/api/user/password-reset/request")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{}")
+                            .header("Authorization", "Bearer invalid-token"))
+               .andExpect(status().isOk())
+               .andExpect(content().string("password-reset-request-ok"));
+
+        verifyNoInteractions(redisService, customUserDetailsService);
+    }
+
+    private void mockUserToken(String token, String loginId, RoleEnum role) {
         Authentication authentication = new UsernamePasswordAuthenticationToken(
             loginId, "", List.of(new SimpleGrantedAuthority(role.name()))
         );
@@ -151,7 +180,7 @@ class ScheduleSecurityConfigTest {
         when(customUserDetailsService.loadUserByUsername(loginId)).thenReturn(new CustomUserDetails(user(role, loginId)));
     }
 
-    private UserEntity user (RoleEnum role, String loginId) {
+    private UserEntity user(RoleEnum role, String loginId) {
         return UserEntity.builder()
                          .userId(1)
                          .accountId(1)
@@ -167,10 +196,24 @@ class ScheduleSecurityConfigTest {
                          .build();
     }
 
+    @RestController
+    @RequestMapping("/api/user")
+    static class PublicAuthTestController {
+        @PostMapping("/login")
+        ResponseEntity<String> login() {
+            return ResponseEntity.ok("login-ok");
+        }
+
+        @PostMapping("/password-reset/request")
+        ResponseEntity<String> requestPasswordReset() {
+            return ResponseEntity.ok("password-reset-request-ok");
+        }
+    }
+
     @SpringBootConfiguration
     @EnableAutoConfiguration
-    @Import({ SecurityConfig.class, ScheduleController.class, RestAuthenticationEntryPoint.class,
-              RestAccessDeniedHandler.class })
+    @Import({ SecurityConfig.class, ScheduleController.class, PublicAuthTestController.class,
+              RestAuthenticationEntryPoint.class, RestAccessDeniedHandler.class })
     static class TestApplication {
     }
 }

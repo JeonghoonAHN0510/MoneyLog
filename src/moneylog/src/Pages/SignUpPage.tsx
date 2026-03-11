@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Wallet, Eye, EyeOff, User, Upload } from 'lucide-react';
+import StandalonePageHeader from '../components/StandalonePageHeader';
+import { Eye, EyeOff, User, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../api/axiosConfig';
 import { useBanks } from '../api/queries';
@@ -41,7 +42,7 @@ export default function SignUpPage() {
     }
   }, [banks, bankId]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setProfileImage(file);
@@ -59,7 +60,7 @@ export default function SignUpPage() {
     return targetBank?.name || "";
   }
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
@@ -129,10 +130,7 @@ export default function SignUpPage() {
   return (
     <div className="signup-page">
       <div className="signup-wrapper">
-        <div className="signup-logo">
-          <Wallet className="signup-logo-icon" />
-          <span className="signup-logo-text">내 가계부</span>
-        </div>
+        <StandalonePageHeader />
 
         <Card className="signup-card">
           <CardHeader className="signup-card-header">
@@ -330,16 +328,6 @@ export default function SignUpPage() {
               >
                 로그인
               </Link>
-            </div>
-
-            <div className="signup-home-btn-wrapper">
-              <Button
-                variant="ghost"
-                className="signup-home-btn"
-                onClick={() => navigate('/')}
-              >
-                홈으로 돌아가기
-              </Button>
             </div>
           </CardContent>
         </Card>

@@ -1,0 +1,37 @@
+@reference "../tailwind.css";
+
+.standalone-page-header {
+    @apply mb-6 flex items-center justify-between gap-4;
+}
+
+.standalone-page-header-brand {
+    @apply flex items-center gap-3;
+}
+
+.standalone-page-header-icon {
+    @apply size-9;
+    color: #1558b3;
+}
+
+.standalone-page-header-text {
+    @apply text-2xl font-semibold tracking-tight;
+    color: #16365f;
+}
+
+.standalone-page-header-home {
+    @apply shrink-0;
+}
+
+@media (max-width: 480px) {
+    .standalone-page-header {
+        @apply flex-col items-stretch;
+    }
+
+    .standalone-page-header-brand {
+        @apply justify-center;
+    }
+
+    .standalone-page-header-home {
+        @apply w-full;
+    }
+}
