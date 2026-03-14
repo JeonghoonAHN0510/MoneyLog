@@ -20,6 +20,19 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from './ui/chart';
 import { formatKrw } from '../utils/currency';
 import { CHART_COLORS, TREND_CHART_CONFIG } from './DashboardView.constants';
 
+type TrendMonthPoint = {
+  monthLabel: string;
+  income: number | null;
+  expense: number | null;
+  net: number | null;
+  isCurrent: boolean;
+  state: 'ready' | 'error';
+};
+
+function isReadyTrendPoint(item: TrendMonthPoint): item is TrendMonthPoint & { income: number; expense: number; net: number; state: 'ready' } {
+  return item.state === 'ready' && item.income !== null && item.expense !== null && item.net !== null;
+}
+
 export function DashboardView() {
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -33,8 +46,8 @@ export function DashboardView() {
   // 최근 3개월 추세 데이터
   const month1 = new Date(currentYear, currentMonth - 3, 1);
   const month2 = new Date(currentYear, currentMonth - 2, 1);
-  const { data: dash1, isLoading: trendMonth1Loading } = useDashboard(month1.getFullYear(), month1.getMonth() + 1);
-  const { data: dash2, isLoading: trendMonth2Loading } = useDashboard(month2.getFullYear(), month2.getMonth() + 1);
+  const { data: dash1, isLoading: trendMonth1Loading, isError: trendMonth1Error } = useDashboard(month1.getFullYear(), month1.getMonth() + 1);
+  const { data: dash2, isLoading: trendMonth2Loading, isError: trendMonth2Error } = useDashboard(month2.getFullYear(), month2.getMonth() + 1);
 
   if (dashLoading || !dashboardData) {
     return (
@@ -65,7 +78,7 @@ export function DashboardView() {
 
   // 카테고리 차트 데이터
   const pieData = categoryStats
-    .filter(s => s.totalAmount > 0)
+    .filter((s) => s.totalAmount > 0)
     .map((s, i) => ({
       name: s.categoryName,
       value: s.totalAmount,
@@ -74,20 +87,22 @@ export function DashboardView() {
     }));
 
   // 최근 3개월 추세
-  const monthlyTrend = [
+  const monthlyTrend: TrendMonthPoint[] = [
     {
       monthLabel: `${month1.getFullYear()}.${month1.getMonth() + 1}`,
-      income: dash1?.totalIncome || 0,
-      expense: dash1?.totalExpense || 0,
-      net: (dash1?.totalIncome || 0) - (dash1?.totalExpense || 0),
+      income: trendMonth1Error ? null : dash1?.totalIncome ?? 0,
+      expense: trendMonth1Error ? null : dash1?.totalExpense ?? 0,
+      net: trendMonth1Error ? null : (dash1?.totalIncome ?? 0) - (dash1?.totalExpense ?? 0),
       isCurrent: false,
+      state: trendMonth1Error ? 'error' : 'ready',
     },
     {
       monthLabel: `${month2.getFullYear()}.${month2.getMonth() + 1}`,
-      income: dash2?.totalIncome || 0,
-      expense: dash2?.totalExpense || 0,
-      net: (dash2?.totalIncome || 0) - (dash2?.totalExpense || 0),
+      income: trendMonth2Error ? null : dash2?.totalIncome ?? 0,
+      expense: trendMonth2Error ? null : dash2?.totalExpense ?? 0,
+      net: trendMonth2Error ? null : (dash2?.totalIncome ?? 0) - (dash2?.totalExpense ?? 0),
       isCurrent: false,
+      state: trendMonth2Error ? 'error' : 'ready',
     },
     {
       monthLabel: `${currentYear}.${currentMonth}`,
@@ -95,46 +110,54 @@ export function DashboardView() {
       expense: totalExpense,
       net: totalIncome - totalExpense,
       isCurrent: true,
+      state: 'ready',
     },
   ];
+  const readyTrendItems = monthlyTrend.filter(isReadyTrendPoint);
   const trendPanelLoading = trendMonth1Loading || trendMonth2Loading;
-  const trendHasAnyData = monthlyTrend.some((item) => item.income > 0 || item.expense > 0);
+  const trendHasComparisonError = trendMonth1Error || trendMonth2Error;
+  const trendHasAnyData = readyTrendItems.some((item) => item.income > 0 || item.expense > 0);
   const previousTrend = monthlyTrend[1];
   const currentTrend = monthlyTrend[2];
-  const netDelta = currentTrend.net - previousTrend.net;
-  const bestNetMonth = monthlyTrend.reduce((best, current) => (current.net > best.net ? current : best), monthlyTrend[0]);
-  const highestExpenseMonth = monthlyTrend.reduce((best, current) => (current.expense > best.expense ? current : best), monthlyTrend[0]);
-  const trendHasAnyExpense = monthlyTrend.some((item) => item.expense > 0);
-  const currentNetChipClass = currentTrend.net > 0
+  const currentNet = currentTrend.net ?? 0;
+  const netDelta = isReadyTrendPoint(previousTrend) ? currentNet - previousTrend.net : null;
+  const bestNetMonth = trendHasComparisonError ? null : readyTrendItems.reduce((best, current) => (current.net > best.net ? current : best), readyTrendItems[0]);
+  const highestExpenseMonth = trendHasComparisonError ? null : readyTrendItems.reduce((best, current) => (current.expense > best.expense ? current : best), readyTrendItems[0]);
+  const trendHasAnyExpense = readyTrendItems.some((item) => item.expense > 0);
+  const currentNetChipClass = currentNet > 0
     ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-    : currentTrend.net < 0
+    : currentNet < 0
       ? 'border-rose-200 bg-rose-50 text-rose-700'
       : 'border-slate-200 bg-slate-50 text-slate-600';
-  const deltaChipClass = netDelta > 0
-    ? 'border-sky-200 bg-sky-50 text-sky-700'
-    : netDelta < 0
-      ? 'border-amber-200 bg-amber-50 text-amber-700'
-      : 'border-slate-200 bg-slate-50 text-slate-600';
-  const currentNetChipText = currentTrend.net === 0
+  const deltaChipClass = netDelta === null
+    ? 'border-slate-200 bg-slate-50 text-slate-600'
+    : netDelta > 0
+      ? 'border-sky-200 bg-sky-50 text-sky-700'
+      : netDelta < 0
+        ? 'border-amber-200 bg-amber-50 text-amber-700'
+        : 'border-slate-200 bg-slate-50 text-slate-600';
+  const currentNetChipText = currentNet === 0
     ? '이번 달 순흐름 변동 없음'
-    : `이번 달 순흐름 ${formatSignedAmount(currentTrend.net)}`;
-  const deltaChipText = netDelta === 0
-    ? '전월 대비 변동 없음'
-    : `전월 대비 ${formatSignedAmount(netDelta)}`;
+    : `이번 달 순흐름 ${formatSignedAmount(currentNet)}`;
+  const deltaChipText = netDelta === null
+    ? '전월 비교 불가'
+    : netDelta === 0
+      ? '전월 대비 변동 없음'
+      : `전월 대비 ${formatSignedAmount(netDelta)}`;
   const neutralChip = 'bg-slate-50 text-slate-600 border-slate-200';
 
   // 예산 추적
   const budgetStatus = budgets.map((budget) => {
     const categoryStat = categoryStats.find(
       (s) => {
-        const cat = categories.find(c => String(c.categoryId) === String(budget.categoryId));
+        const cat = categories.find((c) => String(c.categoryId) === String(budget.categoryId));
         return cat && s.categoryName === cat.name;
-      }
+      },
     );
     const spent = categoryStat ? categoryStat.totalAmount : 0;
     const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
     const categoryName = budget.categoryName ||
-      categories.find(c => String(c.categoryId) === String(budget.categoryId))?.name ||
+      categories.find((c) => String(c.categoryId) === String(budget.categoryId))?.name ||
       '알 수 없음';
     return {
       category: categoryName,
@@ -190,10 +213,10 @@ export function DashboardView() {
       chip: totalIncome === 0
         ? neutralChip
         : savingsRateValue >= 20
-        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-        : savingsRateValue >= 0
-          ? 'bg-amber-50 text-amber-700 border-amber-200'
-          : 'bg-rose-50 text-rose-700 border-rose-200',
+          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+          : savingsRateValue >= 0
+            ? 'bg-amber-50 text-amber-700 border-amber-200'
+            : 'bg-rose-50 text-rose-700 border-rose-200',
       subText: totalIncome > 0 ? '수입 대비 잔여 비율' : '수입이 기록되면 계산됩니다',
     },
   ];
@@ -320,54 +343,76 @@ export function DashboardView() {
                 </div>
                 <div className="h-[320px] animate-pulse rounded-2xl border border-border/60 bg-white/60" />
               </div>
-            ) : trendHasAnyData ? (
+            ) : (trendHasComparisonError || trendHasAnyData) ? (
               <>
-                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                  <span className="rounded-full border border-border/60 bg-white/80 px-3 py-1">
-                    최고 순흐름 {bestNetMonth.monthLabel}
-                  </span>
-                  <span className="rounded-full border border-border/60 bg-white/80 px-3 py-1">
-                    {trendHasAnyExpense ? `최대 지출 ${highestExpenseMonth.monthLabel}` : '지출 집계 없음'}
-                  </span>
-                </div>
+                {trendHasComparisonError ? (
+                  <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50/70 px-4 py-3 text-xs text-amber-800">
+                    비교 월 데이터 일부를 불러오지 못해 최고 순흐름과 최대 지출 인사이트는 숨겼습니다.
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    <span className="rounded-full border border-border/60 bg-white/80 px-3 py-1">
+                      최고 순흐름 {bestNetMonth?.monthLabel}
+                    </span>
+                    <span className="rounded-full border border-border/60 bg-white/80 px-3 py-1">
+                      {trendHasAnyExpense ? `최대 지출 ${highestExpenseMonth?.monthLabel}` : '지출 집계 없음'}
+                    </span>
+                  </div>
+                )}
                 <div className="grid gap-4 xl:grid-cols-[minmax(0,320px),1fr]">
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:grid-cols-1">
                     {monthlyTrend.map((item) => {
-                      const incomeTone = item.income > 0 ? 'text-emerald-700' : 'text-slate-500';
-                      const expenseTone = item.expense > 0 ? 'text-rose-700' : 'text-slate-500';
-                      const netTone = item.net > 0
+                      const incomeTone = item.income !== null && item.income > 0 ? 'text-emerald-700' : 'text-slate-500';
+                      const expenseTone = item.expense !== null && item.expense > 0 ? 'text-rose-700' : 'text-slate-500';
+                      const netTone = item.net !== null && item.net > 0
                         ? 'text-emerald-700'
-                        : item.net < 0
+                        : item.net !== null && item.net < 0
                           ? 'text-rose-700'
                           : 'text-slate-600';
-                      const cardSurface = item.isCurrent
-                        ? 'border-sky-200 bg-sky-50/80 shadow-sm'
-                        : 'border-border/60 bg-white/80';
+                      const cardSurface = item.state === 'error'
+                        ? 'border-amber-200 bg-amber-50/60'
+                        : item.isCurrent
+                          ? 'border-sky-200 bg-sky-50/80 shadow-sm'
+                          : 'border-border/60 bg-white/80';
+                      const badgeClass = item.isCurrent
+                        ? 'bg-sky-100 text-sky-700'
+                        : item.state === 'error'
+                          ? 'bg-amber-100 text-amber-700'
+                          : 'bg-slate-100 text-slate-600';
+                      const badgeText = item.isCurrent ? '이번 달' : item.state === 'error' ? '집계 실패' : '비교 월';
 
                       return (
                         <div key={item.monthLabel} className={`rounded-2xl border p-4 ${cardSurface}`}>
                           <div className="mb-3 flex items-center justify-between">
                             <div className="text-sm font-semibold">{item.monthLabel}</div>
-                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${item.isCurrent ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-600'}`}>
-                              {item.isCurrent ? '이번 달' : '비교 월'}
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${badgeClass}`}>
+                              {badgeText}
                             </span>
                           </div>
-                          <div className="space-y-2 text-xs">
-                            <div className="flex items-center justify-between text-muted-foreground">
-                              <span>수입</span>
-                              <span className={`font-medium ${incomeTone}`}>{formatKrw(item.income)}원</span>
+                          {item.state === 'error' ? (
+                            <div className="rounded-xl border border-dashed border-amber-200 bg-white/70 px-3 py-4 text-xs text-amber-800">
+                              데이터를 불러오지 못했습니다
                             </div>
-                            <div className="flex items-center justify-between text-muted-foreground">
-                              <span>지출</span>
-                              <span className={`font-medium ${expenseTone}`}>{formatKrw(item.expense)}원</span>
-                            </div>
-                          </div>
-                          <div className="mt-4 border-t border-border/50 pt-3">
-                            <div className="text-[11px] text-muted-foreground">순흐름</div>
-                            <div className={`mt-1 text-lg font-semibold tracking-tight ${netTone}`}>
-                              {formatSignedAmount(item.net)}
-                            </div>
-                          </div>
+                          ) : (
+                            <>
+                              <div className="space-y-2 text-xs">
+                                <div className="flex items-center justify-between text-muted-foreground">
+                                  <span>수입</span>
+                                  <span className={`font-medium ${incomeTone}`}>{formatKrw(item.income ?? 0)}원</span>
+                                </div>
+                                <div className="flex items-center justify-between text-muted-foreground">
+                                  <span>지출</span>
+                                  <span className={`font-medium ${expenseTone}`}>{formatKrw(item.expense ?? 0)}원</span>
+                                </div>
+                              </div>
+                              <div className="mt-4 border-t border-border/50 pt-3">
+                                <div className="text-[11px] text-muted-foreground">순흐름</div>
+                                <div className={`mt-1 text-lg font-semibold tracking-tight ${netTone}`}>
+                                  {formatSignedAmount(item.net ?? 0)}
+                                </div>
+                              </div>
+                            </>
+                          )}
                         </div>
                       );
                     })}
@@ -385,14 +430,17 @@ export function DashboardView() {
                             <ChartTooltipContent
                               indicator="line"
                               labelFormatter={(label) => `${label} 흐름`}
-                              formatter={(value, name) => (
-                                <div className="flex min-w-[150px] items-center justify-between gap-4">
-                                  <span className="text-muted-foreground">{name}</span>
-                                  <span className="font-mono font-medium text-foreground">
-                                    {formatKrw(Number(value))}원
-                                  </span>
-                                </div>
-                              )}
+                              formatter={(value, name) => {
+                                const seriesLabel = TREND_CHART_CONFIG[String(name) as keyof typeof TREND_CHART_CONFIG]?.label ?? String(name);
+                                return (
+                                  <div className="flex min-w-[150px] items-center justify-between gap-4">
+                                    <span className="text-muted-foreground">{seriesLabel}</span>
+                                    <span className="font-mono font-medium text-foreground">
+                                      {formatKrw(Number(value))}원
+                                    </span>
+                                  </div>
+                                );
+                              }}
                             />
                           )}
                         />
