@@ -14,7 +14,7 @@ import {
   CartesianGrid,
   ReferenceLine,
 } from 'recharts';
-import { TrendingUp, TrendingDown, Wallet, Target, Loader2, ArrowUpRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, Target, Loader2, ArrowUpRight, Minus } from 'lucide-react';
 import { useDashboard, useBudgets, useCategories } from '../api/queries';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from './ui/chart';
 import { formatKrw } from '../utils/currency';
@@ -104,6 +104,7 @@ export function DashboardView() {
   const netDelta = currentTrend.net - previousTrend.net;
   const bestNetMonth = monthlyTrend.reduce((best, current) => (current.net > best.net ? current : best), monthlyTrend[0]);
   const highestExpenseMonth = monthlyTrend.reduce((best, current) => (current.expense > best.expense ? current : best), monthlyTrend[0]);
+  const trendHasAnyExpense = monthlyTrend.some((item) => item.expense > 0);
   const currentNetChipClass = currentTrend.net > 0
     ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
     : currentTrend.net < 0
@@ -114,6 +115,13 @@ export function DashboardView() {
     : netDelta < 0
       ? 'border-amber-200 bg-amber-50 text-amber-700'
       : 'border-slate-200 bg-slate-50 text-slate-600';
+  const currentNetChipText = currentTrend.net === 0
+    ? '이번 달 순흐름 변동 없음'
+    : `이번 달 순흐름 ${formatSignedAmount(currentTrend.net)}`;
+  const deltaChipText = netDelta === 0
+    ? '전월 대비 변동 없음'
+    : `전월 대비 ${formatSignedAmount(netDelta)}`;
+  const neutralChip = 'bg-slate-50 text-slate-600 border-slate-200';
 
   // 예산 추적
   const budgetStatus = budgets.map((budget) => {
@@ -141,44 +149,52 @@ export function DashboardView() {
     {
       title: '이번 달 수입',
       value: `${formatKrw(totalIncome)}원`,
-      badgeText: '현금유입',
+      badgeText: totalIncome > 0 ? '현금유입' : '수입 없음',
+      badgeIcon: totalIncome > 0 ? ArrowUpRight : Minus,
       icon: TrendingUp,
-      tone: 'text-emerald-600',
-      chip: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      subText: '지난 달 대비 추세 확인',
+      tone: totalIncome > 0 ? 'text-emerald-600' : 'text-slate-600',
+      chip: totalIncome > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : neutralChip,
+      subText: totalIncome > 0 ? '지난 달 대비 추세 확인' : '이번 달 기록된 수입이 없습니다',
     },
     {
       title: '이번 달 지출',
       value: `${formatKrw(totalExpense)}원`,
-      badgeText: '현금유출',
+      badgeText: totalExpense > 0 ? '현금유출' : '지출 없음',
+      badgeIcon: totalExpense > 0 ? ArrowUpRight : Minus,
       icon: TrendingDown,
-      tone: 'text-rose-600',
-      chip: 'bg-rose-50 text-rose-700 border-rose-200',
-      subText: '카테고리별 사용 확인',
+      tone: totalExpense > 0 ? 'text-rose-600' : 'text-slate-600',
+      chip: totalExpense > 0 ? 'bg-rose-50 text-rose-700 border-rose-200' : neutralChip,
+      subText: totalExpense > 0 ? '카테고리별 사용 확인' : '이번 달 기록된 지출이 없습니다',
     },
     {
       title: '순자산 변동',
       value: `${formatKrw(totalBalance)}원`,
-      badgeText: totalBalance >= 0 ? '흑자' : '적자',
+      badgeText: totalBalance > 0 ? '흑자' : totalBalance < 0 ? '적자' : '변동 없음',
+      badgeIcon: totalBalance === 0 ? Minus : ArrowUpRight,
       icon: Wallet,
-      tone: totalBalance >= 0 ? 'text-sky-700' : 'text-rose-700',
-      chip: totalBalance >= 0
+      tone: totalBalance > 0 ? 'text-sky-700' : totalBalance < 0 ? 'text-rose-700' : 'text-slate-600',
+      chip: totalBalance > 0
         ? 'bg-sky-50 text-sky-700 border-sky-200'
-        : 'bg-rose-50 text-rose-700 border-rose-200',
-      subText: totalBalance >= 0 ? '흑자 흐름 유지 중' : '지출 최적화 필요',
+        : totalBalance < 0
+          ? 'bg-rose-50 text-rose-700 border-rose-200'
+          : neutralChip,
+      subText: totalBalance > 0 ? '흑자 흐름 유지 중' : totalBalance < 0 ? '지출 최적화 필요' : '수입과 지출이 같은 수준',
     },
     {
       title: '저축률',
-      value: `${savingsRate}%`,
-      badgeText: savingsRateValue >= 20 ? '우수' : savingsRateValue >= 0 ? '보통' : '주의',
+      value: totalIncome > 0 ? `${savingsRate}%` : '-',
+      badgeText: totalIncome === 0 ? '집계 대기' : savingsRateValue >= 20 ? '우수' : savingsRateValue >= 0 ? '보통' : '주의',
+      badgeIcon: totalIncome === 0 ? Minus : ArrowUpRight,
       icon: Target,
-      tone: savingsRateValue >= 20 ? 'text-emerald-700' : savingsRateValue >= 0 ? 'text-amber-700' : 'text-rose-700',
-      chip: savingsRateValue >= 20
+      tone: totalIncome === 0 ? 'text-slate-600' : savingsRateValue >= 20 ? 'text-emerald-700' : savingsRateValue >= 0 ? 'text-amber-700' : 'text-rose-700',
+      chip: totalIncome === 0
+        ? neutralChip
+        : savingsRateValue >= 20
         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
         : savingsRateValue >= 0
           ? 'bg-amber-50 text-amber-700 border-amber-200'
           : 'bg-rose-50 text-rose-700 border-rose-200',
-      subText: '수입 대비 잔여 비율',
+      subText: totalIncome > 0 ? '수입 대비 잔여 비율' : '수입이 기록되면 계산됩니다',
     },
   ];
 
@@ -188,13 +204,14 @@ export function DashboardView() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {summaryCards.map((card) => {
           const Icon = card.icon;
+          const BadgeIcon = card.badgeIcon;
           return (
             <Card key={card.title} className="border-border/70 bg-gradient-to-b from-background to-muted/20 shadow-sm">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
                   <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] ${card.chip}`}>
-                    <ArrowUpRight className="mr-1 size-3" />
+                    <BadgeIcon className="mr-1 size-3" />
                     {card.badgeText}
                   </span>
                 </div>
@@ -280,10 +297,10 @@ export function DashboardView() {
               {!trendPanelLoading && (
                 <div className="flex flex-wrap gap-2">
                   <span className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium ${currentNetChipClass}`}>
-                    이번 달 순흐름 {formatSignedAmount(currentTrend.net)}
+                    {currentNetChipText}
                   </span>
                   <span className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium ${deltaChipClass}`}>
-                    전월 대비 {formatSignedAmount(netDelta)}
+                    {deltaChipText}
                   </span>
                 </div>
               )}
@@ -310,12 +327,14 @@ export function DashboardView() {
                     최고 순흐름 {bestNetMonth.monthLabel}
                   </span>
                   <span className="rounded-full border border-border/60 bg-white/80 px-3 py-1">
-                    최대 지출 {highestExpenseMonth.monthLabel}
+                    {trendHasAnyExpense ? `최대 지출 ${highestExpenseMonth.monthLabel}` : '지출 집계 없음'}
                   </span>
                 </div>
                 <div className="grid gap-4 xl:grid-cols-[minmax(0,320px),1fr]">
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:grid-cols-1">
                     {monthlyTrend.map((item) => {
+                      const incomeTone = item.income > 0 ? 'text-emerald-700' : 'text-slate-500';
+                      const expenseTone = item.expense > 0 ? 'text-rose-700' : 'text-slate-500';
                       const netTone = item.net > 0
                         ? 'text-emerald-700'
                         : item.net < 0
@@ -336,11 +355,11 @@ export function DashboardView() {
                           <div className="space-y-2 text-xs">
                             <div className="flex items-center justify-between text-muted-foreground">
                               <span>수입</span>
-                              <span className="font-medium text-emerald-700">{formatKrw(item.income)}원</span>
+                              <span className={`font-medium ${incomeTone}`}>{formatKrw(item.income)}원</span>
                             </div>
                             <div className="flex items-center justify-between text-muted-foreground">
                               <span>지출</span>
-                              <span className="font-medium text-rose-700">{formatKrw(item.expense)}원</span>
+                              <span className={`font-medium ${expenseTone}`}>{formatKrw(item.expense)}원</span>
                             </div>
                           </div>
                           <div className="mt-4 border-t border-border/50 pt-3">
