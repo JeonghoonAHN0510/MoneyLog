@@ -31,6 +31,7 @@ import {
     validateImportRow,
     type TransactionDirectionType,
 } from '../utils/transactionImportValidation';
+import { ISSUE_SUMMARY_LIMIT } from './TransactionImportDialog.constants';
 import '../styles/components/TransactionImportDialog.css';
 
 interface TransactionImportDialogProps {
@@ -104,8 +105,6 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
     const [importPreview, setImportPreview] = useState<TransactionImportPreviewResponse | null>(null);
     const [importRows, setImportRows] = useState<TransactionImportCommitRequest['rows']>([]);
     const [showUnresolvedDetail, setShowUnresolvedDetail] = useState<boolean>(false);
-    const ISSUE_SUMMARY_LIMIT = 3;
-
     const importPreviewMut = useTransactionImportPreview();
     const importCommitMut = useTransactionImportCommit();
 

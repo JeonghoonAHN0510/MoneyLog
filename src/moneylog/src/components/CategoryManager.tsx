@@ -20,6 +20,7 @@ import {
 } from "./ui/alert-dialog";
 import { useCategories, usePayments, useAccounts } from '../api/queries';
 import { getAccountTypeLabel } from '../constants/account';
+import { CATEGORY_DEFAULT_COLORS } from './CategoryManager.constants';
 
 interface CategoryManagerProps {
     onAdd: (category: Omit<Category, "categoryId" | "userId" | "createdAt" | "updatedAt">) => void;
@@ -30,11 +31,6 @@ interface CategoryManagerProps {
     onUpdatePayment: (payment: Partial<Payment>) => void;
     onDeletePayment: (paymentId: string) => void;
 }
-
-const defaultColors = [
-    '#ef4444', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#10b981',
-    '#14b8a6', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#64748b',
-];
 
 interface CategoryFormProps {
     name: string;
@@ -82,7 +78,7 @@ const CategoryForm = ({ name, setName, type, setType, color, setColor }: Categor
         <div className="space-y-2">
             <Label>색상</Label>
             <div className="grid grid-cols-6 gap-2">
-                {defaultColors.map((c) => (
+                {CATEGORY_DEFAULT_COLORS.map((c) => (
                     <button
                         key={c}
                         type="button"
@@ -274,13 +270,13 @@ export function CategoryManager({
 
     const [name, setName] = useState('');
     const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
-    const [color, setColor] = useState(defaultColors[0]);
+    const [color, setColor] = useState(CATEGORY_DEFAULT_COLORS[0]);
     const [categoryId, setCategoryId] = useState('');
     const [accountId, setAccountId] = useState('');
 
     const resetForm = () => {
         setName('');
-        setColor(defaultColors[0]);
+        setColor(CATEGORY_DEFAULT_COLORS[0]);
     };
 
     const handleAdd = () => {
