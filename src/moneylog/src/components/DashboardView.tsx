@@ -16,30 +16,9 @@ import {
 } from 'recharts';
 import { TrendingUp, TrendingDown, Wallet, Target, Loader2, ArrowUpRight } from 'lucide-react';
 import { useDashboard, useBudgets, useCategories } from '../api/queries';
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from './ui/chart';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from './ui/chart';
 import { formatKrw } from '../utils/currency';
-
-// 카테고리 색상 팔레트 (순환 사용)
-const CHART_COLORS = [
-  '#1558b3', '#1d73d6', '#2b8fe5', '#0ea5c6', '#2f96c6',
-  '#2f778f', '#22c55e', '#38bdf8', '#1e40af', '#0f766e',
-  '#2563eb', '#64748b',
-];
-
-const TREND_CHART_CONFIG = {
-  income: {
-    label: '수입',
-    color: '#16a34a',
-  },
-  expense: {
-    label: '지출',
-    color: '#dc2626',
-  },
-  net: {
-    label: '순흐름',
-    color: '#1558b3',
-  },
-} satisfies ChartConfig;
+import { CHART_COLORS, TREND_CHART_CONFIG } from './DashboardView.constants';
 
 export function DashboardView() {
   const now = new Date();
