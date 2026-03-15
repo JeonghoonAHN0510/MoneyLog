@@ -5,6 +5,7 @@ import java.util.List;
 import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.global.type.PaymentEnum;
+import com.moneylog_backend.global.util.InputStringNormalizer;
 import com.moneylog_backend.global.util.OwnershipValidator;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
@@ -30,13 +31,9 @@ public class PaymentService {
     @Transactional
     public int savePayment(PaymentReqDto paymentReqDto, int userId) {
         Integer accountId = resolveAccountId(paymentReqDto.getType(), paymentReqDto.getAccountId(), userId);
+        String normalizedName = InputStringNormalizer.trimToNull(paymentReqDto.getName());
 
-        PaymentEntity paymentEntity = PaymentEntity.builder()
-                                                   .userId(userId)
-                                                   .accountId(accountId)
-                                                   .name(paymentReqDto.getName())
-                                                   .type(paymentReqDto.getType())
-                                                   .build();
+        PaymentEntity paymentEntity = paymentReqDto.toEntity(userId, accountId, normalizedName);
         paymentRepository.save(paymentEntity);
 
         return paymentEntity.getPaymentId();
@@ -49,9 +46,10 @@ public class PaymentService {
     @Transactional
     public PaymentResDto updatePayment(PaymentReqDto paymentReqDto, int userId) {
         Integer accountId = resolveAccountId(paymentReqDto.getType(), paymentReqDto.getAccountId(), userId);
+        String normalizedName = InputStringNormalizer.trimToNull(paymentReqDto.getName());
 
         PaymentEntity paymentEntity = getPaymentByIdAndValidateOwnership(paymentReqDto.getPaymentId(), userId);
-        paymentEntity.updateDetails(accountId, paymentReqDto.getName(), paymentReqDto.getType());
+        paymentEntity.updateDetails(accountId, normalizedName, paymentReqDto.getType());
 
         return paymentEntity.toDto();
     }

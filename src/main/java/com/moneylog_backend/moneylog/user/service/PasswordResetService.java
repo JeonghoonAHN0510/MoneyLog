@@ -5,6 +5,7 @@ import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.security.pii.PiiCryptoService;
 import com.moneylog_backend.global.security.redis.RedisSecretProtector;
 import com.moneylog_backend.global.type.ProviderEnum;
+import com.moneylog_backend.global.util.InputStringNormalizer;
 import com.moneylog_backend.global.util.RedisService;
 import com.moneylog_backend.moneylog.user.dto.PasswordResetConfirmReqDto;
 import com.moneylog_backend.moneylog.user.dto.PasswordResetRequestDto;
@@ -143,13 +144,16 @@ public class PasswordResetService {
     }
 
     private UserEntity loadResettableUser(String loginId, String email) {
-        UserEntity userEntity = userRepository.findByLoginId(loginId)
+        String normalizedLoginId = InputStringNormalizer.trimToNull(loginId);
+        String normalizedEmail = piiCryptoService.normalizeEmail(email);
+
+        UserEntity userEntity = userRepository.findByLoginId(normalizedLoginId)
                                               .orElseThrow(() -> new ResponseStatusException(
                                                   HttpStatus.BAD_REQUEST,
                                                   ErrorMessageConstants.PASSWORD_RESET_IDENTITY_CHECK_FAILED
                                               ));
 
-        if (!piiCryptoService.normalizeEmail(userEntity.getEmail()).equals(piiCryptoService.normalizeEmail(email))) {
+        if (!piiCryptoService.normalizeEmail(userEntity.getEmail()).equals(normalizedEmail)) {
             throw invalidPasswordResetIdentity();
         }
 

@@ -97,6 +97,21 @@ class PasswordResetServiceTest {
     }
 
     @Test
+    void 인증번호_요청시_아이디와_이메일의_앞뒤_공백을_정리한다() {
+        UserEntity userEntity = localUser();
+        when(userRepository.findByLoginId("tester")).thenReturn(Optional.of(userEntity));
+        when(redisTokenKeyResolver.passwordResetOtp(1)).thenReturn("PR:OTP:1");
+        when(redisTokenKeyResolver.passwordResetOtpAttempts(1)).thenReturn("PR:OTP:ATTEMPTS:1");
+        when(redisTokenKeyResolver.passwordResetOtpResend(1)).thenReturn("PR:OTP:RESEND:1");
+        when(redisSecretProtector.hashPasswordResetOtp(eq(1), anyString())).thenReturn("otp-hash");
+
+        passwordResetService.requestOtp(new PasswordResetRequestDto("  tester  ", "  TESTER@moneylog.com  "));
+
+        verify(userRepository).findByLoginId("tester");
+        verify(passwordResetMailService).sendOtp(eq("tester@moneylog.com"), any());
+    }
+
+    @Test
     void 인증번호_요청시_아이디가_없어도_일반화된_400을_반환한다() {
         when(userRepository.findByLoginId("tester")).thenReturn(Optional.empty());
 

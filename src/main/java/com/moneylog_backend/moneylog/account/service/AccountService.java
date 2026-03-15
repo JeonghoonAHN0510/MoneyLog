@@ -5,6 +5,7 @@ import java.util.List;
 import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.global.util.BankAccountNumberFormatter;
+import com.moneylog_backend.global.util.InputStringNormalizer;
 import com.moneylog_backend.global.util.OwnershipValidator;
 import com.moneylog_backend.moneylog.account.dto.req.AccountReqDto;
 import com.moneylog_backend.moneylog.account.dto.res.AccountResDto;
@@ -36,9 +37,8 @@ public class AccountService {
 
     @Transactional
     public int saveAccount(AccountReqDto accountReqDto, int userId) {
-
-        String finalNickname = accountReqDto.getNickname();
-        String finalAccountNumber = accountReqDto.getAccountNumber();
+        String finalNickname = InputStringNormalizer.trimToNull(accountReqDto.getNickname());
+        String finalAccountNumber = InputStringNormalizer.trimToNull(accountReqDto.getAccountNumber());
 
         if (accountReqDto.getBankId() != null) {
             int bankId = accountReqDto.getBankId();
@@ -47,8 +47,8 @@ public class AccountService {
                 throw new IllegalArgumentException("유효하지 않은 은행 ID입니다.");
             }
 
-            finalAccountNumber = getRegexAccountNumber(bankId, accountReqDto.getAccountNumber());
-            if (accountMapper.checkAccountNumber(finalAccountNumber) > 0) {
+            finalAccountNumber = finalAccountNumber == null ? null : getRegexAccountNumber(bankId, finalAccountNumber);
+            if (finalAccountNumber != null && accountMapper.checkAccountNumber(finalAccountNumber) > 0) {
                 throw new IllegalArgumentException("이미 등록된 계좌번호입니다.");
             }
 
@@ -78,14 +78,15 @@ public class AccountService {
         AccountEntity accountEntity = getAccountByIdAndValidateOwnership(accountReqDto.getAccountId(), userId);
 
         String newAccountNumber = null;
-        String accountNumber = accountReqDto.getAccountNumber();
+        String accountNumber = InputStringNormalizer.trimToNull(accountReqDto.getAccountNumber());
+        String normalizedNickname = InputStringNormalizer.trimToNull(accountReqDto.getNickname());
         Integer bankId = accountReqDto.getBankId();
-        if (accountNumber != null && !accountNumber.isEmpty()) {
+        if (accountNumber != null) {
             int targetBankId = ( bankId != null ) ? bankId : accountEntity.getBankId();
             newAccountNumber = getRegexAccountNumber(targetBankId, accountNumber);
         }
 
-        accountEntity.updateDetails(accountReqDto.getNickname(), newAccountNumber, accountReqDto.getBalance(),
+        accountEntity.updateDetails(normalizedNickname, newAccountNumber, accountReqDto.getBalance(),
                                     accountReqDto.getColor());
 
         return accountEntity.toDto();
@@ -121,7 +122,8 @@ public class AccountService {
         fromAccountEntity.withdraw(transferBalance);
         toAccountEntity.deposit(transferBalance);
 
-        TransferEntity transferEntity = transferDto.toEntity(userId);
+        String normalizedMemo = InputStringNormalizer.trimNullable(transferDto.getMemo());
+        TransferEntity transferEntity = transferDto.toEntity(userId, normalizedMemo);
         transferRepository.save(transferEntity);
 
         return true;

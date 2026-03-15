@@ -47,12 +47,12 @@ public class FixedReqDto {
 
     private LocalDateTime updatedAt;
 
-    public FixedEntity toEntity (Integer userId) {
+    public FixedEntity toEntity (Integer userId, String normalizedTitle) {
         return FixedEntity.builder()
                           .userId(userId)
                           .categoryId(this.categoryId)
                           .accountId(this.accountId)
-                          .title(this.title)
+                          .title(normalizedTitle)
                           .amount(this.amount)
                           .fixedDay(this.fixedDay)
                           .startDate(this.startDate)

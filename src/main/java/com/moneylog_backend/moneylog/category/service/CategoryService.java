@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
+import com.moneylog_backend.global.util.InputStringNormalizer;
 import com.moneylog_backend.global.util.OwnershipValidator;
 import com.moneylog_backend.moneylog.category.dto.req.CategoryReqDto;
 import com.moneylog_backend.moneylog.category.dto.res.CategoryResDto;
@@ -26,13 +27,14 @@ public class CategoryService {
 
     @Transactional
     public int saveCategory(CategoryReqDto categoryReqDto, int userId) {
-        CheckCategoryNameTypeUniqueQuery selectQuery = categoryReqDto.toSelectQuery(categoryReqDto, userId);
+        String normalizedName = InputStringNormalizer.trimToNull(categoryReqDto.getName());
+        CheckCategoryNameTypeUniqueQuery selectQuery = categoryReqDto.toSelectQuery(userId, normalizedName);
         int countSameCategory = categoryMapper.checkCategoryNameTypeUnique(selectQuery);
         if (countSameCategory > 0) {
             return -1;
         }
 
-        CategoryEntity categoryEntity = categoryReqDto.toEntity(userId);
+        CategoryEntity categoryEntity = categoryReqDto.toEntity(userId, normalizedName);
         categoryEntity = categoryRepository.save(categoryEntity);
 
         return categoryEntity.getCategoryId();
@@ -48,8 +50,9 @@ public class CategoryService {
     @Transactional
     public CategoryResDto updateCategory(CategoryReqDto categoryReqDto, int userId) {
         CategoryEntity categoryEntity = getCategoryByIdAndValidateOwnership(categoryReqDto.getCategoryId(), userId);
+        String normalizedName = InputStringNormalizer.trimToNull(categoryReqDto.getName());
 
-        categoryEntity.updateDetails(categoryReqDto.getName(), categoryReqDto.getType(), categoryReqDto.getColor());
+        categoryEntity.updateDetails(normalizedName, categoryReqDto.getType(), categoryReqDto.getColor());
 
         return categoryEntity.toResDto();
     }

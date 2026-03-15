@@ -8,6 +8,7 @@ import type {
   TransactionImportCommitRequest,
   Transfer,
 } from '../types/finance';
+import { trimOptionalTextValue } from '../utils/inputNormalization';
 
 const toOptionalInteger = (value: string | number | null | undefined) => {
   if (value === '' || value === null || value === undefined) {
@@ -41,6 +42,8 @@ export const serializeTransactionPayload = (transaction: Partial<Transaction>) =
   fixedId: toOptionalInteger(transaction.fixedId),
   amount: toNumberValue(transaction.amount),
   installmentCount: toOptionalInteger(transaction.installmentCount),
+  title: trimOptionalTextValue(transaction.title),
+  memo: trimOptionalTextValue(transaction.memo),
 });
 
 export const serializeFixedPayload = (fixed: Partial<Fixed>) => ({
@@ -50,6 +53,7 @@ export const serializeFixedPayload = (fixed: Partial<Fixed>) => ({
   accountId: toOptionalInteger(fixed.accountId),
   amount: toNumberValue(fixed.amount),
   fixedDay: toOptionalInteger(fixed.fixedDay),
+  title: trimOptionalTextValue(fixed.title),
 });
 
 export const serializeAccountPayload = (account: Partial<Account>) => ({
@@ -57,6 +61,8 @@ export const serializeAccountPayload = (account: Partial<Account>) => ({
   accountId: toOptionalInteger(account.accountId),
   bankId: toOptionalInteger(account.bankId),
   balance: toNumberValue(account.balance),
+  nickname: trimOptionalTextValue(account.nickname),
+  accountNumber: trimOptionalTextValue(account.accountNumber),
 });
 
 export const serializeBudgetPayload = (budget: Partial<Budget>) => ({
@@ -69,12 +75,14 @@ export const serializeBudgetPayload = (budget: Partial<Budget>) => ({
 export const serializeCategoryPayload = (category: Partial<Category>) => ({
   ...category,
   categoryId: toOptionalInteger(category.categoryId),
+  name: trimOptionalTextValue(category.name),
 });
 
 export const serializePaymentPayload = (payment: Partial<Payment>) => ({
   ...payment,
   paymentId: toOptionalInteger(payment.paymentId),
   accountId: toOptionalInteger(payment.accountId),
+  name: trimOptionalTextValue(payment.name),
 });
 
 export const serializeTransferPayload = (transfer: Omit<Transfer, 'transferId' | 'userId' | 'createdAt' | 'updatedAt'>) => ({
@@ -82,6 +90,7 @@ export const serializeTransferPayload = (transfer: Omit<Transfer, 'transferId' |
   fromAccount: toOptionalInteger(transfer.fromAccount),
   toAccount: toOptionalInteger(transfer.toAccount),
   amount: toNumberValue(transfer.amount),
+  memo: trimOptionalTextValue(transfer.memo),
 });
 
 export const serializeTransactionImportCommitPayload = (payload: TransactionImportCommitRequest) => ({
@@ -92,5 +101,7 @@ export const serializeTransactionImportCommitPayload = (payload: TransactionImpo
     categoryId: toOptionalInteger(row.categoryId),
     paymentId: toOptionalInteger(row.paymentId),
     amount: toNumberValue(row.amount),
+    title: trimOptionalTextValue(row.title),
+    memo: trimOptionalTextValue(row.memo),
   })),
 });

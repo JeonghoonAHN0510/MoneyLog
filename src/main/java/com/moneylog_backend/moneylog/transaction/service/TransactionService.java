@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import com.moneylog_backend.global.type.CategoryEnum;
+import com.moneylog_backend.global.util.InputStringNormalizer;
 import com.moneylog_backend.global.util.OwnershipValidator;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
@@ -59,11 +60,13 @@ public class TransactionService {
 
     @Transactional
     public int saveTransaction (TransactionReqDto transactionReqDto, Integer userId) {
+        String normalizedTitle = InputStringNormalizer.trimToNull(transactionReqDto.getTitle());
+        String normalizedMemo = InputStringNormalizer.trimNullable(transactionReqDto.getMemo());
         transactionWriteValidator.validateRequiredId(transactionReqDto.getAccountId(), "계좌 ID");
         transactionWriteValidator.validateRequiredId(transactionReqDto.getCategoryId(), "카테고리 ID");
         transactionWriteValidator.validateBasicFields(
-            transactionReqDto.getTitle(),
-            transactionReqDto.getMemo(),
+            normalizedTitle,
+            normalizedMemo,
             transactionReqDto.getAmount(),
             transactionReqDto.getTradingAt()
         );
@@ -82,28 +85,29 @@ public class TransactionService {
                     transactionReqDto.getInstallmentCount(),
                     paymentEntity.getType()
                 );
-                return saveInstallmentTransactions(transactionReqDto, categoryEntity, accountEntity);
+                return saveInstallmentTransactions(transactionReqDto, categoryEntity, accountEntity, normalizedTitle,
+                                                  normalizedMemo);
             }
 
-            return saveSingleTransaction(transactionReqDto, userId, accountEntity, type);
+            return saveSingleTransaction(transactionReqDto, userId, accountEntity, type, normalizedTitle, normalizedMemo);
         }
 
         if (CategoryEnum.INCOME.equals(type)) {
             if (transactionReqDto.isInstallment()) {
                 transactionWriteValidator.validateInstallment(type, transactionReqDto.getInstallmentCount(), null);
             }
-            return saveSingleTransaction(transactionReqDto, userId, accountEntity, type);
+            return saveSingleTransaction(transactionReqDto, userId, accountEntity, type, normalizedTitle, normalizedMemo);
         }
 
         throw new IllegalStateException("지원하지 않는 카테고리 타입입니다.");
     }
 
     private int saveSingleTransaction (TransactionReqDto transactionReqDto, Integer userId, AccountEntity accountEntity,
-                                       CategoryEnum type) {
+                                       CategoryEnum type, String normalizedTitle, String normalizedMemo) {
         Integer amount = transactionReqDto.getAmount();
         updateAccountBalance(accountEntity, type, amount, false);
 
-        TransactionEntity transactionEntity = transactionReqDto.toEntity(userId);
+        TransactionEntity transactionEntity = transactionReqDto.toEntity(userId, normalizedTitle, normalizedMemo);
         transactionEntity.initializeDefaultSingleSettlementState(nowDateTimeKst());
         transactionRepository.save(transactionEntity);
 
@@ -130,12 +134,14 @@ public class TransactionService {
 
     @Transactional
     public TransactionResDto updateTransaction (TransactionReqDto transactionReqDto, Integer userId) {
+        String normalizedTitle = InputStringNormalizer.trimToNull(transactionReqDto.getTitle());
+        String normalizedMemo = InputStringNormalizer.trimNullable(transactionReqDto.getMemo());
         transactionWriteValidator.validateRequiredId(transactionReqDto.getTransactionId(), "거래 ID");
         transactionWriteValidator.validateRequiredId(transactionReqDto.getAccountId(), "계좌 ID");
         transactionWriteValidator.validateRequiredId(transactionReqDto.getCategoryId(), "카테고리 ID");
         transactionWriteValidator.validateBasicFields(
-            transactionReqDto.getTitle(),
-            transactionReqDto.getMemo(),
+            normalizedTitle,
+            normalizedMemo,
             transactionReqDto.getAmount(),
             transactionReqDto.getTradingAt()
         );
@@ -169,8 +175,8 @@ public class TransactionService {
         Integer newAmount = transactionReqDto.getAmount();
         updateAccountBalance(newAccount, newType, newAmount, false);
 
-        transactionEntity.update(newCategoryId, newPaymentId, newAccountId, transactionReqDto.getTitle(), newAmount,
-                                 transactionReqDto.getMemo(), transactionReqDto.getTradingAt());
+        transactionEntity.update(newCategoryId, newPaymentId, newAccountId, normalizedTitle, newAmount,
+                                 normalizedMemo, transactionReqDto.getTradingAt());
 
         return transactionEntity.toDto();
     }
@@ -254,7 +260,7 @@ public class TransactionService {
     }
 
     private int saveInstallmentTransactions (TransactionReqDto transactionReqDto, CategoryEntity categoryEntity,
-                                            AccountEntity accountEntity) {
+                                            AccountEntity accountEntity, String normalizedTitle, String normalizedMemo) {
         Integer installmentCount = transactionReqDto.getInstallmentCount();
         boolean isInterestFree = Boolean.TRUE.equals(transactionReqDto.getIsInterestFree());
         LocalDate firstTradingAt = transactionReqDto.getTradingAt();
@@ -265,8 +271,8 @@ public class TransactionService {
                                                                .categoryId(categoryEntity.getCategoryId())
                                                                .paymentId(transactionReqDto.getPaymentId())
                                                                .accountId(transactionReqDto.getAccountId())
-                                                               .title(transactionReqDto.getTitle())
-                                                               .memo(transactionReqDto.getMemo())
+                                                               .title(normalizedTitle)
+                                                               .memo(normalizedMemo)
                                                                .totalAmount(transactionReqDto.getAmount())
                                                                .installmentCount(installmentCount)
                                                                .firstTradingAt(firstTradingAt)
@@ -289,9 +295,9 @@ public class TransactionService {
                                                                 .categoryId(categoryEntity.getCategoryId())
                                                                 .paymentId(transactionReqDto.getPaymentId())
                                                                 .accountId(transactionReqDto.getAccountId())
-                                                                .title(transactionReqDto.getTitle())
+                                                                .title(normalizedTitle)
                                                                 .amount(installmentAmount)
-                                                                .memo(transactionReqDto.getMemo())
+                                                                .memo(normalizedMemo)
                                                                 .tradingAt(tradingAt)
                                                                 .installmentPlanId(plan.getInstallmentPlanId())
                                                                 .installmentNo(i + 1)

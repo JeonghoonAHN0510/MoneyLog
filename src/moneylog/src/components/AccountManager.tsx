@@ -21,6 +21,7 @@ import { useAccounts, useBanks } from '../api/queries';
 import { getAccountTypeLabel } from '../constants/account';
 import { formatKrw } from '../utils/currency';
 import { createDialogOpenChangeHandler } from '../utils/dialog';
+import { isTrimmedBlank, trimTextValue } from '../utils/inputNormalization';
 import {
     FINANCE_HELPER_TEXT,
     FINANCE_INPUT_PLACEHOLDERS,
@@ -242,16 +243,19 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
     });
 
     const handleAdd = () => {
-        if (!nickname) return;
+        const normalizedNickname = trimTextValue(nickname);
+        const normalizedAccountNumber = trimTextValue(accountNumber);
+
+        if (isTrimmedBlank(normalizedNickname)) return;
         if (type === 'BANK' && !bankId) return;
 
         onAdd({
             bankId: type === 'BANK' ? bankId : undefined,
             type,
-            nickname,
+            nickname: normalizedNickname,
             balance: Number(balance),
             color,
-            accountNumber: type === 'BANK' ? accountNumber : undefined
+            accountNumber: type === 'BANK' ? normalizedAccountNumber : undefined
         });
 
         resetForm();
@@ -271,16 +275,20 @@ export function AccountManager({ onAdd, onUpdate, onDelete, onTransferClick }: A
 
     const handleUpdate = () => {
         if (!editingAccount) return;
+        const normalizedNickname = trimTextValue(nickname);
+        const normalizedAccountNumber = trimTextValue(accountNumber);
+
+        if (isTrimmedBlank(normalizedNickname)) return;
         if (type === 'BANK' && !bankId) return;
 
         onUpdate({
             accountId: editingAccount.accountId,
             bankId: type === 'BANK' ? bankId : undefined,
-            nickname,
+            nickname: normalizedNickname,
             balance: Number(balance),
             type,
             color,
-            accountNumber: type === 'BANK' ? accountNumber : undefined
+            accountNumber: type === 'BANK' ? normalizedAccountNumber : undefined
         });
 
         resetForm();

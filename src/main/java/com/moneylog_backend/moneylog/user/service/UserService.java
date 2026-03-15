@@ -11,6 +11,7 @@ import com.moneylog_backend.global.security.pii.PiiCryptoService;
 import com.moneylog_backend.global.security.redis.RedisSecretProtector;
 import com.moneylog_backend.global.util.BankAccountNumberFormatter;
 import com.moneylog_backend.global.util.FormatUtils;
+import com.moneylog_backend.global.util.InputStringNormalizer;
 import com.moneylog_backend.global.util.RedisService;
 import com.moneylog_backend.moneylog.bank.entity.BankEntity;
 import com.moneylog_backend.moneylog.bank.repository.BankRepository;
@@ -69,13 +70,18 @@ public class UserService {
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public int signup(UserDto userDto) throws IOException {
+        String normalizedName = InputStringNormalizer.trimToNull(userDto.getName());
+        String normalizedLoginId = InputStringNormalizer.trimToNull(userDto.getId());
         String normalizedEmail = piiCryptoService.normalizeEmail(userDto.getEmail());
         String emailHash = piiCryptoService.hashEmail(normalizedEmail);
-        checkIdOrEmailValidity(userDto.getId(), normalizedEmail, emailHash);
+        checkIdOrEmailValidity(normalizedLoginId, normalizedEmail, emailHash);
 
         int bankId = userDto.getBankId();
         String bankName = getBankName(bankId);
-        String regexAccountNumber = BankAccountNumberFormatter.format(bankName, userDto.getAccountNumber());
+        String regexAccountNumber = BankAccountNumberFormatter.format(
+            bankName,
+            InputStringNormalizer.trimToNull(userDto.getAccountNumber())
+        );
         String profileImageUrl = fileStorageService.storeFile(userDto.getUploadFile(), "profile");
         String regexPhone = formatUtils.toPhone(userDto.getPhone());
         String encodedPassword = passwordEncoder.encode(userDto.getPassword());
@@ -83,11 +89,14 @@ public class UserService {
         try {
             return userWriteTxService.signup(
                 userDto,
+                normalizedName,
+                normalizedLoginId,
                 normalizedEmail,
                 emailHash,
                 regexPhone,
                 profileImageUrl,
                 encodedPassword,
+                bankName,
                 regexAccountNumber
             );
         } catch (RuntimeException ex) {
@@ -97,9 +106,10 @@ public class UserService {
     }
 
     public TokenResponse login(LoginReqDto loginReqDto) {
+        String normalizedLoginId = InputStringNormalizer.trimToNull(loginReqDto.getId());
         // 1. 인증 객체 생성
         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
-            loginReqDto.getId(), loginReqDto.getPassword());
+            normalizedLoginId, loginReqDto.getPassword());
         // 2. 비밀번호 체크
         Authentication authentication = authenticationManagerBuilder.getObject()
                                                                     .authenticate(usernamePasswordAuthenticationToken);

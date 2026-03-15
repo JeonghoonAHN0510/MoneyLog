@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
@@ -58,19 +59,24 @@ public class UserDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    @NotNull(message = "은행은 필수입니다")
     private Integer bankId;
     private String bankName;
+
+    @NotBlank(message = "계좌번호는 필수입니다")
     private String accountNumber;
 
-    public UserEntity toEntity(String normalizedEmail,
+    public UserEntity toEntity(String normalizedName,
+                               String normalizedLoginId,
+                               String normalizedEmail,
                                String emailHash,
                                String regexPhone,
                                String profileImageUrl,
                                String encodedPassword) {
         return UserEntity.builder()
                          .accountId(this.accountId)
-                         .name(this.name)
-                         .loginId(this.id)
+                         .name(normalizedName)
+                         .loginId(normalizedLoginId)
                          .password(encodedPassword)
                          .email(normalizedEmail)
                          .emailHash(emailHash)
