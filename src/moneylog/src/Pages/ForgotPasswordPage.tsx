@@ -10,6 +10,7 @@ import StandalonePageHeader from '../components/StandalonePageHeader';
 import { toast } from 'sonner';
 import api from '../api/axiosConfig';
 import { getApiErrorMessage } from '../utils/error';
+import { isTrimmedBlank, trimTextValue } from '../utils/inputNormalization';
 import { AUTH_HELPER_TEXT, AUTH_PLACEHOLDERS } from './AuthPlaceholders.constants';
 import '../styles/pages/ForgotPasswordPage.css';
 
@@ -67,7 +68,10 @@ export default function ForgotPasswordPage() {
   };
 
   const handleRequestOtp = async () => {
-    if (!id.trim() || !email.trim()) {
+    const normalizedId = trimTextValue(id);
+    const normalizedEmail = trimTextValue(email);
+
+    if (isTrimmedBlank(normalizedId) || isTrimmedBlank(normalizedEmail)) {
       setError('아이디와 이메일을 입력해주세요.');
       return;
     }
@@ -77,8 +81,8 @@ export default function ForgotPasswordPage() {
 
     try {
       const response = await api.post('/user/password-reset/request', {
-        id: id.trim(),
-        email: email.trim(),
+        id: normalizedId,
+        email: normalizedEmail,
       });
       const data = response.data;
       setStep('verify');
@@ -96,7 +100,11 @@ export default function ForgotPasswordPage() {
   };
 
   const handleVerifyOtp = async () => {
-    if (otpCode.trim().length !== 6) {
+    const normalizedId = trimTextValue(id);
+    const normalizedEmail = trimTextValue(email);
+    const normalizedOtpCode = trimTextValue(otpCode);
+
+    if (normalizedOtpCode.length !== 6) {
       setError('인증번호 6자리를 입력해주세요.');
       return;
     }
@@ -106,9 +114,9 @@ export default function ForgotPasswordPage() {
 
     try {
       const response = await api.post('/user/password-reset/verify-otp', {
-        id: id.trim(),
-        email: email.trim(),
-        otpCode: otpCode.trim(),
+        id: normalizedId,
+        email: normalizedEmail,
+        otpCode: normalizedOtpCode,
       });
       const data = response.data;
       setResetToken(data.resetToken);

@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from './ui/textarea';
 import { Transaction, Category, Account, Payment } from '../types/finance';
 import { useCategories, useAccounts, usePayments } from '../api/queries';
+import { isTrimmedBlank, trimTextValue } from '../utils/inputNormalization';
 import { FINANCE_INPUT_PLACEHOLDERS, FINANCE_SELECT_PLACEHOLDERS } from './FinancePlaceholders.constants';
 
 interface EditTransactionDialogProps {
@@ -61,7 +62,10 @@ export function EditTransactionDialog({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!categoryId || !amount || !date || !transaction) return;
+        const normalizedDescription = trimTextValue(description);
+        const normalizedMemo = trimTextValue(memo);
+
+        if (!categoryId || !amount || !date || !transaction || isTrimmedBlank(normalizedDescription)) return;
 
         onUpdate({
             transactionId: transaction.transactionId,
@@ -69,8 +73,8 @@ export function EditTransactionDialog({
             accountId,
             paymentId: paymentId || undefined,
             amount: parseFloat(amount),
-            title: description,
-            memo,
+            title: normalizedDescription,
+            memo: normalizedMemo,
             tradingAt: date
         });
 

@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Transaction, Category, Account, Payment, Fixed } from '../types/finance';
 import { useCategories, useAccounts, usePayments } from '../api/queries';
 import { getTodayIsoDate } from '../utils/date';
+import { isTrimmedBlank, trimTextValue } from '../utils/inputNormalization';
 import { FINANCE_INPUT_PLACEHOLDERS, FINANCE_SELECT_PLACEHOLDERS } from './FinancePlaceholders.constants';
 
 interface AddTransactionDialogProps {
@@ -56,15 +57,18 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onTransactionS
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!categoryId || !amount || !date) return;
+        const normalizedDescription = trimTextValue(description);
+        const normalizedMemo = trimTextValue(memo);
+
+        if (!categoryId || !amount || !date || isTrimmedBlank(normalizedDescription)) return;
 
         onTransactionSubmit({
             categoryId,
             accountId,
             paymentId: paymentId || undefined,
             amount: parseFloat(amount),
-            title: description,
-            memo,
+            title: normalizedDescription,
+            memo: normalizedMemo,
             installmentCount: installmentCount ? parseInt(installmentCount, 10) : undefined,
             isInterestFree: installmentCount ? isInterestFree : undefined,
             tradingAt: date
@@ -266,12 +270,14 @@ const FixedTransactionForm = ({ categories, accounts, onFixedSubmit, onCancel }:
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!fixedName || !startDate || !amount || !categoryId || !accountId) return;
+        const normalizedFixedName = trimTextValue(fixedName);
+
+        if (!startDate || !amount || !categoryId || !accountId || isTrimmedBlank(normalizedFixedName)) return;
 
         onFixedSubmit({
             categoryId,
             accountId,
-            title: fixedName,
+            title: normalizedFixedName,
             amount: parseFloat(amount),
             fixedDay: parseInt(fixedDay, 10),
             startDate,

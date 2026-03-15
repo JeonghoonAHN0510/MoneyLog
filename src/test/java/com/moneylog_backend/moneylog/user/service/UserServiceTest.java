@@ -42,6 +42,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -107,6 +108,32 @@ class UserServiceTest {
         userService.login(new com.moneylog_backend.moneylog.user.dto.LoginReqDto("tester", "password"));
 
         verify(redisService).setValues("RT:tester", "refresh-token-hash", Duration.ofSeconds(120));
+    }
+
+    @Test
+    void 로그인시_아이디_앞뒤_공백을_제거하고_인증한다() {
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+            "tester",
+            "",
+            List.of(new SimpleGrantedAuthority("USER"))
+        );
+
+        when(authenticationManagerBuilder.getObject()).thenReturn(authenticationManager);
+        when(authenticationManager.authenticate(any())).thenReturn(authentication);
+        when(jwtProvider.createAccessToken(authentication)).thenReturn("access-token");
+        when(jwtProvider.createRefreshToken(authentication)).thenReturn("refresh-token");
+        when(redisTokenKeyResolver.refreshToken("tester")).thenReturn("RT:tester");
+        when(redisSecretProtector.hashRefreshToken("refresh-token")).thenReturn("refresh-token-hash");
+        when(jwtProperties.getRefreshTokenValidityInSeconds()).thenReturn(120L);
+        when(jwtProperties.getAccessTokenValidityInSeconds()).thenReturn(60L);
+
+        userService.login(new com.moneylog_backend.moneylog.user.dto.LoginReqDto("  tester  ", "password"));
+
+        verify(authenticationManager).authenticate(argThat(authenticationToken ->
+            authenticationToken instanceof UsernamePasswordAuthenticationToken token
+                && "tester".equals(token.getPrincipal())
+                && "password".equals(token.getCredentials())
+        ));
     }
 
     @Test
@@ -193,18 +220,19 @@ class UserServiceTest {
             "abc".getBytes(StandardCharsets.UTF_8)
         );
         UserDto request = UserDto.builder()
-                                 .id("tester")
-                                 .email("tester@moneylog.com")
+                                 .name("  머니로그  ")
+                                 .id("  tester  ")
+                                 .email("  tester@moneylog.com  ")
                                  .phone("01012341234")
                                  .password("password")
                                  .bankId(1)
                                  .bankName("한국은행")
-                                 .accountNumber("123123123123")
+                                 .accountNumber(" 123123123123 ")
                                  .uploadFile(file)
                                  .build();
 
         when(userRepository.existsByLoginId("tester")).thenReturn(false);
-        when(piiCryptoService.normalizeEmail("tester@moneylog.com")).thenReturn("tester@moneylog.com");
+        when(piiCryptoService.normalizeEmail("  tester@moneylog.com  ")).thenReturn("tester@moneylog.com");
         when(piiCryptoService.hashEmail("tester@moneylog.com")).thenReturn("email-hash");
         when(userRepository.existsByEmailHash("email-hash")).thenReturn(false);
         when(userRepository.findAllByEmailHashIsNullOrderByUserIdAsc()).thenReturn(List.of());
@@ -212,7 +240,18 @@ class UserServiceTest {
         when(fileStorageService.storeFile(eq(file), eq("profile"))).thenReturn("/uploads/signup.jpg");
         when(formatUtils.toPhone("01012341234")).thenReturn("010-1234-1234");
         when(passwordEncoder.encode("password")).thenReturn("encoded-password");
-        when(userWriteTxService.signup(eq(request), eq("tester@moneylog.com"), eq("email-hash"), eq("010-1234-1234"), eq("/uploads/signup.jpg"), eq("encoded-password"), any()))
+        when(userWriteTxService.signup(
+            eq(request),
+            eq("머니로그"),
+            eq("tester"),
+            eq("tester@moneylog.com"),
+            eq("email-hash"),
+            eq("010-1234-1234"),
+            eq("/uploads/signup.jpg"),
+            eq("encoded-password"),
+            eq("한국은행"),
+            any()
+        ))
             .thenThrow(new RuntimeException("db fail"));
 
         assertThrows(RuntimeException.class, () -> userService.signup(request));

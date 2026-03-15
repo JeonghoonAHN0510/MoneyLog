@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
+import com.moneylog_backend.global.util.InputStringNormalizer;
 import com.moneylog_backend.global.util.OwnershipValidator;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
 import com.moneylog_backend.moneylog.account.repository.AccountRepository;
@@ -32,13 +33,14 @@ public class FixedService {
     @Transactional
     public FixedResDto saveFixed (FixedReqDto fixedReqDto, Integer userId) {
         validateOwnership(fixedReqDto.getAccountId(), fixedReqDto.getCategoryId(), userId);
+        String normalizedTitle = InputStringNormalizer.trimToNull(fixedReqDto.getTitle());
 
         LocalDate endDate = fixedReqDto.getEndDate();
         if (endDate != null && fixedReqDto.getStartDate().isAfter(endDate)) {
             throw new IllegalArgumentException("종료일은 시작일보다 빠를 수 없습니다.");
         }
 
-        FixedEntity fixedEntity = fixedReqDto.toEntity(userId);
+        FixedEntity fixedEntity = fixedReqDto.toEntity(userId, normalizedTitle);
         fixedRepository.save(fixedEntity);
 
         return fixedEntity.toResDto();

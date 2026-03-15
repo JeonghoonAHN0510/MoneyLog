@@ -27,11 +27,11 @@ public class PaymentReqDto {
     @NotNull(message = "결제수단 유형은 필수입니다")
     private PaymentEnum type;
 
-    public PaymentEntity toEntity(Integer userId) {
+    public PaymentEntity toEntity(Integer userId, Integer accountId, String normalizedName) {
         return PaymentEntity.builder()
                             .userId(userId)
-                            .accountId(this.accountId)
-                            .name(this.name)
+                            .accountId(accountId)
+                            .name(normalizedName)
                             .type(this.type)
                             .build();
     }

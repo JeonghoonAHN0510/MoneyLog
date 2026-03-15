@@ -20,6 +20,7 @@ import {
 } from "./ui/alert-dialog";
 import { useCategories, usePayments, useAccounts } from '../api/queries';
 import { getAccountTypeLabel } from '../constants/account';
+import { isTrimmedBlank, trimTextValue } from '../utils/inputNormalization';
 import { CATEGORY_DEFAULT_COLORS } from './CategoryManager.constants';
 import { FINANCE_INPUT_PLACEHOLDERS, FINANCE_SELECT_PLACEHOLDERS } from './FinancePlaceholders.constants';
 
@@ -281,8 +282,10 @@ export function CategoryManager({
     };
 
     const handleAdd = () => {
-        if (!name) return;
-        onAdd({ name, type, color });
+        const normalizedName = trimTextValue(name);
+
+        if (isTrimmedBlank(normalizedName)) return;
+        onAdd({ name: normalizedName, type, color });
         resetForm();
         setIsAddDialogOpen(false);
     };
@@ -297,8 +300,10 @@ export function CategoryManager({
     };
 
     const handleUpdate = () => {
-        if (!editingCategory || !name) return;
-        onUpdate({ categoryId, name, type, color });
+        const normalizedName = trimTextValue(name);
+
+        if (!editingCategory || isTrimmedBlank(normalizedName)) return;
+        onUpdate({ categoryId, name: normalizedName, type, color });
         resetForm();
         setEditingCategory(null);
         setIsEditDialogOpen(false);
@@ -337,9 +342,11 @@ export function CategoryManager({
     };
 
     const handleAddPayment = () => {
-        if (!paymentName) return;
+        const normalizedPaymentName = trimTextValue(paymentName);
+
+        if (isTrimmedBlank(normalizedPaymentName)) return;
         const nextAccountId = paymentType === 'CASH' ? '' : accountId;
-        onAddPayment({ name: paymentName, type: paymentType, accountId: nextAccountId });
+        onAddPayment({ name: normalizedPaymentName, type: paymentType, accountId: nextAccountId });
         resetPaymentForm();
         setIsAddPaymentOpen(false);
     };
@@ -355,9 +362,11 @@ export function CategoryManager({
     };
 
     const handleUpdatePayment = () => {
-        if (!editingPayment || !paymentName) return;
+        const normalizedPaymentName = trimTextValue(paymentName);
+
+        if (!editingPayment || isTrimmedBlank(normalizedPaymentName)) return;
         const nextAccountId = paymentType === 'CASH' ? '' : accountId;
-        onUpdatePayment({ paymentId, name: paymentName, type: paymentType, accountId: nextAccountId });
+        onUpdatePayment({ paymentId, name: normalizedPaymentName, type: paymentType, accountId: nextAccountId });
         resetPaymentForm();
         setEditingPayment(null);
         setIsEditPaymentOpen(false);

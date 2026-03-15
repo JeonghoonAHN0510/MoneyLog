@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import api from '../api/axiosConfig';
 import { useBanks } from '../api/queries';
 import { getApiErrorMessage } from '../utils/error';
+import { isTrimmedBlank, normalizePhoneValue, trimTextValue } from '../utils/inputNormalization';
 import { AUTH_HELPER_TEXT, AUTH_PLACEHOLDERS } from './AuthPlaceholders.constants';
 import '../styles/pages/SignUpPage.css';
 
@@ -66,8 +67,23 @@ export default function SignUpPage() {
     setIsLoading(true);
     setError('');
 
+    const normalizedName = trimTextValue(name);
+    const normalizedId = trimTextValue(id);
+    const normalizedEmail = trimTextValue(email);
+    const normalizedPhone = normalizePhoneValue(phone);
+    const normalizedAccountNumber = trimTextValue(accountNumber);
+
     // 클라이언트 검증
-    if (!name || !id || !email || !password || !confirmPassword || !phone || !bankId || !accountNumber) {
+    if (
+      isTrimmedBlank(normalizedName) ||
+      isTrimmedBlank(normalizedId) ||
+      isTrimmedBlank(normalizedEmail) ||
+      !password ||
+      !confirmPassword ||
+      normalizedPhone.length === 0 ||
+      !bankId ||
+      isTrimmedBlank(normalizedAccountNumber)
+    ) {
       setError('모든 필드를 입력해주세요');
       setIsLoading(false);
       return;
@@ -88,14 +104,14 @@ export default function SignUpPage() {
     try {
       const formData = new FormData();
 
-      formData.append('id', id);
-      formData.append('name', name);
-      formData.append('email', email);
+      formData.append('id', normalizedId);
+      formData.append('name', normalizedName);
+      formData.append('email', normalizedEmail);
       formData.append('password', password);
-      formData.append('phone', phone);
+      formData.append('phone', normalizedPhone);
       formData.append('gender', String(gender));
       formData.append('bankId', bankId);
-      formData.append('accountNumber', String(accountNumber));
+      formData.append('accountNumber', normalizedAccountNumber);
 
       const bankName = getBankName(bankId);
       formData.append('bankName', String(bankName));

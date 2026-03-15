@@ -32,15 +32,15 @@ public class CategoryReqDto {
 
     private Integer userId;
 
-    public CategoryEntity toEntity (Integer userId) {
-        return CategoryEntity.builder().userId(userId).name(this.name).type(this.type).color(this.color).build();
+    public CategoryEntity toEntity (Integer userId, String normalizedName) {
+        return CategoryEntity.builder().userId(userId).name(normalizedName).type(this.type).color(this.color).build();
     }
 
-    public CheckCategoryNameTypeUniqueQuery toSelectQuery (CategoryReqDto categoryReqDto, Integer userId) {
+    public CheckCategoryNameTypeUniqueQuery toSelectQuery (Integer userId, String normalizedName) {
         return CheckCategoryNameTypeUniqueQuery.builder()
                                                .userId(userId)
-                                               .name(categoryReqDto.getName())
-                                               .type(categoryReqDto.getType())
+                                               .name(normalizedName)
+                                               .type(this.type)
                                                .build();
     }
 }

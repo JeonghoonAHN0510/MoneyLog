@@ -48,16 +48,16 @@ public class TransactionReqDto {
         return this.installmentCount != null && this.installmentCount >= 2;
     }
 
-    public TransactionEntity toEntity(Integer userId) {
+    public TransactionEntity toEntity(Integer userId, String normalizedTitle, String normalizedMemo) {
         return TransactionEntity.builder()
                                 .userId(userId)
                                 .categoryId(this.categoryId)
                                 .paymentId(this.paymentId)
                                 .accountId(this.accountId)
                                 .fixedId(fixedId)
-                                .title(this.title)
+                                .title(normalizedTitle)
                                 .amount(this.amount)
-                                .memo(this.memo)
+                                .memo(normalizedMemo)
                                 .isInterestFree(this.isInterestFree)
                                 .tradingAt(this.tradingAt)
                                 .build();

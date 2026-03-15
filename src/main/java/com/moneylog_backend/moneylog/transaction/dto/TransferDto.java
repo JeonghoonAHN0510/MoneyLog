@@ -26,14 +26,14 @@ public class TransferDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public TransferEntity toEntity (Integer userId) {
+    public TransferEntity toEntity (Integer userId, String normalizedMemo) {
         return TransferEntity.builder()
                              .userId(userId)
                              .fromAccount(this.fromAccount)
                              .toAccount(this.toAccount)
                              .amount(this.amount)
                              .transferAt(this.transferAt)
-                             .memo(this.memo)
+                             .memo(normalizedMemo)
                              .build();
     }
 }

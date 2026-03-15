@@ -9,6 +9,7 @@ import { Transfer } from '../types/finance';
 import { useAccounts } from '../api/queries';
 import { formatKrw } from '../utils/currency';
 import { getTodayIsoDate } from '../utils/date';
+import { trimTextValue } from '../utils/inputNormalization';
 import { FINANCE_INPUT_PLACEHOLDERS, FINANCE_SELECT_PLACEHOLDERS } from './FinancePlaceholders.constants';
 
 interface TransferDialogProps {
@@ -39,6 +40,7 @@ export function TransferDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const normalizedMemo = trimTextValue(memo);
 
     if (!fromAccountId || !toAccountId || !amount) return;
 
@@ -52,7 +54,7 @@ export function TransferDialog({
       toAccount: toAccountId,
       transferAt: date,
       amount: parseFloat(amount),
-      memo: memo || undefined,
+      memo: normalizedMemo,
     });
 
     resetForm();

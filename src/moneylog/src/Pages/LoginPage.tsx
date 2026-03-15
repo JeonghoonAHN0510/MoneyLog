@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import api from '../api/axiosConfig';
 import useUserStore from '../stores/authStore';
 import { getApiErrorMessage } from '../utils/error';
+import { isTrimmedBlank, trimTextValue } from '../utils/inputNormalization';
 import { AUTH_PLACEHOLDERS } from './AuthPlaceholders.constants';
 import '../styles/pages/LoginPage.css';
 
@@ -27,15 +28,17 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
 
+    const normalizedId = trimTextValue(id);
+
     // 간단한 클라이언트 검증
-    if (!id || !password) {
+    if (isTrimmedBlank(normalizedId) || !password) {
       setError('아이디와 비밀번호를 입력해주세요');
       setIsLoading(false);
       return;
     }
 
     try {
-      const user = { id, password };
+      const user = { id: normalizedId, password };
       const response = await api.post('/user/login', user);
       const data = await response.data;
       if (data) {

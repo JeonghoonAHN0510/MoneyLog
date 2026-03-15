@@ -1,5 +1,6 @@
 package com.moneylog_backend.global.auth.security;
 
+import com.moneylog_backend.global.util.InputStringNormalizer;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 import com.moneylog_backend.moneylog.user.repository.UserRepository;
 
@@ -17,7 +18,10 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername (String username) throws UsernameNotFoundException {
-        UserEntity userEntity = userRepository.findByLoginId(username).orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다." + username));
+        String normalizedUsername = InputStringNormalizer.trimToNull(username);
+        UserEntity userEntity = userRepository.findByLoginId(normalizedUsername)
+                                              .orElseThrow(
+                                                  () -> new UsernameNotFoundException("사용자를 찾을 수 없습니다." + normalizedUsername));
 
         return new CustomUserDetails(userEntity);
     }
