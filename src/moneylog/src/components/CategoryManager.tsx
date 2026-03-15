@@ -21,6 +21,7 @@ import {
 import { useCategories, usePayments, useAccounts } from '../api/queries';
 import { getAccountTypeLabel } from '../constants/account';
 import { CATEGORY_DEFAULT_COLORS } from './CategoryManager.constants';
+import { FINANCE_INPUT_PLACEHOLDERS, FINANCE_SELECT_PLACEHOLDERS } from './FinancePlaceholders.constants';
 
 interface CategoryManagerProps {
     onAdd: (category: Omit<Category, "categoryId" | "userId" | "createdAt" | "updatedAt">) => void;
@@ -47,7 +48,7 @@ const CategoryForm = ({ name, setName, type, setType, color, setColor }: Categor
             <Label htmlFor="category-name">카테고리명</Label>
             <Input
                 id="category-name"
-                placeholder="식비"
+                placeholder={FINANCE_INPUT_PLACEHOLDERS.categoryName}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
             />
@@ -117,7 +118,7 @@ const PaymentForm = ({ name, setName, type, setType, accountId, setAccountId, ac
             <Label htmlFor="payment-name">결제수단명</Label>
             <Input
                 id="payment-name"
-                placeholder="현금, 국민카드 등"
+                placeholder={FINANCE_INPUT_PLACEHOLDERS.paymentName}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
             />
@@ -165,7 +166,7 @@ const PaymentForm = ({ name, setName, type, setType, accountId, setAccountId, ac
                 <Label htmlFor="account-select">계좌 선택</Label>
                 <Select value={accountId} onValueChange={setAccountId}>
                     <SelectTrigger id="account-select">
-                        <SelectValue placeholder="계좌를 선택해주세요" />
+                        <SelectValue placeholder={FINANCE_SELECT_PLACEHOLDERS.account} />
                     </SelectTrigger>
                     <SelectContent>
                         {accounts.map((account) => (

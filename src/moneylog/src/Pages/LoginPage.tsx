@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import api from '../api/axiosConfig';
 import useUserStore from '../stores/authStore';
 import { getApiErrorMessage } from '../utils/error';
+import { AUTH_PLACEHOLDERS } from './AuthPlaceholders.constants';
 import '../styles/pages/LoginPage.css';
 
 export default function LoginPage() {
@@ -77,7 +78,7 @@ export default function LoginPage() {
                 <Input
                   id="id"
                   type="text"
-                  placeholder="your_id"
+                  placeholder={AUTH_PLACEHOLDERS.loginId}
                   value={id}
                   onChange={(e) => setId(e.target.value)}
                   required
@@ -90,7 +91,6 @@ export default function LoginPage() {
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required

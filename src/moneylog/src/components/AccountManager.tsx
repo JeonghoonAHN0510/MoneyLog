@@ -21,6 +21,11 @@ import { useAccounts, useBanks } from '../api/queries';
 import { getAccountTypeLabel } from '../constants/account';
 import { formatKrw } from '../utils/currency';
 import { createDialogOpenChangeHandler } from '../utils/dialog';
+import {
+    FINANCE_HELPER_TEXT,
+    FINANCE_INPUT_PLACEHOLDERS,
+    FINANCE_SELECT_PLACEHOLDERS
+} from './FinancePlaceholders.constants';
 
 interface AccountManagerProps {
     onAdd: (account: Omit<Account, "accountId" | "userId" | "createdAt" | "updatedAt" | "bankName">) => void;
@@ -70,7 +75,7 @@ const AccountForm = ({
             <Label htmlFor="account-name">계좌명(별칭)</Label>
             <Input
                 id="account-name"
-                placeholder="예: 월급통장, 비상금"
+                placeholder={FINANCE_INPUT_PLACEHOLDERS.accountNickname}
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
             />
@@ -97,7 +102,7 @@ const AccountForm = ({
                     <Label htmlFor="bank-select">은행 선택</Label>
                     <Select value={bankId} onValueChange={setBankId}>
                         <SelectTrigger id="bank-select">
-                            <SelectValue placeholder="은행을 선택해주세요" />
+                            <SelectValue placeholder={FINANCE_SELECT_PLACEHOLDERS.bank} />
                         </SelectTrigger>
                         <SelectContent>
                             {banks.map((bank) => (
@@ -112,10 +117,11 @@ const AccountForm = ({
                     <Label htmlFor="account-number">계좌번호</Label>
                     <Input
                         id="account-number"
-                        placeholder="110-123-456789"
+                        placeholder={FINANCE_INPUT_PLACEHOLDERS.accountNumber}
                         value={accountNumber}
                         onChange={(e) => setAccountNumber(e.target.value)}
                     />
+                    <p className="text-xs text-muted-foreground">{FINANCE_HELPER_TEXT.accountNumber}</p>
                 </div>
             </>
         )}
@@ -125,7 +131,7 @@ const AccountForm = ({
             <Input
                 id="account-balance"
                 type="number"
-                placeholder="0"
+                placeholder={FINANCE_INPUT_PLACEHOLDERS.amount}
                 value={balance}
                 onChange={(e) => setBalance(e.target.value)}
             />

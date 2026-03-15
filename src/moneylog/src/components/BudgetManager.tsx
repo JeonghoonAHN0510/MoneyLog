@@ -20,6 +20,7 @@ import {
 import { useCategories, useBudgets } from '../api/queries';
 import { formatKrw } from '../utils/currency';
 import { createDialogOpenChangeHandler } from '../utils/dialog';
+import { FINANCE_INPUT_PLACEHOLDERS, FINANCE_SELECT_PLACEHOLDERS } from './FinancePlaceholders.constants';
 
 interface BudgetManagerProps {
     onAdd: (budget: Omit<Budget, 'budgetId' | "userId" | "budgetDate" | "createdAt" | "updatedAt" | "categoryName">) => void;
@@ -44,7 +45,7 @@ const BudgetForm = ({ categoryId, setCategoryId, amount, setAmount, categories }
             <Label htmlFor="budget-category">카테고리</Label>
             <Select value={categoryId} onValueChange={setCategoryId}>
                 <SelectTrigger id="budget-category">
-                    <SelectValue placeholder="카테고리 선택" />
+                    <SelectValue placeholder={FINANCE_SELECT_PLACEHOLDERS.category} />
                 </SelectTrigger>
                 <SelectContent>
                     {categories.map((cat) => (
@@ -61,7 +62,7 @@ const BudgetForm = ({ categoryId, setCategoryId, amount, setAmount, categories }
             <Input
                 id="budget-amount"
                 type="number"
-                placeholder="0"
+                placeholder={FINANCE_INPUT_PLACEHOLDERS.amount}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
             />

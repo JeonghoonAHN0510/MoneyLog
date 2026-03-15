@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from './ui/textarea';
 import { Transaction, Category, Account, Payment } from '../types/finance';
 import { useCategories, useAccounts, usePayments } from '../api/queries';
+import { FINANCE_INPUT_PLACEHOLDERS, FINANCE_SELECT_PLACEHOLDERS } from './FinancePlaceholders.constants';
 
 interface EditTransactionDialogProps {
     open: boolean;
@@ -122,7 +123,7 @@ export function EditTransactionDialog({
                         <Label htmlFor="edit-category">카테고리</Label>
                         <Select value={categoryId} onValueChange={setCategoryId}>
                             <SelectTrigger id="edit-category">
-                                <SelectValue placeholder="카테고리 선택" />
+                                <SelectValue placeholder={FINANCE_SELECT_PLACEHOLDERS.category} />
                             </SelectTrigger>
                             <SelectContent>
                                 {filteredCategories.map((cat) => (
@@ -139,7 +140,7 @@ export function EditTransactionDialog({
                             <Label htmlFor="edit-payment-method">결제수단</Label>
                             <Select value={paymentId} onValueChange={handlePaymentMethodChange}>
                                 <SelectTrigger id="edit-payment-method">
-                                    <SelectValue placeholder="결제수단 선택" />
+                                    <SelectValue placeholder={FINANCE_SELECT_PLACEHOLDERS.payment} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {payments.map((payment) => (
@@ -156,7 +157,7 @@ export function EditTransactionDialog({
                         <Label htmlFor="edit-account">계좌</Label>
                         <Select value={accountId} onValueChange={setAccountId}>
                             <SelectTrigger id="edit-account">
-                                <SelectValue placeholder="계좌 선택" />
+                                <SelectValue placeholder={FINANCE_SELECT_PLACEHOLDERS.account} />
                             </SelectTrigger>
                             <SelectContent>
                                 {accounts.map((acc) => (
@@ -169,10 +170,10 @@ export function EditTransactionDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="edit-description">지출명</Label>
+                        <Label htmlFor="edit-description">내용</Label>
                         <Input
                             id="edit-description"
-                            placeholder="예: 점심 식사"
+                            placeholder={FINANCE_INPUT_PLACEHOLDERS.transactionTitle}
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                         />
@@ -183,7 +184,7 @@ export function EditTransactionDialog({
                         <Input
                             id="edit-amount"
                             type="number"
-                            placeholder="0"
+                            placeholder={FINANCE_INPUT_PLACEHOLDERS.amount}
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
                             required
@@ -194,7 +195,7 @@ export function EditTransactionDialog({
                         <Label htmlFor="edit-memo">메모</Label>
                         <Textarea
                             id="edit-memo"
-                            placeholder="메모를 입력하세요"
+                            placeholder={FINANCE_INPUT_PLACEHOLDERS.memo}
                             value={memo}
                             onChange={(e) => setMemo(e.target.value)}
                             rows={3}
