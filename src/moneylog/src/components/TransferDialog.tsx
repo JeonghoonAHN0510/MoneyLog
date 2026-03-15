@@ -9,6 +9,7 @@ import { Transfer } from '../types/finance';
 import { useAccounts } from '../api/queries';
 import { formatKrw } from '../utils/currency';
 import { getTodayIsoDate } from '../utils/date';
+import { FINANCE_INPUT_PLACEHOLDERS, FINANCE_SELECT_PLACEHOLDERS } from './FinancePlaceholders.constants';
 
 interface TransferDialogProps {
   open: boolean;
@@ -73,7 +74,7 @@ export function TransferDialog({
             <Label htmlFor="from-account">출금계좌</Label>
             <Select value={fromAccountId} onValueChange={setFromAccountId}>
               <SelectTrigger id="from-account">
-                <SelectValue placeholder="출금할 계좌 선택" />
+                <SelectValue placeholder={FINANCE_SELECT_PLACEHOLDERS.fromAccount} />
               </SelectTrigger>
               <SelectContent>
                 {availableFromAccounts
@@ -91,7 +92,7 @@ export function TransferDialog({
             <Label htmlFor="to-account">입금계좌</Label>
             <Select value={toAccountId} onValueChange={setToAccountId}>
               <SelectTrigger id="to-account">
-                <SelectValue placeholder="입금할 계좌 선택" />
+                <SelectValue placeholder={FINANCE_SELECT_PLACEHOLDERS.toAccount} />
               </SelectTrigger>
               <SelectContent>
                 {availableToAccounts.map((acc) => (
@@ -108,7 +109,7 @@ export function TransferDialog({
             <Input
               id="transfer-amount"
               type="number"
-              placeholder="0"
+              placeholder={FINANCE_INPUT_PLACEHOLDERS.amount}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required
@@ -130,7 +131,7 @@ export function TransferDialog({
             <Label htmlFor="transfer-memo">메모</Label>
             <Textarea
               id="transfer-memo"
-              placeholder="메모를 입력하세요"
+              placeholder={FINANCE_INPUT_PLACEHOLDERS.memo}
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
               rows={3}

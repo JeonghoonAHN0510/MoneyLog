@@ -32,6 +32,7 @@ import {
     type TransactionDirectionType,
 } from '../utils/transactionImportValidation';
 import { ISSUE_SUMMARY_LIMIT } from './TransactionImportDialog.constants';
+import { FINANCE_SELECT_PLACEHOLDERS } from './FinancePlaceholders.constants';
 import '../styles/components/TransactionImportDialog.css';
 
 interface TransactionImportDialogProps {
@@ -491,7 +492,7 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
                                                 onValueChange={(value) => updateImportRow(previewRow.rowIndex, 'accountId', value)}
                                             >
                                                 <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="계좌 선택" />
+                                                    <SelectValue placeholder={FINANCE_SELECT_PLACEHOLDERS.importAccount} />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {importPreview.availableAccounts.map((account) => (
@@ -512,7 +513,7 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
                                                 onValueChange={(value) => updateImportCategory(previewRow.rowIndex, value)}
                                             >
                                                 <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="카테고리 선택" />
+                                                    <SelectValue placeholder={FINANCE_SELECT_PLACEHOLDERS.importCategory} />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {directionedCategories.length === 0 ? (
@@ -537,7 +538,7 @@ export function TransactionImportDialog ({ open, onOpenChange }: TransactionImpo
                                                     onValueChange={(value) => updateImportRow(previewRow.rowIndex, 'paymentId', value)}
                                                 >
                                                     <SelectTrigger className="w-full">
-                                                        <SelectValue placeholder="결제수단 선택" />
+                                                        <SelectValue placeholder={FINANCE_SELECT_PLACEHOLDERS.importPayment} />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {importPreview.availablePayments.map((payment) => (

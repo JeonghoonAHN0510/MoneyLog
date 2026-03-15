@@ -10,6 +10,7 @@ import StandalonePageHeader from '../components/StandalonePageHeader';
 import { toast } from 'sonner';
 import api from '../api/axiosConfig';
 import { getApiErrorMessage } from '../utils/error';
+import { AUTH_HELPER_TEXT, AUTH_PLACEHOLDERS } from './AuthPlaceholders.constants';
 import '../styles/pages/ForgotPasswordPage.css';
 
 export default function ForgotPasswordPage() {
@@ -220,7 +221,7 @@ export default function ForgotPasswordPage() {
                   <Input
                     id="forgot-id"
                     type="text"
-                    placeholder="your_id"
+                    placeholder={AUTH_PLACEHOLDERS.loginId}
                     value={id}
                     onChange={(event) => setId(event.target.value)}
                     required
@@ -232,7 +233,7 @@ export default function ForgotPasswordPage() {
                   <Input
                     id="forgot-email"
                     type="email"
-                    placeholder="your@email.com"
+                    placeholder={AUTH_PLACEHOLDERS.email}
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     required
@@ -320,11 +321,11 @@ export default function ForgotPasswordPage() {
                   <Input
                     id="forgot-new-password"
                     type="password"
-                    placeholder="새 비밀번호"
                     value={newPassword}
                     onChange={(event) => setNewPassword(event.target.value)}
                     required
                   />
+                  <p className="text-xs text-muted-foreground">{AUTH_HELPER_TEXT.password}</p>
                 </div>
 
                 <div className="forgot-field-group">
@@ -332,7 +333,6 @@ export default function ForgotPasswordPage() {
                   <Input
                     id="forgot-confirm-password"
                     type="password"
-                    placeholder="새 비밀번호 확인"
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
                     required

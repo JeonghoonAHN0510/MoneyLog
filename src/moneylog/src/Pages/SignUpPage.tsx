@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import api from '../api/axiosConfig';
 import { useBanks } from '../api/queries';
 import { getApiErrorMessage } from '../utils/error';
+import { AUTH_HELPER_TEXT, AUTH_PLACEHOLDERS } from './AuthPlaceholders.constants';
 import '../styles/pages/SignUpPage.css';
 
 export default function SignUpPage() {
@@ -181,7 +182,7 @@ export default function SignUpPage() {
                   <Input
                     id="id"
                     type="text"
-                    placeholder="아이디"
+                    placeholder={AUTH_PLACEHOLDERS.loginId}
                     value={id}
                     onChange={(e) => setId(e.target.value)}
                     required
@@ -192,7 +193,7 @@ export default function SignUpPage() {
                   <Input
                     id="name"
                     type="text"
-                    placeholder="홍길동"
+                    placeholder={AUTH_PLACEHOLDERS.signupName}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
@@ -205,7 +206,7 @@ export default function SignUpPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="your@email.com"
+                  placeholder={AUTH_PLACEHOLDERS.email}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -218,7 +219,6 @@ export default function SignUpPage() {
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -231,6 +231,7 @@ export default function SignUpPage() {
                     {showPassword ? <EyeOff className="signup-password-toggle-icon" /> : <Eye className="signup-password-toggle-icon" />}
                   </button>
                 </div>
+                <p className="text-xs text-muted-foreground">{AUTH_HELPER_TEXT.password}</p>
               </div>
 
               <div className="signup-field-group">
@@ -238,7 +239,6 @@ export default function SignUpPage() {
                 <Input
                   id="confirmPassword"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
@@ -250,7 +250,7 @@ export default function SignUpPage() {
                   <Label htmlFor="bank">주거래 은행</Label>
                   <Select value={bankId} onValueChange={handleBankChange}>
                     <SelectTrigger id="bank" className="signup-bank-select-trigger">
-                      <SelectValue placeholder="은행 선택" />
+                      <SelectValue placeholder={AUTH_PLACEHOLDERS.bankSelect} />
                     </SelectTrigger>
                     <SelectContent>
                       {banks.map((bank) => (
@@ -267,11 +267,12 @@ export default function SignUpPage() {
                   <Input
                     id="accountNumber"
                     type="text"
-                    placeholder="-를 제외하고 입력해주세요."
+                    placeholder={AUTH_PLACEHOLDERS.accountNumber}
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value)}
                     required
                   />
+                  <p className="text-xs text-muted-foreground">{AUTH_HELPER_TEXT.accountNumber}</p>
                 </div>
               </div>
 
@@ -281,11 +282,12 @@ export default function SignUpPage() {
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="010-1234-5678"
+                    placeholder={AUTH_PLACEHOLDERS.phone}
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     required
                   />
+                  <p className="text-xs text-muted-foreground">{AUTH_HELPER_TEXT.phone}</p>
                 </div>
 
                 <div className="signup-field-group">

@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Transaction, Category, Account, Payment, Fixed } from '../types/finance';
 import { useCategories, useAccounts, usePayments } from '../api/queries';
 import { getTodayIsoDate } from '../utils/date';
+import { FINANCE_INPUT_PLACEHOLDERS, FINANCE_SELECT_PLACEHOLDERS } from './FinancePlaceholders.constants';
 
 interface AddTransactionDialogProps {
     open: boolean;
@@ -108,7 +109,7 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onTransactionS
                 <Label htmlFor="category">카테고리</Label>
                 <Select value={categoryId} onValueChange={setCategoryId}>
                     <SelectTrigger id="category">
-                        <SelectValue placeholder="카테고리 선택" />
+                        <SelectValue placeholder={FINANCE_SELECT_PLACEHOLDERS.category} />
                     </SelectTrigger>
                     <SelectContent>
                         {filteredCategories.map((cat) => (
@@ -125,7 +126,7 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onTransactionS
                     <Label htmlFor="payment-method">결제수단</Label>
                     <Select value={paymentId} onValueChange={handlePaymentMethodChange}>
                         <SelectTrigger id="payment-method">
-                            <SelectValue placeholder="결제수단 선택" />
+                            <SelectValue placeholder={FINANCE_SELECT_PLACEHOLDERS.payment} />
                         </SelectTrigger>
                         <SelectContent>
                             {payments.map((payment) => (
@@ -142,7 +143,7 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onTransactionS
                 <Label htmlFor="account">계좌</Label>
                 <Select value={accountId} onValueChange={setAccountId}>
                     <SelectTrigger id="account">
-                        <SelectValue placeholder="계좌 선택" />
+                        <SelectValue placeholder={FINANCE_SELECT_PLACEHOLDERS.account} />
                     </SelectTrigger>
                     <SelectContent>
                         {accounts.map((acc) => (
@@ -155,10 +156,10 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onTransactionS
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="description">지출명</Label>
+                <Label htmlFor="description">내용</Label>
                 <Input
                     id="description"
-                    placeholder="예: 점심 식사"
+                    placeholder={FINANCE_INPUT_PLACEHOLDERS.transactionTitle}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                 />
@@ -169,7 +170,7 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onTransactionS
                 <Input
                     id="amount"
                     type="number"
-                    placeholder="0"
+                    placeholder={FINANCE_INPUT_PLACEHOLDERS.amount}
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     required
@@ -184,7 +185,7 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onTransactionS
                         type="number"
                         min={2}
                         max={36}
-                        placeholder="2 이상 입력 시 할부 적용"
+                        placeholder={FINANCE_INPUT_PLACEHOLDERS.installmentCount}
                         value={installmentCount}
                         onChange={(e) => {
                             const nextValue = e.target.value;
@@ -210,7 +211,7 @@ const GeneralTransactionForm = ({ categories, accounts, payments, onTransactionS
                 <Label htmlFor="memo">메모</Label>
                 <Textarea
                     id="memo"
-                    placeholder="메모를 입력하세요"
+                    placeholder={FINANCE_INPUT_PLACEHOLDERS.memo}
                     value={memo}
                     onChange={(e) => setMemo(e.target.value)}
                     rows={3}
@@ -312,7 +313,7 @@ const FixedTransactionForm = ({ categories, accounts, onFixedSubmit, onCancel }:
                 <Label htmlFor="fixed-category">카테고리</Label>
                 <Select value={categoryId} onValueChange={setCategoryId}>
                     <SelectTrigger id="fixed-category">
-                        <SelectValue placeholder="카테고리 선택" />
+                        <SelectValue placeholder={FINANCE_SELECT_PLACEHOLDERS.category} />
                     </SelectTrigger>
                     <SelectContent>
                         {filteredCategories.map((cat) => (
@@ -328,7 +329,7 @@ const FixedTransactionForm = ({ categories, accounts, onFixedSubmit, onCancel }:
                 <Label htmlFor="account">계좌</Label>
                 <Select value={accountId} onValueChange={setAccountId}>
                     <SelectTrigger id="account">
-                        <SelectValue placeholder="계좌 선택" />
+                        <SelectValue placeholder={FINANCE_SELECT_PLACEHOLDERS.account} />
                     </SelectTrigger>
                     <SelectContent>
                         {accounts.map((acc) => (
@@ -341,10 +342,10 @@ const FixedTransactionForm = ({ categories, accounts, onFixedSubmit, onCancel }:
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="fixed-name">내용 (예: 월세, 월급)</Label>
+                <Label htmlFor="fixed-name">내용</Label>
                 <Input
                     id="fixed-name"
-                    placeholder="내용을 입력하세요"
+                    placeholder={FINANCE_INPUT_PLACEHOLDERS.fixedTitle}
                     value={fixedName}
                     onChange={(e) => setFixedName(e.target.value)}
                     required
@@ -356,7 +357,7 @@ const FixedTransactionForm = ({ categories, accounts, onFixedSubmit, onCancel }:
                 <Input
                     id="fixed-amount"
                     type="number"
-                    placeholder="0"
+                    placeholder={FINANCE_INPUT_PLACEHOLDERS.amount}
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     required
