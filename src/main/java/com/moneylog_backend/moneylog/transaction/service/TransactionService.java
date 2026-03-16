@@ -71,7 +71,7 @@ public class TransactionService {
             transactionReqDto.getTradingAt()
         );
 
-        AccountEntity accountEntity = getAccountByIdAndValidateOwnership(transactionReqDto.getAccountId(), userId);
+        AccountEntity accountEntity = lockAccountByIdAndValidateOwnership(transactionReqDto.getAccountId(), userId);
         CategoryEntity categoryEntity = getCategoryByIdAndValidateOwnership(transactionReqDto.getCategoryId(), userId);
         CategoryEnum type = categoryEntity.getType();
         transactionWriteValidator.validatePaymentPolicy(type, transactionReqDto.getPaymentId());
@@ -146,15 +146,18 @@ public class TransactionService {
             transactionReqDto.getTradingAt()
         );
 
-        TransactionEntity transactionEntity = getTransactionByIdAndValidateOwnership(
+        TransactionEntity transactionEntity = getTransactionByIdAndValidateOwnershipForUpdate(
             transactionReqDto.getTransactionId(), userId);
 
         if (Boolean.TRUE.equals(transactionEntity.getIsInstallment())) {
             throw new IllegalArgumentException("할부 거래는 수정할 수 없습니다.");
         }
 
-        AccountEntity oldAccount = getAccountByIdAndValidateOwnership(transactionEntity.getAccountId(),
-                                                                      transactionEntity.getUserId());
+        List<AccountEntity> lockedAccounts = lockAccountsAndValidateOwnership(
+            List.of(transactionEntity.getAccountId(), transactionReqDto.getAccountId()),
+            userId
+        );
+        AccountEntity oldAccount = findLockedAccount(lockedAccounts, transactionEntity.getAccountId());
         String oldTypeCode = categoryMapper.getCategoryTypeByCategoryId(transactionEntity.getCategoryId());
         CategoryEnum oldType = CategoryEnum.fromCode(oldTypeCode);
 
@@ -162,7 +165,7 @@ public class TransactionService {
 
         Integer newAccountId = transactionReqDto.getAccountId();
         Integer newCategoryId = transactionReqDto.getCategoryId();
-        AccountEntity newAccount = getAccountByIdAndValidateOwnership(newAccountId, userId);
+        AccountEntity newAccount = findLockedAccount(lockedAccounts, newAccountId);
         CategoryEntity newCategory = getCategoryByIdAndValidateOwnership(newCategoryId, userId);
         CategoryEnum newType = newCategory.getType();
 
@@ -183,14 +186,14 @@ public class TransactionService {
 
     @Transactional
     public boolean deleteTransaction (Integer transactionId, Integer userId) {
-        TransactionEntity transactionEntity = getTransactionByIdAndValidateOwnership(transactionId, userId);
-
-        AccountEntity accountEntity = getAccountByIdAndValidateOwnership(transactionEntity.getAccountId(), userId);
-        Integer installmentPlanId = transactionEntity.getInstallmentPlanId();
+        TransactionEntity transactionSnapshot = getTransactionByIdAndValidateOwnership(transactionId, userId);
+        Integer installmentPlanId = transactionSnapshot.getInstallmentPlanId();
         CardInstallmentPlanEntity installmentPlan = null;
         if (installmentPlanId != null) {
-            installmentPlan = installmentPlanRepository.findById(installmentPlanId).orElse(null);
+            installmentPlan = getInstallmentPlanByIdAndValidateOwnershipForUpdate(installmentPlanId, userId);
         }
+        TransactionEntity transactionEntity = getTransactionByIdAndValidateOwnershipForUpdate(transactionId, userId);
+        AccountEntity accountEntity = lockAccountByIdAndValidateOwnership(transactionEntity.getAccountId(), userId);
 
         String categoryTypeCode = categoryMapper.getCategoryTypeByCategoryId(transactionEntity.getCategoryId());
         CategoryEnum categoryType = CategoryEnum.fromCode(categoryTypeCode);
@@ -367,6 +370,15 @@ public class TransactionService {
         return transactionEntity;
     }
 
+    private TransactionEntity getTransactionByIdAndValidateOwnershipForUpdate (Integer transactionId, Integer userId) {
+        TransactionEntity transactionEntity = transactionRepository.findByIdForUpdate(transactionId)
+                                                                   .orElseThrow(() -> new ResourceNotFoundException(
+                                                                       ErrorMessageConstants.TRANSACTION_NOT_FOUND));
+        OwnershipValidator.validateOwner(transactionEntity.getUserId(), userId, "본인의 지출 내역이 아닙니다.");
+
+        return transactionEntity;
+    }
+
     private AccountEntity getAccountByIdAndValidateOwnership (Integer accountId, Integer userId) {
         AccountEntity accountEntity = accountRepository.findById(accountId)
                                                        .orElseThrow(
@@ -375,6 +387,49 @@ public class TransactionService {
         OwnershipValidator.validateOwner(accountEntity.getUserId(), userId, "본인의 계좌가 아닙니다.");
 
         return accountEntity;
+    }
+
+    private AccountEntity lockAccountByIdAndValidateOwnership (Integer accountId, Integer userId) {
+        AccountEntity accountEntity = accountRepository.findByIdForUpdate(accountId)
+                                                       .orElseThrow(
+                                                           () -> new ResourceNotFoundException(
+                                                               ErrorMessageConstants.ACCOUNT_NOT_FOUND));
+        OwnershipValidator.validateOwner(accountEntity.getUserId(), userId, "본인의 계좌가 아닙니다.");
+
+        return accountEntity;
+    }
+
+    private List<AccountEntity> lockAccountsAndValidateOwnership (List<Integer> accountIds, Integer userId) {
+        List<Integer> sortedDistinctAccountIds = accountIds.stream().distinct().sorted().toList();
+        List<AccountEntity> lockedAccounts = accountRepository.findAllByAccountIdInForUpdate(sortedDistinctAccountIds);
+        if (lockedAccounts.size() != sortedDistinctAccountIds.size()) {
+            throw new ResourceNotFoundException(ErrorMessageConstants.ACCOUNT_NOT_FOUND);
+        }
+
+        lockedAccounts.forEach(account ->
+            OwnershipValidator.validateOwner(account.getUserId(), userId, "본인의 계좌가 아닙니다.")
+        );
+        return lockedAccounts;
+    }
+
+    private AccountEntity findLockedAccount (List<AccountEntity> lockedAccounts, Integer accountId) {
+        return lockedAccounts.stream()
+                             .filter(account -> accountId.equals(account.getAccountId()))
+                             .findFirst()
+                             .orElseThrow(() -> new ResourceNotFoundException(ErrorMessageConstants.ACCOUNT_NOT_FOUND));
+    }
+
+    private CardInstallmentPlanEntity getInstallmentPlanByIdAndValidateOwnershipForUpdate (
+        Integer installmentPlanId,
+        Integer userId
+    ) {
+        CardInstallmentPlanEntity installmentPlan = installmentPlanRepository.findByIdForUpdate(installmentPlanId)
+                                                                             .orElseThrow(
+                                                                                 () -> new ResourceNotFoundException(
+                                                                                     "할부 계획을 찾을 수 없습니다."
+                                                                                 ));
+        OwnershipValidator.validateOwner(installmentPlan.getUserId(), userId, "본인의 할부 계획이 아닙니다.");
+        return installmentPlan;
     }
 
     private CategoryEntity getCategoryByIdAndValidateOwnership (Integer categoryId, Integer userId) {

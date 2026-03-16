@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS account (
     type ENUM('BANK', 'CASH', 'POINT', 'OTHER') NOT NULL,
     created_at DATETIME(6) NULL,
     updated_at DATETIME(6) NULL,
-    PRIMARY KEY (account_id)
+    PRIMARY KEY (account_id),
+    UNIQUE KEY uk_account_account_number (account_number)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS user (
@@ -52,9 +53,11 @@ CREATE TABLE IF NOT EXISTS category (
     name VARCHAR(50) NOT NULL,
     type ENUM('INCOME', 'EXPENSE') NOT NULL,
     color ENUM('RED', 'AMBER', 'YELLOW', 'LIME', 'GREEN', 'EMERALD', 'TEAL', 'CYAN', 'BLUE', 'PURPLE', 'PINK', 'SLATE') DEFAULT 'BLUE',
+    version BIGINT NOT NULL DEFAULT 0,
     created_at DATETIME(6) NULL,
     updated_at DATETIME(6) NULL,
-    PRIMARY KEY (category_id)
+    PRIMARY KEY (category_id),
+    UNIQUE KEY uk_category_user_name_type (user_id, name, type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS payment (
@@ -63,6 +66,7 @@ CREATE TABLE IF NOT EXISTS payment (
     account_id INT UNSIGNED NULL,
     name VARCHAR(50) NOT NULL,
     type ENUM('CASH', 'CREDIT_CARD', 'CHECK_CARD', 'BANK') NOT NULL,
+    version BIGINT NOT NULL DEFAULT 0,
     created_at DATETIME(6) NULL,
     updated_at DATETIME(6) NULL,
     PRIMARY KEY (payment_id)
@@ -74,9 +78,11 @@ CREATE TABLE IF NOT EXISTS budget (
     category_id INT UNSIGNED NOT NULL,
     amount INT NOT NULL,
     budget_date DATE NOT NULL,
+    version BIGINT NOT NULL DEFAULT 0,
     created_at DATETIME(6) NULL,
     updated_at DATETIME(6) NULL,
-    PRIMARY KEY (budget_id)
+    PRIMARY KEY (budget_id),
+    UNIQUE KEY uk_budget_user_category (user_id, category_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS fixed (
@@ -157,6 +163,7 @@ CREATE TABLE IF NOT EXISTS job_metadata (
     cron_expression VARCHAR(120) NULL,
     description VARCHAR(255) NULL,
     is_active BOOLEAN NOT NULL,
+    version BIGINT NOT NULL DEFAULT 0,
     PRIMARY KEY (job_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

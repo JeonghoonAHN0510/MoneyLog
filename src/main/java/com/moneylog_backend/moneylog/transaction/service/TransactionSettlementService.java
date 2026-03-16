@@ -34,9 +34,9 @@ public class TransactionSettlementService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void settleInstallmentPlan (Integer installmentPlanId) {
-        CardInstallmentPlanEntity plan = installmentPlanRepository.findById(installmentPlanId)
-                                                                .orElseThrow(
-                                                                    () -> new IllegalArgumentException("할부 계획을 찾을 수 없습니다."));
+        CardInstallmentPlanEntity plan = installmentPlanRepository.findByIdForUpdate(installmentPlanId)
+                                                                  .orElseThrow(
+                                                                      () -> new IllegalArgumentException("할부 계획을 찾을 수 없습니다."));
 
         resyncInstallmentPlanProgress(plan);
 
@@ -165,8 +165,8 @@ public class TransactionSettlementService {
     }
 
     private AccountEntity getAccountByIdAndValidateOwnership (Integer accountId, Integer userId) {
-        AccountEntity accountEntity = accountRepository.findById(accountId)
-                                                     .orElseThrow(() -> new ResourceNotFoundException("계좌를 찾을 수 없습니다."));
+        AccountEntity accountEntity = accountRepository.findByIdForUpdate(accountId)
+                                                       .orElseThrow(() -> new ResourceNotFoundException("계좌를 찾을 수 없습니다."));
         OwnershipValidator.validateOwner(accountEntity.getUserId(), userId, "본인의 계좌가 아닙니다.");
 
         return accountEntity;

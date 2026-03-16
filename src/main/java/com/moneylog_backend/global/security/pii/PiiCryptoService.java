@@ -1,6 +1,8 @@
 package com.moneylog_backend.global.security.pii;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.moneylog_backend.global.security.AppSecurityProperties;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -28,10 +30,15 @@ public class PiiCryptoService {
     private final String emailHashKeySource;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public PiiCryptoService(
-        @Value("${app.security.pii.encryption-key:}") String encryptionKeySource,
-        @Value("${app.security.pii.email-hash-key:}") String emailHashKeySource
-    ) {
+    @Autowired
+    public PiiCryptoService(AppSecurityProperties appSecurityProperties) {
+        this(
+            appSecurityProperties.getPii().getEncryptionKey(),
+            appSecurityProperties.getPii().getEmailHashKey()
+        );
+    }
+
+    PiiCryptoService(String encryptionKeySource, String emailHashKeySource) {
         this.encryptionKeySource = encryptionKeySource;
         this.emailHashKeySource = emailHashKeySource;
     }

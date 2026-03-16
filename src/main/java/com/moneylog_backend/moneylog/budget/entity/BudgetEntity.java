@@ -15,7 +15,11 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "budget")
+@Table(name = "budget", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_budget_user_category", columnNames = {
+        "user_id", "category_id"
+    })
+})
 @Getter
 @SuperBuilder
 @DynamicInsert
@@ -34,6 +38,9 @@ public class BudgetEntity extends BaseTime {
     private Integer amount;
     @Column(name = "budget_date", columnDefinition = "DATE NOT NULL")
     private LocalDate budgetDate;
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     public BudgetResDto toDto() {
         return BudgetResDto.builder()

@@ -34,6 +34,9 @@ public class PaymentEntity extends BaseTime {
     @Column(columnDefinition = "ENUM('CASH', 'CREDIT_CARD', 'CHECK_CARD', 'BANK') NOT NULL")
     @Enumerated(EnumType.STRING)
     private PaymentEnum type;
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     public PaymentResDto toDto() {
         return PaymentResDto.builder()

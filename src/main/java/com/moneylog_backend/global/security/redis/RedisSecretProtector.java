@@ -1,6 +1,8 @@
 package com.moneylog_backend.global.security.redis;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.moneylog_backend.global.security.AppSecurityProperties;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -21,7 +23,12 @@ public class RedisSecretProtector {
 
     private final String hashKeySource;
 
-    public RedisSecretProtector(@Value("${app.security.redis-secret.hash-key:}") String hashKeySource) {
+    @Autowired
+    public RedisSecretProtector(AppSecurityProperties appSecurityProperties) {
+        this(appSecurityProperties.getRedisSecret().getHashKey());
+    }
+
+    public RedisSecretProtector(String hashKeySource) {
         this.hashKeySource = hashKeySource;
     }
 

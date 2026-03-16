@@ -9,6 +9,9 @@ import java.lang.reflect.Field;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.error.ErrorResponse;
@@ -263,6 +267,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAuthenticationException(Exception ex) {
         ErrorResponse response = new ErrorResponse("LOGIN_FAILED", ErrorMessageConstants.LOGIN_FAILED);
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler({
+        OptimisticLockingFailureException.class,
+        ObjectOptimisticLockingFailureException.class,
+        PessimisticLockingFailureException.class,
+        CannotAcquireLockException.class
+    })
+    public ResponseEntity<ErrorResponse> handleConcurrencyConflict(Exception ex) {
+        ErrorResponse response = new ErrorResponse(HttpStatus.CONFLICT.name(), ErrorMessageConstants.CONFLICT);
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 
     // 5. 리소스 없음 처리 -> 404 Not Found

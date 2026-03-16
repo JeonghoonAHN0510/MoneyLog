@@ -15,7 +15,11 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "category")
+@Table(name = "category", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_category_user_name_type", columnNames = {
+        "user_id", "name", "type"
+    })
+})
 @Getter
 @SuperBuilder
 @DynamicInsert
@@ -36,6 +40,9 @@ public class CategoryEntity extends BaseTime {
     @Column(columnDefinition = "ENUM('RED', 'AMBER', 'YELLOW', 'LIME', 'GREEN', 'EMERALD', 'TEAL', 'CYAN', 'BLUE', 'PURPLE', 'PINK', 'SLATE') DEFAULT 'BLUE'")
     @Enumerated(EnumType.STRING)
     private ColorEnum color;
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     public void updateDetails(String name, CategoryEnum type, ColorEnum color) {
         if (name != null && !name.isEmpty()) {

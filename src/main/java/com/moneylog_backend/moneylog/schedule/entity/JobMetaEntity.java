@@ -6,6 +6,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,6 +32,9 @@ public class JobMetaEntity {
     private String description;     // 예: "30일 지난 로그 삭제"
     @Column(name = "is_active")
     private boolean isActive;      // 활성화 여부
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     public void updateCron (String cronExpression) {
         this.cronExpression = cronExpression;

@@ -20,6 +20,7 @@ import com.moneylog_backend.moneylog.transaction.entity.TransferEntity;
 import com.moneylog_backend.moneylog.user.entity.UserEntity;
 import com.moneylog_backend.moneylog.user.repository.UserRepository;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,7 +59,11 @@ public class AccountService {
         }
 
         AccountEntity accountEntity = accountReqDto.toEntity(userId, finalNickname, finalAccountNumber);
-        accountRepository.save(accountEntity);
+        try {
+            accountRepository.saveAndFlush(accountEntity);
+        } catch (DataIntegrityViolationException ex) {
+            throw duplicateAccountNumberException();
+        }
 
         return accountEntity.getAccountId();
     }
@@ -75,19 +80,24 @@ public class AccountService {
 
     @Transactional
     public AccountResDto updateAccount(AccountReqDto accountReqDto, int userId) {
-        AccountEntity accountEntity = getAccountByIdAndValidateOwnership(accountReqDto.getAccountId(), userId);
+        AccountEntity accountEntity = lockAccountByIdAndValidateOwnership(accountReqDto.getAccountId(), userId);
 
         String newAccountNumber = null;
         String accountNumber = InputStringNormalizer.trimToNull(accountReqDto.getAccountNumber());
         String normalizedNickname = InputStringNormalizer.trimToNull(accountReqDto.getNickname());
         Integer bankId = accountReqDto.getBankId();
         if (accountNumber != null) {
-            int targetBankId = ( bankId != null ) ? bankId : accountEntity.getBankId();
+            int targetBankId = resolveAccountNumberBankId(bankId, accountEntity.getBankId());
             newAccountNumber = getRegexAccountNumber(targetBankId, accountNumber);
         }
 
         accountEntity.updateDetails(normalizedNickname, newAccountNumber, accountReqDto.getBalance(),
                                     accountReqDto.getColor());
+        try {
+            accountRepository.flush();
+        } catch (DataIntegrityViolationException ex) {
+            throw duplicateAccountNumberException();
+        }
 
         return accountEntity.toDto();
     }
@@ -116,8 +126,9 @@ public class AccountService {
         int fromAccountId = transferDto.getFromAccount();
         int toAccountId = transferDto.getToAccount();
 
-        AccountEntity fromAccountEntity = getAccountByIdAndValidateOwnership(fromAccountId, userId);
-        AccountEntity toAccountEntity = getAccountByIdAndValidateOwnership(toAccountId, userId);
+        List<AccountEntity> lockedAccounts = lockAccountsAndValidateOwnership(List.of(fromAccountId, toAccountId), userId);
+        AccountEntity fromAccountEntity = findLockedAccount(lockedAccounts, fromAccountId);
+        AccountEntity toAccountEntity = findLockedAccount(lockedAccounts, toAccountId);
 
         fromAccountEntity.withdraw(transferBalance);
         toAccountEntity.deposit(transferBalance);
@@ -149,6 +160,53 @@ public class AccountService {
         OwnershipValidator.validateOwner(accountEntity.getUserId(), userId, "본인의 계좌가 아닙니다.");
 
         return accountEntity;
+    }
+
+    private AccountEntity lockAccountByIdAndValidateOwnership (int accountId, int userId) {
+        AccountEntity accountEntity = accountRepository.findByIdForUpdate(accountId)
+                                                       .orElseThrow(
+                                                           () -> new ResourceNotFoundException(
+                                                               ErrorMessageConstants.ACCOUNT_NOT_FOUND));
+
+        OwnershipValidator.validateOwner(accountEntity.getUserId(), userId, "본인의 계좌가 아닙니다.");
+
+        return accountEntity;
+    }
+
+    private List<AccountEntity> lockAccountsAndValidateOwnership (List<Integer> accountIds, int userId) {
+        List<Integer> sortedDistinctAccountIds = accountIds.stream().distinct().sorted().toList();
+        List<AccountEntity> lockedAccounts = accountRepository.findAllByAccountIdInForUpdate(sortedDistinctAccountIds);
+        if (lockedAccounts.size() != sortedDistinctAccountIds.size()) {
+            throw new ResourceNotFoundException(ErrorMessageConstants.ACCOUNT_NOT_FOUND);
+        }
+
+        lockedAccounts.forEach(account ->
+            OwnershipValidator.validateOwner(account.getUserId(), userId, "본인의 계좌가 아닙니다.")
+        );
+        return lockedAccounts;
+    }
+
+    private AccountEntity findLockedAccount (List<AccountEntity> lockedAccounts, int accountId) {
+        return lockedAccounts.stream()
+                             .filter(account -> Integer.valueOf(accountId).equals(account.getAccountId()))
+                             .findFirst()
+                             .orElseThrow(() -> new ResourceNotFoundException(ErrorMessageConstants.ACCOUNT_NOT_FOUND));
+    }
+
+    private IllegalArgumentException duplicateAccountNumberException () {
+        return new IllegalArgumentException("이미 등록된 계좌번호입니다.");
+    }
+
+    private int resolveAccountNumberBankId (Integer requestBankId, Integer currentBankId) {
+        Integer targetBankId = requestBankId != null ? requestBankId : currentBankId;
+        if (targetBankId == null) {
+            throw new IllegalArgumentException("계좌번호를 등록하려면 은행 ID가 필요합니다.");
+        }
+        if (!isBankValid(targetBankId)) {
+            throw new IllegalArgumentException("유효하지 않은 은행 ID입니다.");
+        }
+
+        return targetBankId;
     }
 
     private boolean isBankValid (int bankId) {

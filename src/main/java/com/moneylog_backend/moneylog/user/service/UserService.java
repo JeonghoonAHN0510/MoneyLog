@@ -153,11 +153,15 @@ public class UserService {
         Authentication authentication = jwtProvider.getAuthentication(refreshToken);
         String newAccessToken = jwtProvider.createAccessToken(authentication);
         String newRefreshToken = jwtProvider.createRefreshToken(authentication);
-        redisService.setValues(
+        boolean rotated = redisService.compareAndSetValues(
             redisTokenKeyResolver.refreshToken(loginId),
+            savedRefreshTokenHash,
             redisSecretProtector.hashRefreshToken(newRefreshToken),
             Duration.ofSeconds(jwtProperties.getRefreshTokenValidityInSeconds())
         );
+        if (!rotated) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, REFRESH_TOKEN_INVALID);
+        }
 
         return TokenResponse.builder()
                             .grantType("Bearer")

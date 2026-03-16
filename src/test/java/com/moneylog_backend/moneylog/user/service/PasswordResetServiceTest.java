@@ -25,6 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.Optional;
@@ -82,6 +83,14 @@ class PasswordResetServiceTest {
         when(redisTokenKeyResolver.passwordResetOtpAttempts(1)).thenReturn("PR:OTP:ATTEMPTS:1");
         when(redisTokenKeyResolver.passwordResetOtpResend(1)).thenReturn("PR:OTP:RESEND:1");
         when(redisSecretProtector.hashPasswordResetOtp(eq(1), anyString())).thenReturn("otp-hash");
+        when(redisService.storePasswordResetOtpState(
+            "PR:OTP:1",
+            "otp-hash",
+            Duration.ofSeconds(300),
+            "PR:OTP:ATTEMPTS:1",
+            "PR:OTP:RESEND:1",
+            Duration.ofSeconds(60)
+        )).thenReturn(true);
 
         PasswordResetRequestResponse response = passwordResetService.requestOtp(
             new PasswordResetRequestDto("tester", "tester@moneylog.com")
@@ -90,9 +99,14 @@ class PasswordResetServiceTest {
         assertEquals(true, response.isSent());
         assertEquals(300, response.getOtpTtlSeconds());
         assertEquals(60, response.getResendCooldownSeconds());
-        verify(redisService).setValues(eq("PR:OTP:1"), eq("otp-hash"), eq(java.time.Duration.ofSeconds(300)));
-        verify(redisService).setValues(eq("PR:OTP:ATTEMPTS:1"), eq("0"), eq(java.time.Duration.ofSeconds(300)));
-        verify(redisService).setValues(eq("PR:OTP:RESEND:1"), eq("1"), eq(java.time.Duration.ofSeconds(60)));
+        verify(redisService).storePasswordResetOtpState(
+            "PR:OTP:1",
+            "otp-hash",
+            Duration.ofSeconds(300),
+            "PR:OTP:ATTEMPTS:1",
+            "PR:OTP:RESEND:1",
+            Duration.ofSeconds(60)
+        );
         verify(passwordResetMailService).sendOtp(eq("tester@moneylog.com"), any());
     }
 
@@ -104,6 +118,14 @@ class PasswordResetServiceTest {
         when(redisTokenKeyResolver.passwordResetOtpAttempts(1)).thenReturn("PR:OTP:ATTEMPTS:1");
         when(redisTokenKeyResolver.passwordResetOtpResend(1)).thenReturn("PR:OTP:RESEND:1");
         when(redisSecretProtector.hashPasswordResetOtp(eq(1), anyString())).thenReturn("otp-hash");
+        when(redisService.storePasswordResetOtpState(
+            "PR:OTP:1",
+            "otp-hash",
+            Duration.ofSeconds(300),
+            "PR:OTP:ATTEMPTS:1",
+            "PR:OTP:RESEND:1",
+            Duration.ofSeconds(60)
+        )).thenReturn(true);
 
         passwordResetService.requestOtp(new PasswordResetRequestDto("  tester  ", "  TESTER@moneylog.com  "));
 
@@ -122,7 +144,7 @@ class PasswordResetServiceTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
         assertEquals(ErrorMessageConstants.PASSWORD_RESET_IDENTITY_CHECK_FAILED, exception.getReason());
-        verify(redisService, never()).setValues(anyString(), anyString(), any());
+        verify(redisService, never()).storePasswordResetOtpState(anyString(), anyString(), any(), anyString(), anyString(), any());
         verify(passwordResetMailService, never()).sendOtp(any(), any());
     }
 
@@ -137,7 +159,7 @@ class PasswordResetServiceTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
         assertEquals(ErrorMessageConstants.PASSWORD_RESET_IDENTITY_CHECK_FAILED, exception.getReason());
-        verify(redisService, never()).setValues(anyString(), anyString(), any());
+        verify(redisService, never()).storePasswordResetOtpState(anyString(), anyString(), any(), anyString(), anyString(), any());
         verify(passwordResetMailService, never()).sendOtp(any(), any());
     }
 
@@ -152,7 +174,33 @@ class PasswordResetServiceTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
         assertEquals(ErrorMessageConstants.PASSWORD_RESET_IDENTITY_CHECK_FAILED, exception.getReason());
-        verify(redisService, never()).setValues(anyString(), anyString(), any());
+        verify(redisService, never()).storePasswordResetOtpState(anyString(), anyString(), any(), anyString(), anyString(), any());
+        verify(passwordResetMailService, never()).sendOtp(any(), any());
+    }
+
+    @Test
+    void 인증번호_재전송_쿨다운중이면_429를_반환한다() {
+        when(userRepository.findByLoginId("tester")).thenReturn(Optional.of(localUser()));
+        when(redisTokenKeyResolver.passwordResetOtp(1)).thenReturn("PR:OTP:1");
+        when(redisTokenKeyResolver.passwordResetOtpAttempts(1)).thenReturn("PR:OTP:ATTEMPTS:1");
+        when(redisTokenKeyResolver.passwordResetOtpResend(1)).thenReturn("PR:OTP:RESEND:1");
+        when(redisSecretProtector.hashPasswordResetOtp(eq(1), anyString())).thenReturn("otp-hash");
+        when(redisService.storePasswordResetOtpState(
+            "PR:OTP:1",
+            "otp-hash",
+            Duration.ofSeconds(300),
+            "PR:OTP:ATTEMPTS:1",
+            "PR:OTP:RESEND:1",
+            Duration.ofSeconds(60)
+        )).thenReturn(false);
+
+        ResponseStatusException exception = assertThrows(
+            ResponseStatusException.class,
+            () -> passwordResetService.requestOtp(new PasswordResetRequestDto("tester", "tester@moneylog.com"))
+        );
+
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, exception.getStatusCode());
+        assertEquals(ErrorMessageConstants.PASSWORD_RESET_OTP_RESEND_COOLDOWN, exception.getReason());
         verify(passwordResetMailService, never()).sendOtp(any(), any());
     }
 
@@ -164,9 +212,18 @@ class PasswordResetServiceTest {
         when(redisTokenKeyResolver.passwordResetOtpAttempts(1)).thenReturn("PR:OTP:ATTEMPTS:1");
         when(redisTokenKeyResolver.passwordResetOtpResend(1)).thenReturn("PR:OTP:RESEND:1");
         when(redisTokenKeyResolver.passwordResetToken(anyString())).thenAnswer(invocation -> "PR:TOKEN:" + invocation.getArgument(0));
-        when(redisService.getValues("PR:OTP:1")).thenReturn("otp-hash");
-        when(redisService.getValues("PR:OTP:ATTEMPTS:1")).thenReturn("0");
-        when(redisSecretProtector.matchesPasswordResetOtp(1, "123456", "otp-hash")).thenReturn(true);
+        when(redisSecretProtector.hashPasswordResetOtp(1, "123456")).thenReturn("otp-hash");
+        when(redisService.verifyPasswordResetOtp(
+            eq("PR:OTP:1"),
+            eq("PR:OTP:ATTEMPTS:1"),
+            eq("PR:OTP:RESEND:1"),
+            eq("otp-hash"),
+            eq(5),
+            eq(Duration.ofSeconds(300)),
+            anyString(),
+            eq("1"),
+            eq(Duration.ofSeconds(600))
+        )).thenReturn(RedisService.PasswordResetOtpVerifyResult.SUCCESS);
 
         PasswordResetVerifyOtpResDto response = passwordResetService.verifyOtp(
             new PasswordResetVerifyOtpReqDto("tester", "tester@moneylog.com", "123456")
@@ -174,10 +231,17 @@ class PasswordResetServiceTest {
 
         assertNotNull(response.getResetToken());
         assertEquals(600, response.getResetTokenTtlSeconds());
-        verify(redisService).deleteValues("PR:OTP:1");
-        verify(redisService).deleteValues("PR:OTP:ATTEMPTS:1");
-        verify(redisService).deleteValues("PR:OTP:RESEND:1");
-        verify(redisService).setValues(eq("PR:TOKEN:" + response.getResetToken()), eq("1"), eq(java.time.Duration.ofSeconds(600)));
+        verify(redisService).verifyPasswordResetOtp(
+            eq("PR:OTP:1"),
+            eq("PR:OTP:ATTEMPTS:1"),
+            eq("PR:OTP:RESEND:1"),
+            eq("otp-hash"),
+            eq(5),
+            eq(Duration.ofSeconds(300)),
+            eq("PR:TOKEN:" + response.getResetToken()),
+            eq("1"),
+            eq(Duration.ofSeconds(600))
+        );
     }
 
     @Test
@@ -186,9 +250,20 @@ class PasswordResetServiceTest {
         when(userRepository.findByLoginId("tester")).thenReturn(Optional.of(userEntity));
         when(redisTokenKeyResolver.passwordResetOtp(1)).thenReturn("PR:OTP:1");
         when(redisTokenKeyResolver.passwordResetOtpAttempts(1)).thenReturn("PR:OTP:ATTEMPTS:1");
-        when(redisService.getValues("PR:OTP:1")).thenReturn("otp-hash");
-        when(redisService.getValues("PR:OTP:ATTEMPTS:1")).thenReturn("1");
-        when(redisSecretProtector.matchesPasswordResetOtp(1, "000000", "otp-hash")).thenReturn(false);
+        when(redisTokenKeyResolver.passwordResetOtpResend(1)).thenReturn("PR:OTP:RESEND:1");
+        when(redisTokenKeyResolver.passwordResetToken(anyString())).thenAnswer(invocation -> "PR:TOKEN:" + invocation.getArgument(0));
+        when(redisSecretProtector.hashPasswordResetOtp(1, "000000")).thenReturn("otp-hash");
+        when(redisService.verifyPasswordResetOtp(
+            eq("PR:OTP:1"),
+            eq("PR:OTP:ATTEMPTS:1"),
+            eq("PR:OTP:RESEND:1"),
+            eq("otp-hash"),
+            eq(5),
+            eq(Duration.ofSeconds(300)),
+            anyString(),
+            eq("1"),
+            eq(Duration.ofSeconds(600))
+        )).thenReturn(RedisService.PasswordResetOtpVerifyResult.INVALID);
 
         ResponseStatusException exception = assertThrows(
             ResponseStatusException.class,
@@ -197,7 +272,6 @@ class PasswordResetServiceTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
         assertEquals(ErrorMessageConstants.PASSWORD_RESET_OTP_INVALID, exception.getReason());
-        verify(redisService).setValues("PR:OTP:ATTEMPTS:1", "2", java.time.Duration.ofSeconds(300));
     }
 
     @Test
@@ -246,7 +320,7 @@ class PasswordResetServiceTest {
     void 비밀번호_재설정_확정시_비밀번호를_변경하고_refreshToken을_삭제한다() {
         UserEntity userEntity = localUser();
         when(redisTokenKeyResolver.passwordResetToken("reset-token")).thenReturn("PR:TOKEN:reset-token");
-        when(redisService.getValues("PR:TOKEN:reset-token")).thenReturn("1");
+        when(redisService.getAndDeleteValue("PR:TOKEN:reset-token")).thenReturn("1");
         when(userRepository.findById(1)).thenReturn(Optional.of(userEntity));
         when(passwordEncoder.encode("new-password")).thenReturn("encoded-password");
         when(redisTokenKeyResolver.passwordResetOtp(1)).thenReturn("PR:OTP:1");
@@ -257,8 +331,23 @@ class PasswordResetServiceTest {
         passwordResetService.confirmReset(new PasswordResetConfirmReqDto("reset-token", "new-password"));
 
         verify(userWriteTxService).updatePassword(1, "encoded-password");
-        verify(redisService).deleteValues("PR:TOKEN:reset-token");
+        verify(redisService).getAndDeleteValue("PR:TOKEN:reset-token");
         verify(redisService).deleteValues("RT:tester");
+    }
+
+    @Test
+    void 비밀번호_재설정_확정시_resetToken이_없으면_400을_반환한다() {
+        when(redisTokenKeyResolver.passwordResetToken("reset-token")).thenReturn("PR:TOKEN:reset-token");
+        when(redisService.getAndDeleteValue("PR:TOKEN:reset-token")).thenReturn(null);
+
+        ResponseStatusException exception = assertThrows(
+            ResponseStatusException.class,
+            () -> passwordResetService.confirmReset(new PasswordResetConfirmReqDto("reset-token", "new-password"))
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        assertEquals(ErrorMessageConstants.PASSWORD_RESET_TOKEN_INVALID, exception.getReason());
+        verify(userWriteTxService, never()).updatePassword(any(), anyString());
     }
 
     private UserEntity localUser() {

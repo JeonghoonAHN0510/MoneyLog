@@ -42,6 +42,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -152,12 +153,120 @@ class UserServiceTest {
         when(jwtProvider.createAccessToken(authentication)).thenReturn("new-access-token");
         when(jwtProvider.createRefreshToken(authentication)).thenReturn("new-refresh-token");
         when(redisSecretProtector.hashRefreshToken("new-refresh-token")).thenReturn("new-refresh-token-hash");
+        when(redisService.compareAndSetValues(
+            "RT:tester",
+            "saved-refresh-hash",
+            "new-refresh-token-hash",
+            Duration.ofSeconds(120)
+        )).thenReturn(true);
         when(jwtProperties.getRefreshTokenValidityInSeconds()).thenReturn(120L);
         when(jwtProperties.getAccessTokenValidityInSeconds()).thenReturn(60L);
 
         userService.refresh(new com.moneylog_backend.moneylog.user.dto.RefreshReqDto("refresh-token"));
 
-        verify(redisService).setValues("RT:tester", "new-refresh-token-hash", Duration.ofSeconds(120));
+        verify(redisService).compareAndSetValues(
+            "RT:tester",
+            "saved-refresh-hash",
+            "new-refresh-token-hash",
+            Duration.ofSeconds(120)
+        );
+    }
+
+    @Test
+    void refresh시_토큰이_유효하지_않으면_401을_반환한다() {
+        when(jwtProvider.validateToken("refresh-token")).thenReturn(false);
+
+        ResponseStatusException exception = assertThrows(
+            ResponseStatusException.class,
+            () -> userService.refresh(new com.moneylog_backend.moneylog.user.dto.RefreshReqDto("refresh-token"))
+        );
+
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusCode());
+        assertEquals("유효하지 않은 리프레시 토큰입니다.", exception.getReason());
+        verify(redisService, never()).getValues(anyString());
+        verify(redisService, never()).setValues(anyString(), anyString(), any());
+    }
+
+    @Test
+    void refresh시_저장된_refreshToken이_없으면_401을_반환한다() {
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+            "tester",
+            "",
+            List.of(new SimpleGrantedAuthority("USER"))
+        );
+
+        when(jwtProvider.validateToken("refresh-token")).thenReturn(true);
+        when(jwtProvider.getAuthentication("refresh-token")).thenReturn(authentication);
+        when(redisTokenKeyResolver.refreshToken("tester")).thenReturn("RT:tester");
+        when(redisService.getValues("RT:tester")).thenReturn(null);
+
+        ResponseStatusException exception = assertThrows(
+            ResponseStatusException.class,
+            () -> userService.refresh(new com.moneylog_backend.moneylog.user.dto.RefreshReqDto("refresh-token"))
+        );
+
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusCode());
+        assertEquals("리프레시 토큰이 없습니다.", exception.getReason());
+        verify(redisService, never()).setValues(anyString(), anyString(), any());
+        verify(redisService, never()).compareAndSetValues(anyString(), anyString(), anyString(), any());
+    }
+
+    @Test
+    void refresh시_저장된_refreshToken_해시가_다르면_401을_반환한다() {
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+            "tester",
+            "",
+            List.of(new SimpleGrantedAuthority("USER"))
+        );
+
+        when(jwtProvider.validateToken("refresh-token")).thenReturn(true);
+        when(jwtProvider.getAuthentication("refresh-token")).thenReturn(authentication);
+        when(redisTokenKeyResolver.refreshToken("tester")).thenReturn("RT:tester");
+        when(redisService.getValues("RT:tester")).thenReturn("saved-refresh-hash");
+        when(redisSecretProtector.matchesRefreshToken("refresh-token", "saved-refresh-hash")).thenReturn(false);
+
+        ResponseStatusException exception = assertThrows(
+            ResponseStatusException.class,
+            () -> userService.refresh(new com.moneylog_backend.moneylog.user.dto.RefreshReqDto("refresh-token"))
+        );
+
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusCode());
+        assertEquals("일치하지 않는 리프레시 토큰입니다.", exception.getReason());
+        verify(redisService, never()).setValues(anyString(), anyString(), any());
+        verify(redisService, never()).compareAndSetValues(anyString(), anyString(), anyString(), any());
+    }
+
+    @Test
+    void refresh시_CAS에_실패하면_401을_반환한다() {
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+            "tester",
+            "",
+            List.of(new SimpleGrantedAuthority("USER"))
+        );
+
+        when(jwtProvider.validateToken("refresh-token")).thenReturn(true);
+        when(jwtProvider.getAuthentication("refresh-token")).thenReturn(authentication);
+        when(redisTokenKeyResolver.refreshToken("tester")).thenReturn("RT:tester");
+        when(redisService.getValues("RT:tester")).thenReturn("saved-refresh-hash");
+        when(redisSecretProtector.matchesRefreshToken("refresh-token", "saved-refresh-hash")).thenReturn(true);
+        when(jwtProvider.createAccessToken(authentication)).thenReturn("new-access-token");
+        when(jwtProvider.createRefreshToken(authentication)).thenReturn("new-refresh-token");
+        when(redisSecretProtector.hashRefreshToken("new-refresh-token")).thenReturn("new-refresh-token-hash");
+        when(jwtProperties.getRefreshTokenValidityInSeconds()).thenReturn(120L);
+        when(redisService.compareAndSetValues(
+            "RT:tester",
+            "saved-refresh-hash",
+            "new-refresh-token-hash",
+            Duration.ofSeconds(120)
+        )).thenReturn(false);
+
+        ResponseStatusException exception = assertThrows(
+            ResponseStatusException.class,
+            () -> userService.refresh(new com.moneylog_backend.moneylog.user.dto.RefreshReqDto("refresh-token"))
+        );
+
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusCode());
+        assertEquals("유효하지 않은 리프레시 토큰입니다.", exception.getReason());
     }
 
     @Test

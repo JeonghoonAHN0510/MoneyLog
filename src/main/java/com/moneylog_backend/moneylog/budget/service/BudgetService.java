@@ -13,6 +13,7 @@ import com.moneylog_backend.moneylog.budget.repository.BudgetRepository;
 import com.moneylog_backend.moneylog.category.entity.CategoryEntity;
 import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +37,11 @@ public class BudgetService {
         }
 
         BudgetEntity budgetEntity = budgetReqDto.toEntity(userId);
-        budgetRepository.save(budgetEntity);
+        try {
+            budgetRepository.saveAndFlush(budgetEntity);
+        } catch (DataIntegrityViolationException ex) {
+            return -1;
+        }
         return budgetEntity.getBudgetId();
     }
 
@@ -52,6 +57,11 @@ public class BudgetService {
         BudgetEntity budgetEntity = getBudgetByIdAndValidateOwnership(budgetReqDto.getBudgetId(), userId);
 
         budgetEntity.updateDetails(categoryId, budgetReqDto.getAmount());
+        try {
+            budgetRepository.flush();
+        } catch (DataIntegrityViolationException ex) {
+            throw new IllegalArgumentException("이미 등록된 예산입니다.");
+        }
 
         return budgetEntity.toDto();
     }

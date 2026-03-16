@@ -55,12 +55,11 @@ public class PasswordResetService {
         UserEntity userEntity = loadResettableUser(requestDto.getId(), requestDto.getEmail());
         Integer userId = userEntity.getUserId();
 
-        if (redisService.hasKey(redisTokenKeyResolver.passwordResetOtpResend(userId))) {
+        String otpCode = generateOtpCode();
+        boolean stored = storeOtpState(userId, otpCode);
+        if (!stored) {
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, ErrorMessageConstants.PASSWORD_RESET_OTP_RESEND_COOLDOWN);
         }
-
-        String otpCode = generateOtpCode();
-        storeOtpState(userId, otpCode);
 
         try {
             passwordResetMailService.sendOtp(userEntity.getEmail(), otpCode);
@@ -79,41 +78,27 @@ public class PasswordResetService {
     public PasswordResetVerifyOtpResDto verifyOtp(PasswordResetVerifyOtpReqDto requestDto) {
         UserEntity userEntity = loadResettableUser(requestDto.getId(), requestDto.getEmail());
         Integer userId = userEntity.getUserId();
-        String otpKey = redisTokenKeyResolver.passwordResetOtp(userId);
-        String storedOtpHash = redisService.getValues(otpKey);
-
-        if (storedOtpHash == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ErrorMessageConstants.PASSWORD_RESET_OTP_EXPIRED);
-        }
-
-        int currentAttempts = getAttemptCount(userId);
-        if (currentAttempts >= otpMaxAttempts) {
-            clearOtpState(userId);
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, ErrorMessageConstants.PASSWORD_RESET_OTP_ATTEMPTS_EXCEEDED);
-        }
-
-        if (!redisSecretProtector.matchesPasswordResetOtp(userId, requestDto.getOtpCode(), storedOtpHash)) {
-            int nextAttempts = currentAttempts + 1;
-            if (nextAttempts >= otpMaxAttempts) {
-                clearOtpState(userId);
-                throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, ErrorMessageConstants.PASSWORD_RESET_OTP_ATTEMPTS_EXCEEDED);
-            }
-
-            redisService.setValues(
-                redisTokenKeyResolver.passwordResetOtpAttempts(userId),
-                String.valueOf(nextAttempts),
-                Duration.ofSeconds(otpTtlSeconds)
-            );
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ErrorMessageConstants.PASSWORD_RESET_OTP_INVALID);
-        }
-
-        clearOtpState(userId);
         String resetToken = UUID.randomUUID().toString();
-        redisService.setValues(
+        RedisService.PasswordResetOtpVerifyResult verifyResult = redisService.verifyPasswordResetOtp(
+            redisTokenKeyResolver.passwordResetOtp(userId),
+            redisTokenKeyResolver.passwordResetOtpAttempts(userId),
+            redisTokenKeyResolver.passwordResetOtpResend(userId),
+            redisSecretProtector.hashPasswordResetOtp(userId, requestDto.getOtpCode()),
+            otpMaxAttempts,
+            Duration.ofSeconds(otpTtlSeconds),
             redisTokenKeyResolver.passwordResetToken(resetToken),
             String.valueOf(userId),
             Duration.ofSeconds(resetTokenTtlSeconds)
         );
+        if (verifyResult == RedisService.PasswordResetOtpVerifyResult.EXPIRED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ErrorMessageConstants.PASSWORD_RESET_OTP_EXPIRED);
+        }
+        if (verifyResult == RedisService.PasswordResetOtpVerifyResult.EXCEEDED) {
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, ErrorMessageConstants.PASSWORD_RESET_OTP_ATTEMPTS_EXCEEDED);
+        }
+        if (verifyResult == RedisService.PasswordResetOtpVerifyResult.INVALID) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ErrorMessageConstants.PASSWORD_RESET_OTP_INVALID);
+        }
 
         return PasswordResetVerifyOtpResDto.builder()
                                            .resetToken(resetToken)
@@ -123,7 +108,7 @@ public class PasswordResetService {
 
     public void confirmReset(PasswordResetConfirmReqDto requestDto) {
         String tokenKey = redisTokenKeyResolver.passwordResetToken(requestDto.getResetToken());
-        String storedUserId = redisService.getValues(tokenKey);
+        String storedUserId = redisService.getAndDeleteValue(tokenKey);
 
         if (storedUserId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ErrorMessageConstants.PASSWORD_RESET_TOKEN_INVALID);
@@ -138,7 +123,6 @@ public class PasswordResetService {
 
         String encodedPassword = passwordEncoder.encode(requestDto.getNewPassword());
         userWriteTxService.updatePassword(userId, encodedPassword);
-        redisService.deleteValues(tokenKey);
         clearOtpState(userId);
         redisService.deleteValues(redisTokenKeyResolver.refreshToken(userEntity.getLoginId()));
     }
@@ -171,20 +155,13 @@ public class PasswordResetService {
         );
     }
 
-    private void storeOtpState(Integer userId, String otpCode) {
-        redisService.setValues(
+    private boolean storeOtpState(Integer userId, String otpCode) {
+        return redisService.storePasswordResetOtpState(
             redisTokenKeyResolver.passwordResetOtp(userId),
             redisSecretProtector.hashPasswordResetOtp(userId, otpCode),
-            Duration.ofSeconds(otpTtlSeconds)
-        );
-        redisService.setValues(
+            Duration.ofSeconds(otpTtlSeconds),
             redisTokenKeyResolver.passwordResetOtpAttempts(userId),
-            "0",
-            Duration.ofSeconds(otpTtlSeconds)
-        );
-        redisService.setValues(
             redisTokenKeyResolver.passwordResetOtpResend(userId),
-            "1",
             Duration.ofSeconds(otpResendCooldownSeconds)
         );
     }
@@ -193,14 +170,6 @@ public class PasswordResetService {
         redisService.deleteValues(redisTokenKeyResolver.passwordResetOtp(userId));
         redisService.deleteValues(redisTokenKeyResolver.passwordResetOtpAttempts(userId));
         redisService.deleteValues(redisTokenKeyResolver.passwordResetOtpResend(userId));
-    }
-
-    private int getAttemptCount(Integer userId) {
-        String value = redisService.getValues(redisTokenKeyResolver.passwordResetOtpAttempts(userId));
-        if (value == null || value.isBlank()) {
-            return 0;
-        }
-        return Integer.parseInt(value);
     }
 
     private String generateOtpCode() {

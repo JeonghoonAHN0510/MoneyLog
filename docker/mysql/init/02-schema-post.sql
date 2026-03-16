@@ -9,11 +9,9 @@ ALTER TABLE transaction AUTO_INCREMENT = 100001;
 
 CREATE INDEX idx_account_user_id ON account(user_id);
 CREATE INDEX idx_account_bank_id ON account(bank_id);
-CREATE INDEX idx_account_number ON account(account_number);
 CREATE INDEX idx_category_user_id ON category(user_id);
 CREATE INDEX idx_payment_user_id ON payment(user_id);
 CREATE INDEX idx_payment_account_id ON payment(account_id);
-CREATE INDEX idx_budget_user_category ON budget(user_id, category_id);
 CREATE INDEX idx_fixed_user_id ON fixed(user_id);
 CREATE INDEX idx_transaction_user_date ON transaction(user_id, trading_at);
 CREATE INDEX idx_transaction_installment_lookup ON transaction(installment_plan_id, installment_no, is_settled);

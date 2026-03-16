@@ -15,7 +15,9 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "account")
+@Table(name = "account", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_account_account_number", columnNames = "account_number")
+})
 @Getter
 @SuperBuilder
 @DynamicInsert

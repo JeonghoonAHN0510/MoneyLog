@@ -3,6 +3,7 @@ package com.moneylog_backend.moneylog.schedule.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.quartz.JobKey;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
 import org.quartz.JobBuilder;
@@ -11,6 +12,7 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,7 @@ import com.moneylog_backend.global.type.ScheduleEnum;
 import com.moneylog_backend.moneylog.schedule.dto.ScheduleReqDto;
 import com.moneylog_backend.moneylog.schedule.dto.ScheduleResDto;
 import com.moneylog_backend.moneylog.schedule.entity.JobMetaEntity;
+import com.moneylog_backend.moneylog.schedule.event.ScheduleQuartzSyncRequestedEvent;
 import com.moneylog_backend.moneylog.schedule.log.LogCleanupJob;
 import com.moneylog_backend.moneylog.schedule.repository.ScheduleRepository;
 
@@ -32,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final Scheduler scheduler;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     public List<ScheduleResDto> getAllSchedules () {
         return scheduleRepository.findAll().stream().map(ScheduleResDto::from).collect(Collectors.toList());
@@ -43,8 +47,10 @@ public class ScheduleService {
             scheduler.clear();
 
             scheduleRepository.findAll().forEach(meta -> {
-                if (meta.isActive()) {
-                    registerJob(meta);
+                try {
+                    reconcileQuartzJob(meta);
+                } catch (SchedulerException e) {
+                    log.error("스케줄러 초기화 중 작업 동기화에 실패했습니다. jobName={}", meta.getJobName(), e);
                 }
             });
         } catch (SchedulerException e) {
@@ -52,63 +58,94 @@ public class ScheduleService {
         }
     }
 
-    public void registerJob (JobMetaEntity meta) {
-        try {
-            // 실행할 Job 클래스 매핑 (여기서는 로그 삭제 Job으로 고정 예시)
-            // 실제로는 Class.forName(meta.getClassName()) 등으로 동적 로딩 가능
-            JobDetail jobDetail = JobBuilder.newJob(LogCleanupJob.class)
-                                            .withIdentity(meta.getJobName(), meta.getJobGroup())
-                                            .build();
-
-            CronTrigger trigger = TriggerBuilder.newTrigger()
-                                                .withIdentity(meta.getJobName() + "_trigger", meta.getJobGroup())
-                                                .withSchedule(
-                                                    CronScheduleBuilder.cronSchedule(meta.getCronExpression()))
-                                                .build();
-
-            scheduler.scheduleJob(jobDetail, trigger);
-            log.info("스케줄 작업을 등록했습니다. jobName={}, cronExpression={}", meta.getJobName(), meta.getCronExpression());
-
-        } catch (SchedulerException e) {
-            log.error("스케줄 작업 등록에 실패했습니다.", e);
-        }
-    }
-
     @Transactional
     public void updateSchedule (ScheduleReqDto reqDto) {
-        try {
-            String jobName = reqDto.getJobName();
-            JobMetaEntity meta = scheduleRepository.findById(jobName)
-                                                   .orElseThrow(
-                                                       () -> new RuntimeException(
-                                                           ErrorMessageConstants.scheduleJobNotFound(jobName)));
+        String jobName = reqDto.getJobName();
+        JobMetaEntity meta = scheduleRepository.findById(jobName)
+                                               .orElseThrow(
+                                                   () -> new RuntimeException(
+                                                       ErrorMessageConstants.scheduleJobNotFound(jobName)));
 
-            String newCron = generateCronExpression(reqDto);
+        String newCron = generateCronExpression(reqDto);
 
-            // 변경 사항이 없으면 skip
-            if (newCron.equals(meta.getCronExpression())) {
-                log.info("변경된 스케줄이 없어 업데이트를 건너뜁니다. jobName={}", jobName);
-                return;
-            }
-
+        if (newCron.equals(meta.getCronExpression())) {
+            log.info("변경된 스케줄은 없지만 Quartz 정합성 복구를 위해 동기화를 요청합니다. jobName={}", jobName);
+        } else {
             meta.updateCron(newCron);
-            scheduleRepository.save(meta);
-
-            TriggerKey triggerKey = TriggerKey.triggerKey(jobName + "_trigger", meta.getJobGroup());
-
-            CronTrigger newTrigger = TriggerBuilder.newTrigger()
-                                                   .withIdentity(triggerKey)
-                                                   .withSchedule(CronScheduleBuilder.cronSchedule(newCron))
-                                                   .build();
-
-            scheduler.rescheduleJob(triggerKey, newTrigger);
-
-            log.info("스케줄 작업을 재등록했습니다. jobName={}, cronExpression={}", jobName, newCron);
-
-        } catch (SchedulerException e) {
-            log.error("스케줄 작업 재등록에 실패했습니다.", e);
-            throw new RuntimeException(ErrorMessageConstants.SCHEDULE_RESCHEDULE_FAILED);
+            scheduleRepository.saveAndFlush(meta);
+            log.info("스케줄 메타데이터를 갱신했습니다. jobName={}, cronExpression={}", jobName, newCron);
         }
+
+        applicationEventPublisher.publishEvent(new ScheduleQuartzSyncRequestedEvent(jobName));
+    }
+
+    public void synchronizeQuartzJob (String jobName) throws SchedulerException {
+        JobMetaEntity meta = scheduleRepository.findById(jobName)
+                                               .orElseThrow(
+                                                   () -> new RuntimeException(
+                                                       ErrorMessageConstants.scheduleJobNotFound(jobName)));
+        reconcileQuartzJob(meta);
+    }
+
+    private void reconcileQuartzJob (JobMetaEntity meta) throws SchedulerException {
+        TriggerKey triggerKey = triggerKey(meta);
+        JobKey jobKey = jobKey(meta);
+
+        if (!meta.isActive()) {
+            scheduler.unscheduleJob(triggerKey);
+            scheduler.deleteJob(jobKey);
+            log.info("비활성 스케줄을 Quartz에서 제거했습니다. jobName={}", meta.getJobName());
+            return;
+        }
+
+        CronTrigger currentTrigger = scheduler.getTrigger(triggerKey) instanceof CronTrigger cronTrigger
+            ? cronTrigger
+            : null;
+        boolean jobExists = scheduler.checkExists(jobKey);
+
+        if (!jobExists || currentTrigger == null) {
+            if (currentTrigger != null) {
+                scheduler.unscheduleJob(triggerKey);
+            }
+            if (jobExists) {
+                scheduler.deleteJob(jobKey);
+            }
+            scheduleJob(meta);
+            log.info("Quartz 스케줄을 새로 등록했습니다. jobName={}, cronExpression={}", meta.getJobName(), meta.getCronExpression());
+            return;
+        }
+
+        if (meta.getCronExpression().equals(currentTrigger.getCronExpression())) {
+            log.info("Quartz 스케줄이 이미 최신 상태입니다. jobName={}, cronExpression={}", meta.getJobName(), meta.getCronExpression());
+            return;
+        }
+
+        CronTrigger newTrigger = buildTrigger(meta);
+        scheduler.rescheduleJob(triggerKey, newTrigger);
+        log.info("Quartz 스케줄을 DB 기준으로 재동기화했습니다. jobName={}, cronExpression={}", meta.getJobName(), meta.getCronExpression());
+    }
+
+    private void scheduleJob (JobMetaEntity meta) throws SchedulerException {
+        JobDetail jobDetail = JobBuilder.newJob(LogCleanupJob.class)
+                                        .withIdentity(jobKey(meta))
+                                        .build();
+
+        scheduler.scheduleJob(jobDetail, buildTrigger(meta));
+    }
+
+    private CronTrigger buildTrigger (JobMetaEntity meta) {
+        return TriggerBuilder.newTrigger()
+                             .withIdentity(triggerKey(meta))
+                             .withSchedule(CronScheduleBuilder.cronSchedule(meta.getCronExpression()))
+                             .build();
+    }
+
+    private JobKey jobKey (JobMetaEntity meta) {
+        return JobKey.jobKey(meta.getJobName(), meta.getJobGroup());
+    }
+
+    private TriggerKey triggerKey (JobMetaEntity meta) {
+        return TriggerKey.triggerKey(meta.getJobName() + "_trigger", meta.getJobGroup());
     }
 
     private String generateCronExpression (ScheduleReqDto dto) {

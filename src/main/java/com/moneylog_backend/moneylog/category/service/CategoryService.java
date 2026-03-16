@@ -13,6 +13,7 @@ import com.moneylog_backend.moneylog.category.mapper.CategoryMapper;
 import com.moneylog_backend.moneylog.category.repository.CategoryRepository;
 import com.moneylog_backend.moneylog.fixed.dto.query.CheckCategoryNameTypeUniqueQuery;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +36,11 @@ public class CategoryService {
         }
 
         CategoryEntity categoryEntity = categoryReqDto.toEntity(userId, normalizedName);
-        categoryEntity = categoryRepository.save(categoryEntity);
+        try {
+            categoryEntity = categoryRepository.saveAndFlush(categoryEntity);
+        } catch (DataIntegrityViolationException ex) {
+            return -1;
+        }
 
         return categoryEntity.getCategoryId();
     }
@@ -53,6 +58,11 @@ public class CategoryService {
         String normalizedName = InputStringNormalizer.trimToNull(categoryReqDto.getName());
 
         categoryEntity.updateDetails(normalizedName, categoryReqDto.getType(), categoryReqDto.getColor());
+        try {
+            categoryRepository.flush();
+        } catch (DataIntegrityViolationException ex) {
+            throw new IllegalArgumentException("이미 같은 이름과 유형의 카테고리가 존재합니다.");
+        }
 
         return categoryEntity.toResDto();
     }

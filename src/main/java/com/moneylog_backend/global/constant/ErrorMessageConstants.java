@@ -10,6 +10,9 @@ public final class ErrorMessageConstants {
     public static final String TRANSACTION_NOT_FOUND = "존재하지 않는 지출 내역입니다.";
     public static final String DUPLICATE_LOGIN_ID = "이미 가입된 아이디입니다.";
     public static final String DUPLICATE_EMAIL = "이미 가입된 이메일입니다.";
+    public static final String DUPLICATE_ACCOUNT_NUMBER = "이미 등록된 계좌번호입니다.";
+    public static final String DUPLICATE_CATEGORY = "이미 등록된 카테고리입니다.";
+    public static final String CONCURRENT_MODIFICATION = "다른 요청이 먼저 반영되었습니다. 최신 데이터를 확인한 뒤 다시 시도해주세요.";
     public static final String ACCESS_DENIED = "접근 권한이 없습니다.";
     public static final String INVALID_JSON = "올바르지 않은 데이터 형식입니다.";
     public static final String LOGIN_FAILED = "아이디 또는 비밀번호가 일치하지 않습니다.";
