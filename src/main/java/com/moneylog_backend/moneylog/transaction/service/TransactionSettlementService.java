@@ -1,9 +1,8 @@
 package com.moneylog_backend.moneylog.transaction.service;
 
 import com.moneylog_backend.global.type.CategoryEnum;
-import com.moneylog_backend.global.util.OwnershipValidator;
 import com.moneylog_backend.moneylog.account.entity.AccountEntity;
-import com.moneylog_backend.moneylog.account.repository.AccountRepository;
+import com.moneylog_backend.moneylog.account.service.AccountLockHelper;
 import com.moneylog_backend.moneylog.transaction.entity.TransactionEntity;
 import com.moneylog_backend.moneylog.transaction.installment.entity.CardInstallmentPlanEntity;
 import com.moneylog_backend.moneylog.transaction.installment.repository.CardInstallmentPlanRepository;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Propagation;
 
-import com.moneylog_backend.global.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,13 +28,13 @@ public class TransactionSettlementService {
 
     private final TransactionRepository transactionRepository;
     private final CardInstallmentPlanRepository installmentPlanRepository;
-    private final AccountRepository accountRepository;
+    private final AccountLockHelper accountLockHelper;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void settleInstallmentPlan (Integer installmentPlanId) {
-        CardInstallmentPlanEntity plan = installmentPlanRepository.findById(installmentPlanId)
-                                                                .orElseThrow(
-                                                                    () -> new IllegalArgumentException("할부 계획을 찾을 수 없습니다."));
+        CardInstallmentPlanEntity plan = installmentPlanRepository.findByIdForUpdate(installmentPlanId)
+                                                                  .orElseThrow(
+                                                                      () -> new IllegalArgumentException("할부 계획을 찾을 수 없습니다."));
 
         resyncInstallmentPlanProgress(plan);
 
@@ -50,14 +48,16 @@ public class TransactionSettlementService {
             return;
         }
 
-        List<TransactionEntity> dueTransactions = getDueInstallmentTransactions(plan.getInstallmentPlanId(),
-                                                                              currentSettledCount,
-                                                                              targetSettledCount);
+        List<TransactionEntity> dueTransactions = getDueInstallmentTransactionsForUpdate(
+            plan.getInstallmentPlanId(),
+            currentSettledCount,
+            targetSettledCount
+        );
         if (dueTransactions.isEmpty()) {
             return;
         }
 
-        AccountEntity accountEntity = getAccountByIdAndValidateOwnership(plan.getAccountId(), plan.getUserId());
+        AccountEntity accountEntity = accountLockHelper.lockOwnedAccount(plan.getAccountId(), plan.getUserId());
 
         for (TransactionEntity transactionEntity : dueTransactions) {
             try {
@@ -152,23 +152,15 @@ public class TransactionSettlementService {
         plan.resyncProgress(activeInstallmentCount, settledCount, latestSettledAt);
     }
 
-    private List<TransactionEntity> getDueInstallmentTransactions (Integer installmentPlanId,
-                                                                  Integer currentSettledCount,
-                                                                  Integer targetSettledCount) {
+    private List<TransactionEntity> getDueInstallmentTransactionsForUpdate (Integer installmentPlanId,
+                                                                            Integer currentSettledCount,
+                                                                            Integer targetSettledCount) {
         if (targetSettledCount <= currentSettledCount) {
             return List.of();
         }
 
         int startNo = currentSettledCount + 1;
-        return transactionRepository.findByInstallmentPlanIdAndInstallmentNoBetweenAndIsSettledFalseOrderByInstallmentNoAsc(
+        return transactionRepository.findByInstallmentPlanIdAndInstallmentNoBetweenAndIsSettledFalseOrderByInstallmentNoAscForUpdate(
             installmentPlanId, startNo, targetSettledCount);
-    }
-
-    private AccountEntity getAccountByIdAndValidateOwnership (Integer accountId, Integer userId) {
-        AccountEntity accountEntity = accountRepository.findById(accountId)
-                                                     .orElseThrow(() -> new ResourceNotFoundException("계좌를 찾을 수 없습니다."));
-        OwnershipValidator.validateOwner(accountEntity.getUserId(), userId, "본인의 계좌가 아닙니다.");
-
-        return accountEntity;
     }
 }

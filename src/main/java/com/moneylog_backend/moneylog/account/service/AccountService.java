@@ -1,6 +1,7 @@
 package com.moneylog_backend.moneylog.account.service;
 
 import java.util.List;
+import java.util.Map;
 
 import com.moneylog_backend.global.constant.ErrorMessageConstants;
 import com.moneylog_backend.global.exception.ResourceNotFoundException;
@@ -30,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AccountService {
     private final AccountRepository accountRepository;
+    private final AccountLockHelper accountLockHelper;
     private final TransferRepository transferRepository;
     private final UserRepository userRepository;
     private final BankRepository bankRepository;
@@ -75,7 +77,7 @@ public class AccountService {
 
     @Transactional
     public AccountResDto updateAccount(AccountReqDto accountReqDto, int userId) {
-        AccountEntity accountEntity = getAccountByIdAndValidateOwnership(accountReqDto.getAccountId(), userId);
+        AccountEntity accountEntity = accountLockHelper.lockOwnedAccount(accountReqDto.getAccountId(), userId);
 
         String newAccountNumber = null;
         String accountNumber = InputStringNormalizer.trimToNull(accountReqDto.getAccountNumber());
@@ -116,8 +118,12 @@ public class AccountService {
         int fromAccountId = transferDto.getFromAccount();
         int toAccountId = transferDto.getToAccount();
 
-        AccountEntity fromAccountEntity = getAccountByIdAndValidateOwnership(fromAccountId, userId);
-        AccountEntity toAccountEntity = getAccountByIdAndValidateOwnership(toAccountId, userId);
+        Map<Integer, AccountEntity> lockedAccounts = accountLockHelper.lockOwnedAccounts(
+            List.of(fromAccountId, toAccountId),
+            userId
+        );
+        AccountEntity fromAccountEntity = lockedAccounts.get(fromAccountId);
+        AccountEntity toAccountEntity = lockedAccounts.get(toAccountId);
 
         fromAccountEntity.withdraw(transferBalance);
         toAccountEntity.deposit(transferBalance);
