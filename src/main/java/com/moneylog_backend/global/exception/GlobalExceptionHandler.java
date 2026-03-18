@@ -6,9 +6,15 @@ import java.util.stream.Collectors;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 
+import jakarta.persistence.OptimisticLockException;
+import jakarta.persistence.PessimisticLockException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.dao.DeadlockLoserDataAccessException;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -270,6 +276,20 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
         ErrorResponse response = new ErrorResponse("NOT_FOUND", ex.getMessage());
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    // 5-1. Lock 충돌 처리 -> 409 Conflict
+    @ExceptionHandler({
+        OptimisticLockingFailureException.class,
+        PessimisticLockingFailureException.class,
+        CannotAcquireLockException.class,
+        DeadlockLoserDataAccessException.class,
+        OptimisticLockException.class,
+        PessimisticLockException.class
+    })
+    public ResponseEntity<ErrorResponse> handleLockConflict(Exception ex) {
+        ErrorResponse response = new ErrorResponse("CONFLICT", ErrorMessageConstants.CONFLICT);
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 
     // 6. ResponseStatusException 처리 -> 상태코드/메시지 표준화

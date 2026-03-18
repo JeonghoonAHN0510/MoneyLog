@@ -26,6 +26,9 @@ public class BudgetEntity extends BaseTime {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "budget_id", columnDefinition = "INT UNSIGNED")
     private Integer budgetId;
+    @Version
+    @Column(columnDefinition = "BIGINT NOT NULL DEFAULT 0")
+    private Long version;
     @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
     private Integer userId;
     @Column(name = "category_id", columnDefinition = "INT UNSIGNED NOT NULL")

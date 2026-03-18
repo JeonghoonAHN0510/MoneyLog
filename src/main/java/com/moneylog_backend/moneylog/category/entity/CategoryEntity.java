@@ -26,6 +26,9 @@ public class CategoryEntity extends BaseTime {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "category_id", columnDefinition = "INT UNSIGNED")
     private Integer categoryId;
+    @Version
+    @Column(columnDefinition = "BIGINT NOT NULL DEFAULT 0")
+    private Long version;
     @Column(name = "user_id", columnDefinition = "INT UNSIGNED NOT NULL")
     private Integer userId;
     @Column(columnDefinition = "VARCHAR(50) NOT NULL")
