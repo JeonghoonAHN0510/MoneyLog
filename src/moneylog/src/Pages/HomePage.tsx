@@ -8,7 +8,7 @@ import '../styles/pages/HomePage.css';
 export default function HomePage() {
   const navigate = useNavigate();
 
-  useDocumentTitle('머니로그 | 가계부');
+  useDocumentTitle('MoneyLog | 가계부');
 
   const features = [
     {
@@ -40,7 +40,7 @@ export default function HomePage() {
         <div className="home-header-inner">
           <div className="home-header-logo">
             <Wallet className="home-header-logo-icon" />
-            <span className="home-header-logo-text">머니로그</span>
+            <span className="home-header-logo-text">MoneyLog</span>
           </div>
           <div className="home-header-actions">
             <Button variant="outline" size="sm" className="home-header-login-btn" onClick={() => navigate('/login')}>
@@ -231,9 +231,9 @@ export default function HomePage() {
         <div className="home-footer-inner">
           <div className="home-footer-logo">
             <Wallet className="home-footer-logo-icon" />
-            <span className="home-footer-logo-text">머니로그</span>
+            <span className="home-footer-logo-text">MoneyLog</span>
           </div>
-          <p>© 2024 머니로그. All rights reserved.</p>
+          <p>© 2026 MoneyLog. All rights reserved.</p>
         </div>
       </footer>
     </div>

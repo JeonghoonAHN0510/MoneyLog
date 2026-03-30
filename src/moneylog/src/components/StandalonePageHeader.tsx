@@ -8,7 +8,7 @@ export default function StandalonePageHeader() {
     <div className="standalone-page-header">
       <div className="standalone-page-header-brand">
         <Wallet className="standalone-page-header-icon" />
-        <span className="standalone-page-header-text">머니로그</span>
+        <span className="standalone-page-header-text">MoneyLog</span>
       </div>
 
       <Button asChild variant="outline" size="sm" className="standalone-page-header-home">

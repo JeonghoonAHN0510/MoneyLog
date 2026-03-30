@@ -38,7 +38,7 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useDocumentTitle('회원가입 | 머니로그');
+  useDocumentTitle('회원가입 | MoneyLog');
 
   // 은행 목록 로드 시 첫 번째 은행을 기본값으로
   useEffect(() => {
@@ -156,7 +156,7 @@ export default function SignUpPage() {
           <CardHeader className="signup-card-header">
             <CardTitle className="signup-card-title">회원가입</CardTitle>
             <CardDescription className="signup-card-description">
-              계정을 생성하여 머니로그를 시작하세요
+              계정을 생성하여 MoneyLog를 시작하세요
             </CardDescription>
           </CardHeader>
           <CardContent>

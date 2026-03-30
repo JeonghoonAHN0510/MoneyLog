@@ -81,7 +81,7 @@ export default function FinancePage() {
         { label: '관리 흐름', value: '거래 · 예산 · 계좌' },
     ];
 
-    useDocumentTitle(`${currentSection.label} | 머니로그`);
+    useDocumentTitle(`${currentSection.label} | MoneyLog`);
 
     const handleTabChange = (value: FinanceSection) => {
         setSearchParams({ tab: value });

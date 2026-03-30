@@ -24,7 +24,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useDocumentTitle('로그인 | 머니로그');
+  useDocumentTitle('로그인 | MoneyLog');
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();

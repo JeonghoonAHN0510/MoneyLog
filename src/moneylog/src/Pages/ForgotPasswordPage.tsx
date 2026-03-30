@@ -30,7 +30,7 @@ export default function ForgotPasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  useDocumentTitle('비밀번호 재설정 | 머니로그');
+  useDocumentTitle('비밀번호 재설정 | MoneyLog');
 
   useEffect(() => {
     if (step !== 'verify' && step !== 'confirm') {
