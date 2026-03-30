@@ -6,7 +6,7 @@
 <mapper namespace="com.moneylog_backend.moneylog.payment.mapper.PaymentMapper">
     <select id="getPaymentsByUserId">
         SELECT *
-        FROM PAYMENT
+        FROM payment
         WHERE user_id = #{userId}
     </select>
 </mapper>

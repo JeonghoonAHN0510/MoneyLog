@@ -8,9 +8,9 @@
         SELECT T.*,
                C.TYPE categoryType, C.NAME categoryName,
                P.NAME paymentName
-        FROM TRANSACTION T
-        JOIN CATEGORY C ON T.CATEGORY_ID = C.CATEGORY_ID
-        LEFT JOIN PAYMENT P ON T.PAYMENT_ID = P.PAYMENT_ID
+        FROM transaction T
+        JOIN category C ON T.CATEGORY_ID = C.CATEGORY_ID
+        LEFT JOIN payment P ON T.PAYMENT_ID = P.PAYMENT_ID
         WHERE T.USER_ID = #{userId}
           AND T.trading_at <![CDATA[ >= ]]> #{startDate}
           AND T.trading_at <![CDATA[ <= ]]> #{endDate}
@@ -89,8 +89,8 @@
             T.TRADING_AT AS date,
             COALESCE(SUM(CASE WHEN C.TYPE = 'INCOME' THEN T.AMOUNT ELSE 0 END), 0) AS totalIncome,
             COALESCE(SUM(CASE WHEN C.TYPE = 'EXPENSE' THEN T.AMOUNT ELSE 0 END), 0) AS totalExpense
-        FROM TRANSACTION T
-        JOIN CATEGORY C ON T.CATEGORY_ID = C.CATEGORY_ID
+        FROM transaction T
+        JOIN category C ON T.CATEGORY_ID = C.CATEGORY_ID
         WHERE T.USER_ID = #{userId}
           AND T.TRADING_AT <![CDATA[ >= ]]> #{startDate}
           AND T.TRADING_AT <![CDATA[ <= ]]> #{endDate}
@@ -103,8 +103,8 @@
         SELECT
             C.NAME AS categoryName,
             SUM(T.AMOUNT) AS totalAmount
-        FROM TRANSACTION T
-        JOIN CATEGORY C ON T.CATEGORY_ID = C.CATEGORY_ID
+        FROM transaction T
+        JOIN category C ON T.CATEGORY_ID = C.CATEGORY_ID
         WHERE T.USER_ID = #{userId}
           AND C.TYPE = 'EXPENSE'
           AND T.IS_SETTLED = 1

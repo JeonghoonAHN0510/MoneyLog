@@ -6,14 +6,14 @@
 <mapper namespace="com.moneylog_backend.moneylog.account.mapper.AccountMapper">
     <select id="checkAccountNumber" resultType="int">
         SELECT COUNT(*)
-        FROM ACCOUNT
+        FROM account
         WHERE account_number = #{accountNumber}
     </select>
 
     <select id="getAccountsByUserId">
         SELECT A.*, B.NAME bankName
-        FROM ACCOUNT A
-        LEFT JOIN BANK B ON A.BANK_ID = B.BANK_ID
+        FROM account A
+        LEFT JOIN bank B ON A.BANK_ID = B.BANK_ID
         WHERE USER_ID = #{userId}
     </select>
 </mapper>

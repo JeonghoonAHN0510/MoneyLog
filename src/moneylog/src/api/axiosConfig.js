@@ -1,7 +1,7 @@
 import axios from 'axios';
 import authStore from '../stores/authStore.js';
 
-const DEFAULT_API_BASE_URL = 'http://localhost:8080/api';
+const DEFAULT_API_BASE_URL = '/api';
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL;
 const AUTHORIZATION_HEADER = 'Authorization';
 

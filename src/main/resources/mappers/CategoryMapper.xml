@@ -6,7 +6,7 @@
 <mapper namespace="com.moneylog_backend.moneylog.category.mapper.CategoryMapper">
     <select id="checkCategoryNameTypeUnique" parameterType="com.moneylog_backend.moneylog.category.dto.req.CategoryReqDto">
         SELECT COUNT(*)
-        FROM CATEGORY
+        FROM category
         WHERE user_id = #{userId}
           AND NAME = #{name}
           AND TYPE = #{type}
@@ -14,7 +14,7 @@
 
     <select id="getCategoryTypeByCategoryId">
         SELECT type
-        FROM CATEGORY
+        FROM category
         WHERE CATEGORY_ID = #{categoryId}
     </select>
 </mapper>
