@@ -10,6 +10,7 @@ import { Eye, EyeOff, User, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../api/axiosConfig';
 import { useBanks } from '../api/queries';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { getApiErrorMessage } from '../utils/error';
 import { isTrimmedBlank, normalizePhoneValue, trimTextValue } from '../utils/inputNormalization';
 import { AUTH_HELPER_TEXT, AUTH_PLACEHOLDERS } from './AuthPlaceholders.constants';
@@ -36,6 +37,8 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useDocumentTitle('회원가입 | 머니로그');
 
   // 은행 목록 로드 시 첫 번째 은행을 기본값으로
   useEffect(() => {
@@ -153,7 +156,7 @@ export default function SignUpPage() {
           <CardHeader className="signup-card-header">
             <CardTitle className="signup-card-title">회원가입</CardTitle>
             <CardDescription className="signup-card-description">
-              계정을 생성하여 내 가계부를 시작하세요
+              계정을 생성하여 머니로그를 시작하세요
             </CardDescription>
           </CardHeader>
           <CardContent>

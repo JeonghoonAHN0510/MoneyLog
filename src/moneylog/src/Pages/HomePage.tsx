@@ -2,10 +2,13 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Wallet, BarChart3, Calendar, Target, ArrowRight, Upload, ShieldCheck, Sparkles } from 'lucide-react';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import '../styles/pages/HomePage.css';
 
 export default function HomePage() {
   const navigate = useNavigate();
+
+  useDocumentTitle('머니로그 | 가계부');
 
   const features = [
     {
@@ -37,7 +40,7 @@ export default function HomePage() {
         <div className="home-header-inner">
           <div className="home-header-logo">
             <Wallet className="home-header-logo-icon" />
-            <span className="home-header-logo-text">내 가계부</span>
+            <span className="home-header-logo-text">머니로그</span>
           </div>
           <div className="home-header-actions">
             <Button variant="outline" size="sm" className="home-header-login-btn" onClick={() => navigate('/login')}>
@@ -228,9 +231,9 @@ export default function HomePage() {
         <div className="home-footer-inner">
           <div className="home-footer-logo">
             <Wallet className="home-footer-logo-icon" />
-            <span className="home-footer-logo-text">내 가계부</span>
+            <span className="home-footer-logo-text">머니로그</span>
           </div>
-          <p>© 2024 내 가계부. All rights reserved.</p>
+          <p>© 2024 머니로그. All rights reserved.</p>
         </div>
       </footer>
     </div>

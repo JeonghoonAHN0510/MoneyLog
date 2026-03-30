@@ -9,6 +9,7 @@ import StandalonePageHeader from '../components/StandalonePageHeader';
 
 import { toast } from 'sonner';
 import api from '../api/axiosConfig';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { getApiErrorMessage } from '../utils/error';
 import { isTrimmedBlank, trimTextValue } from '../utils/inputNormalization';
 import { AUTH_HELPER_TEXT, AUTH_PLACEHOLDERS } from './AuthPlaceholders.constants';
@@ -28,6 +29,8 @@ export default function ForgotPasswordPage() {
   const [resetTokenTtlSeconds, setResetTokenTtlSeconds] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  useDocumentTitle('비밀번호 재설정 | 머니로그');
 
   useEffect(() => {
     if (step !== 'verify' && step !== 'confirm') {

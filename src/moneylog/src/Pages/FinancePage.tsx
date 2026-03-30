@@ -48,6 +48,7 @@ import {
     useUpdatePayment,
     useDeletePayment,
 } from '../api/queries';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { getApiErrorMessage, getApiErrorStatus } from '../utils/error';
 import { buildProfileImageViewUrl, getProfileInitial } from '../utils/profileImage';
 import { financeSections, type FinanceSection } from './FinancePage.constants';
@@ -79,6 +80,8 @@ export default function FinancePage() {
         { label: '활성 섹션', value: currentSection.label },
         { label: '관리 흐름', value: '거래 · 예산 · 계좌' },
     ];
+
+    useDocumentTitle(`${currentSection.label} | 머니로그`);
 
     const handleTabChange = (value: FinanceSection) => {
         setSearchParams({ tab: value });

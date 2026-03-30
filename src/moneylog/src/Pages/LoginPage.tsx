@@ -9,6 +9,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../api/axiosConfig';
 import useUserStore from '../stores/authStore';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { getApiErrorMessage } from '../utils/error';
 import { isTrimmedBlank, trimTextValue } from '../utils/inputNormalization';
 import { AUTH_PLACEHOLDERS } from './AuthPlaceholders.constants';
@@ -22,6 +23,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useDocumentTitle('로그인 | 머니로그');
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
